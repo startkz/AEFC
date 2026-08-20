@@ -1,0 +1,84 @@
+name: IEEE39 R2024b Bootstrap v2
+
+on:
+  push:
+    branches:
+      - experiment/ieee39-r2024b-actions
+    paths:
+      - matlab_r2024b/**
+      - .github/workflows/ieee39-r2024b-bootstrap-v2.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out migration branch
+        uses: actions/checkout@v4
+
+      - name: Set up MATLAB R2024b and power-system products
+        id: setup_matlab
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: >-
+            Simulink
+            Simscape
+            Simscape_Electrical
+          cache: true
+
+      - name: Bootstrap and smoke-test native IEEE 39-bus plant
+        id: matlab_smoke
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); aefc_ieee39_bootstrap
+
+      - name: Upload migration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ieee39-r2024b-bootstrap-v2
+          path: |
+            results/ieee39_r2024b/**
+            Figures/IEEE39-R2024b/**
+          if-no-files-found: warn
+
+      - name: Persist workflow status and generated plant
+        if: always()
+        shell: bash
+        env:
+          JOB_STATUS: ${{ job.status }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          mkdir -p results/ieee39_r2024b
+          python - <<'PY'
+          import json, os, pathlib, datetime
+          p = pathlib.Path('results/ieee39_r2024b/gha_status.json')
+          data = {
+              'job_status': os.environ.get('JOB_STATUS','unknown'),
+              'source_sha': os.environ.get('SOURCE_SHA',''),
+              'run_id': os.environ.get('RUN_ID',''),
+              'run_attempt': os.environ.get('RUN_ATTEMPT',''),
+              'timestamp_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'evidence_source': 'github_actions_r2024b'
+          }
+          p.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- results/ieee39_r2024b/gha_status.json
+          if [ -d Figures/IEEE39-R2024b ]; then git add -- Figures/IEEE39-R2024b; fi
+          if [ -f results/ieee39_r2024b/bootstrap_inventory.json ]; then git add -- results/ieee39_r2024b/bootstrap_inventory.json; fi
+          if [ -f results/ieee39_r2024b/smoke_summary.json ]; then git add -- results/ieee39_r2024b/smoke_summary.json; fi
+          if git diff --cached --quiet; then
+            echo "No evidence changes to commit."
+          else
+            git commit -m "Persist R2024b IEEE39 bootstrap evidence [skip ci]"
+            git push origin HEAD:experiment/ieee39-r2024b-actions
+          fi
