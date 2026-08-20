@@ -1,0 +1,42 @@
+name: Actions Sentinel
+
+on:
+  push:
+    branches:
+      - experiment/ieee39-r2024b-actions
+    paths:
+      - .github/workflows/actions-sentinel.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sentinel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Persist sentinel
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          mkdir -p results/ieee39_r2024b
+          python - <<'PY'
+          import json, os, pathlib, datetime
+          p = pathlib.Path('results/ieee39_r2024b/actions_sentinel.json')
+          p.write_text(json.dumps({
+              'success': True,
+              'source_sha': os.environ.get('SOURCE_SHA',''),
+              'run_id': os.environ.get('RUN_ID',''),
+              'timestamp_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'runner': 'github-hosted-ubuntu'
+          }, indent=2) + '\n', encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- results/ieee39_r2024b/actions_sentinel.json
+          git commit -m "Persist GitHub Actions sentinel [skip ci]"
+          git push origin HEAD:experiment/ieee39-r2024b-actions
