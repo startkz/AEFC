@@ -1,4 +1,4 @@
-\title{Security-Aware Heterogeneous Federated Reinforcement Learning for Resilient Recovery of Cyber-Physical Systems\\}
+\title{Trustworthy Heterogeneous Federated Reinforcement Learning for Certified Resilient Recovery of Cyber-Physical Systems\\}
 
 \author{
         Kai~Zhong,
@@ -17,18 +17,18 @@
 \thanks{Manuscript received ****, 2026; revised ****, 2026.}
 }
 
-\markboth{IEEE TRANSACTIONS ON ***,~Vol.~*, No.~*, *~2026}%
-{Zhong \MakeLowercase{\textit{et al.}}: Security-Aware Heterogeneous Federated Reinforcement Learning for Resilient Recovery of Cyber-Physical Systems}
+\markboth{IEEE TRANSACTIONS ON DEPENDABLE AND SECURE COMPUTING,~2026}%
+{Zhong \MakeLowercase{\textit{et al.}}: Trustworthy Heterogeneous Federated Reinforcement Learning for Certified Resilient Recovery of CPS}
 
 \IEEEtitleabstractindextext{
 \begin{abstract}
 \justifying{
-Cross-layer attacks against cyber-physical systems (CPS) can corrupt sensing, communication, and control channels at the same time, forcing recovery controllers to restore safe operation with partial observations and untrusted participants. Existing reinforcement learning (RL) recovery methods are still largely centralized, which exposes operational trajectories and scales poorly when subsystems are geographically distributed. This paper proposes a security-aware heterogeneous federated reinforcement learning (FRL) framework for collaborative resilient recovery under cross-layer attacks. The framework decomposes a CPS into subsystem-level agents, trains local recovery policies with prioritized multi-agent RL, and exchanges model updates without sharing raw trajectories. Its core mechanism, Advantage Execution--Federated Critic (AEFC), combines local safety adapters, recovery-state prototype alignment, high-advantage sparse update transmission, and shift-aware credibility aggregation. Local adapters keep subsystem-specific sensing and actuation private, prototype alignment stabilizes the shared recovery representation, sparse transmission limits communication to recovery-informative updates, and credibility aggregation reduces the impact of stale, noisy, or adversarial contributions. AEFC is positioned as a communication-efficient and empirically privacy-enhancing recovery mechanism, not as a formal differential-privacy or secure-aggregation protocol. The framework is evaluated on IEEE 39-bus and IEEE 118-bus power-grid CPS benchmarks implemented through Simulink--Python co-simulation. In these benchmarks, AEFC-FRL improves recovery accuracy by up to 15.3 percentage points over centralized MADDPG and reduces communication overhead by 45.8\% compared with standard FedRL, while maintaining stronger resilience under malicious updates.
+Cross-layer attacks against cyber-physical systems (CPS) can simultaneously corrupt observations, communication, control commands, and the federated knowledge used for post-attack recovery. This creates a recovery-integrity problem that is not addressed by conventional federated reinforcement learning (FRL): a globally shared recovery policy may be trained from heterogeneous clients whose updates are stale, incompatible, or Byzantine, and a poisoned policy may subsequently drive the physical plant outside its safe operating region. We therefore formulate \emph{trustworthy heterogeneous federated recovery}, in which both local observations and federated recovery knowledge are treated as potentially untrusted. We redesign AEFC as a certificate-gated federated recovery mechanism with three layers. First, heterogeneous clients retain subsystem-specific observation/action adapters and share only an aligned recovery backbone. Second, recovery knowledge is admitted to federation only when it is supported by local recovery value and safety certificates, while server aggregation uses Byzantine-resilient trimming rather than client-reported credibility as a trust root. Third, each learned action is passed through a robust safety-recovery shield before execution, separating learning utility from physical safety. Under bounded state/attack uncertainty and shield feasibility, we prove forward invariance of the safe set for arbitrary learned policy proposals, including proposals induced by model poisoning. For Top-$k$ communication, we derive an explicit deterministic contraction factor $\delta_k=k/d$ and combine it with a Byzantine aggregation deviation bound instead of assuming an unverifiable credibility bias. Existing IEEE 39-bus and IEEE 118-bus experiments are retained only for the performance and communication claims they directly support; the revised evaluation protocol further specifies certificate, adaptive-Byzantine, and privacy tests required for high-assurance deployment.
 }
 \end{abstract}
 
 \begin{IEEEkeywords}
-Cyber-physical systems, cross-layer attacks, resilient recovery, security-aware federated reinforcement learning, multi-agent reinforcement learning.
+Cyber-physical systems, resilient recovery, trustworthy federated reinforcement learning, Byzantine robustness, safety certificate, heterogeneous multi-agent reinforcement learning.
 \end{IEEEkeywords}}
 \maketitle
 \IEEEdisplaynontitleabstractindextext
