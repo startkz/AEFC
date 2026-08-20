@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - revision/ieee39-r2022b-actions
+    paths-ignore:
+      - results/ci/**
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   migrate-smoke:
@@ -32,11 +37,41 @@ jobs:
             assert(~isempty(ver('simscape')),'Simscape unavailable');
 
       - name: Migrate and smoke-test real IEEE39 plant
+        id: migrate
+        continue-on-error: true
         uses: matlab-actions/run-command@v3
         with:
           command: >-
             addpath('matlab');
-            aefc_migrate_ieee39_r2022b('Figures/IEEE-39-bus-power.zip','build/ieee39_r2022b');
+            aefc_r2022b_ci_entrypoint;
+
+      - name: Persist compact migration evidence to branch
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p results/ci
+          if [ -f build/ieee39_r2022b/report/migration_report.json ]; then
+            cp build/ieee39_r2022b/report/migration_report.json results/ci/r2022b_migration_report.json
+          fi
+          if [ -f build/ieee39_r2022b/report/model_summary.tsv ]; then
+            cp build/ieee39_r2022b/report/model_summary.tsv results/ci/r2022b_model_summary.tsv
+          fi
+          cat > results/ci/r2022b_action_metadata.json <<EOF
+          {
+            "workflow": "IEEE39 R2022b Migration Smoke",
+            "commit": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_attempt": "${GITHUB_RUN_ATTEMPT}",
+            "migration_step_outcome": "${{ steps.migrate.outcome }}"
+          }
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- results/ci/r2022b_migration_report.json results/ci/r2022b_model_summary.tsv results/ci/r2022b_action_metadata.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Record R2022b IEEE39 migration evidence [skip ci]"
+            git push
+          fi
 
       - name: Upload migration evidence
         if: always()
@@ -48,3 +83,8 @@ jobs:
             build/ieee39_r2022b/migrated/**
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Enforce successful real physical smoke
+        if: steps.migrate.outcome != 'success'
+        shell: bash
+        run: exit 1
