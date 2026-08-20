@@ -1,0 +1,33 @@
+\section{INTRODUCTION}
+\IEEEPARstart{C}{yber-physical} systems (CPS) tightly couple computation, communication, sensing, and physical processes, and they now support critical infrastructure such as power grids, transportation systems, industrial automation, and healthcare platforms. Their operational value comes with rising security risk. A cross-layer attacker may corrupt sensor streams, delay or drop network messages, and manipulate control commands within the same incident. Such attacks do not only degrade prediction accuracy; they can push the physical plant toward unsafe operating regions before a human operator can isolate the compromised component. For this reason, post-attack resilient recovery is a first-order security problem in CPS, not merely a performance optimization problem.
+
+This paper focuses on collaborative recovery after cross-layer attacks. The goal is to restore safe operation under partial observability, heterogeneous subsystem dynamics, and untrusted or unreliable participants. Timely recovery is therefore as important as prevention, especially when the system must reconfigure control actions while the attack surface remains active. Fig.~\ref{f1} summarizes the multi-layer recovery setting considered in this work.
+
+\begin{figure}[htpb]
+	\vspace{-10pt}
+	\centering
+	\includegraphics[width=\linewidth]{Fig1.eps}
+	\caption{The multi-layer resilient recovery framework.}
+	\label{f1}
+\end{figure}
+
+Reinforcement learning (RL) is well suited to resilient recovery because it optimizes sequential control decisions through interaction with complex environments. Existing RL-based recovery methods, however, are still largely centralized. They often require collecting trajectories or intermediate statistics from several subsystems, which can expose operational states and attack traces. They also scale poorly when local dynamics, sensors, and actuators differ across geographically distributed components.
+
+Federated reinforcement learning (FRL) offers a natural alternative: each subsystem learns from local trajectories and exchanges model information with a coordinating server. This formulation preserves data locality, but data locality is not a formal privacy guarantee. Unless differential privacy, secure aggregation, or cryptographic protection is added, shared gradients and sparse updates may still leak rare local states or attack trajectories. We therefore treat privacy as an empirical risk dimension, while positioning resilient recovery under cross-layer attacks as the main security objective.
+
+Conventional FRL is not enough for this setting. Under cross-layer attacks, the most useful recovery transitions are often rare, and their parameter changes need not be the largest coordinates. Magnitude-only Top-$\kappa$ compression can keep large coordinates caused by load variation or corrupted observations while dropping lower-magnitude coordinates associated with actions that return the plant to a safe region. Dense FedAvg has a different weakness: it averages stale, compromised, or observation-incompatible updates as if they came from one stationary task. Credibility weighting also remains weak if the score reflects only client identity or update norm rather than recovery value and representation drift.
+
+To address these failure modes, we develop a security-aware collaborative FRL framework for CPS resilient recovery. The CPS is decomposed into subsystem-level agents trained with prioritized multi-agent reinforcement learning. On top of this local learner, the proposed Advantage Execution--Federated Critic (AEFC) mechanism changes how existing FL primitives are used. Sparse upload is selected by recovery advantage rather than by magnitude alone. Shared parameters are restricted to an aligned recovery backbone after local adapters absorb subsystem-specific observations and actions. Server-side weights are computed from critic-informed recovery utility and prototype drift, so large but stale or inconsistent updates are down-weighted. AEFC is therefore a recovery-conditioned sparse sharing and aggregation rule, not a generic compressed FedRL pipeline.
+
+The learning setting is heterogeneous FRL rather than vertical federated learning in the usual sense of feature-partitioned data with aligned sample identities. Different CPS subsystems collect different local observations and trajectories, while their policies share only the recovery backbone after local observation and action adaptation. This distinction determines how parameter sharing, convergence analysis, and privacy claims should be interpreted.
+
+The present work makes four contributions.
+
+\begin{itemize}
+	\item We formulate cross-layer CPS resilient recovery as a subsystem-level cooperative multi-agent reinforcement learning problem and train local controllers with a prioritized replay variant of MADDPG, improving sample efficiency on critical recovery transitions.
+	\item We design a heterogeneous FRL collaboration mechanism that keeps raw trajectories local while synchronizing only an aligned recovery backbone. Local adapters handle subsystem-specific observation and action spaces, and recovery-state prototypes provide a compact alignment signal for heterogeneous clients.
+	\item We propose the AEFC optimization mechanism, which replaces magnitude-only update compression with recovery-advantage-guided sparse transmission and combines it with prototype-based recovery alignment and shift-aware credibility aggregation. This design targets the failure modes of directly applying generic Top-$\kappa$ compression and parameter averaging to attack-time CPS recovery.
+	\item We provide a conditional convergence analysis under smoothness, bounded heterogeneity, contractive compression, and bounded credibility-bias assumptions, and we evaluate the framework on IEEE 39-bus and IEEE 118-bus power-grid CPS benchmarks with performance, communication, heterogeneity stress, Byzantine-robustness, empirical privacy-risk, deployment-oriented analyses, and a small non-grid traffic-signal proof of concept.
+\end{itemize}
+
+The remainder of this paper is organized as follows. Section II reviews related work. Section III presents the system model, adversary model, local multi-agent learner, federated training mechanism, and the AEFC optimization. Section IV reports the experimental results and discusses external validity and limitations. Section V concludes the paper.

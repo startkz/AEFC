@@ -1,0 +1,43 @@
+Response to Reviewer 1
+
+We sincerely thank the reviewer for the careful reading and constructive comments. We agree that the previous version contained several issues that could undermine confidence in the manuscript, especially the title typo, the over-simplified convergence statement, the misuse of the term "vertical federated learning", the broad cross-domain wording, and the overly strong privacy language. We have revised the manuscript substantially to address these concerns.
+
+Comment 1: The word "Physical" is misspelled as "Physiacl" in the title, appearing on the cover page, body title, and running headers throughout the paper. This indicates the manuscript was not proofread before submission, severely undermining reader confidence in the overall quality.
+
+Response: We apologize for this mistake. We have corrected the spelling in the title, the manuscript header, and all source files. The revised title is "Security-Aware Federated Reinforcement Learning for Resilient Recovery of Cyber-Physical Systems Under Cross-Layer Attacks." We also performed an additional source-level scan and PDF compilation check to ensure that "Physiacl" no longer appears anywhere in the manuscript.
+
+Changes made: Title and running header revised in the front-matter source; the full manuscript was recompiled and proofread.
+
+Comment 2: Section III-E claims the AEFC algorithm converges at O(T^{-1/2}), but this conclusion is directly borrowed from standard SGD results without formal derivation for the multi-agent, non-stationary, sparse-gradient setting of this paper. The compression error delta and bounded divergence assumptions are unverified -- they are stated as assertions, not proofs.
+
+Response: We agree with the reviewer. The original statement was too strong and did not sufficiently distinguish the round-level surrogate analysis from the full non-stationary MARL dynamics. In the revised manuscript, we rewrote Section III-E as a conditional convergence analysis. We now explicitly state that the result is not an unconditional convergence guarantee for arbitrary non-stationary MARL. We added formal assumptions on smoothness, stochastic-gradient noise, bounded heterogeneity, contractive Top-kappa compression, and bounded credibility-weight bias. We also added a theorem with a proof sketch showing how the stationarity bound is obtained from the smoothness inequality while keeping the AEFC-specific residual terms explicit.
+
+Importantly, the revised bound no longer claims a pure O(T^{-1/2}) rate. It states that the first two terms scale as O(T^{-1/2}) under the chosen step size, while the full bound also contains the residual compression term (1-delta_kappa)G^2 and the credibility-weighting bias term b_w^2. We further added diagnostic quantities G_t, H_t, and B_t to make the bounded-gradient, bounded-heterogeneity, and weighting-bias assumptions auditable during training. These diagnostics are presented as empirical sanity checks, not as substitutes for proof.
+
+Changes made: Section III-E was rewritten into a conditional stationarity analysis with explicit assumptions, a theorem/proof sketch, residual error terms, and training diagnostics. Section IV now explains how these diagnostics are used to audit the assumptions in the power-grid experiments.
+
+Comment 3: The paper claims to use "vertical" federated learning because subsystems have different state spaces. However, the standard definition of vertical FL refers to feature partitioning across parties, which does not match the actual setup here (agents with different local observations but sharing homogeneous network architectures). The validity of directly averaging parameters across heterogeneous state spaces lacks theoretical justification.
+
+Response: We agree and have corrected the terminology throughout the manuscript. The revised paper no longer positions the method as vertical federated learning. Instead, we describe the setting as heterogeneous federated reinforcement learning. We now explain that the agents interact with different local environments and generate different trajectories; they do not hold different feature columns of the same aligned samples, which is the standard setting of vertical FL.
+
+We also clarified why parameter sharing is meaningful in our implementation. Each local observation is mapped into a fixed-dimensional representation before being passed to the shared actor backbone. The aligned backbone parameters are synchronized across clients, while agent-specific input or output adapters can remain local when dimensions differ. This revision narrows the claim and makes the parameter-averaging assumption explicit.
+
+Changes made: Terminology was corrected in the Introduction, Related Work, and Methodology sections. The revised manuscript now defines the setting as heterogeneous FRL and explains the shared-backbone/adapter interpretation for heterogeneous observations.
+
+Comment 4: All experiments are based on IEEE 39-bus and IEEE 118-bus power system simulations via Simulink-Python co-simulation. The paper claims applicability across energy, transportation, healthcare, and other domains, but no experiments validate generalization beyond power grids. The semantic gap between simulation and real physical systems is not discussed.
+
+Response: We agree with the reviewer that the empirical evidence in this manuscript is limited to power-grid CPS. We have therefore toned down the cross-domain claims and revised the manuscript to avoid presenting untested generalization as an established result. The revised experimental section explicitly states that the evidence is strongest for power-grid recovery and that other CPS domains may differ in state-action semantics, actuation delay, safety constraints, topology, and available fallback controllers.
+
+We also added an external-validity and deployment discussion. This discussion explains how a non-grid validation could be constructed using an industrial PLC or traffic-signal simulator, but it clearly states that the current source package does not include a complete non-grid numerical run. We further discuss the simulation-to-real gap, including federated-round synchronization, edge-device compute constraints, intermittent communication, stale updates, runtime overhead of advantage scoring and Top-kappa selection, and the need for certified fail-safe controllers.
+
+Changes made: Cross-domain applicability claims were restricted in the Abstract, Introduction, Experimental section, and Conclusion. A new external-validity/deployment discussion was added in Section IV.
+
+Comment 5: The paper claims privacy protection based on a membership inference AUC of 0.5, but this is a heuristic evaluation, not a formal privacy guarantee. No differential privacy (DP) or other quantifiable privacy framework is introduced, and no privacy budget epsilon is analyzed. Gradient sparsification alone does not constitute a privacy mechanism, as sparse gradients can still leak sensitive information.
+
+Response: We agree. The revised manuscript no longer claims formal privacy protection from sparsification or from the membership-inference AUC result. We changed the terminology to "empirical privacy-risk assessment" and explicitly state that a near-0.5 AUC only indicates reduced membership-inference efficacy under the adopted attacker and data split. It is not a formal privacy guarantee and does not imply resistance to stronger inference, reconstruction, or gradient-leakage attacks.
+
+We also added a gradient-leakage discussion. The revised text notes that sparse gradients may still reveal information about local trajectories, rare states, and high-impact recovery actions. We further discuss how AEFC could be combined with secure aggregation, clipping, and calibrated differential-privacy noise in deployments that require mathematical privacy guarantees, while acknowledging the expected accuracy-privacy trade-off. No privacy budget epsilon is claimed for the base AEFC method because DP is not implemented in the current algorithm.
+
+Changes made: Privacy-related language was revised in the Abstract, Methodology, Experimental section, and Conclusion. A DP-compatible extension and gradient-leakage limitation were added, and all claims were reframed as empirical privacy-risk assessment rather than formal privacy protection.
+
+Additional checks: The revised manuscript was recompiled successfully. We checked the LaTeX log and BibTeX log and found no unresolved citations, undefined references, BibTeX errors, or overfull boxes. We also scanned the source files for the title typo and for non-manuscript prompt or drafting artifacts.

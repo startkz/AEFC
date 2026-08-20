@@ -1,0 +1,1868 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2024.7.2)  28 JUL 2026 08:48
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**main.tex
+(./main.tex
+LaTeX2e <2018-12-01>
+(./IEEEtran.cls
+Document Class: IEEEtran 2015/08/26 V1.8b by Michael Shell
+-- See the "IEEEtran_HOWTO" manual for usage information.
+-- http://www.michaelshell.org/tex/ieeetran/
+\@IEEEtrantmpdimenA=\dimen102
+\@IEEEtrantmpdimenB=\dimen103
+\@IEEEtrantmpdimenC=\dimen104
+\@IEEEtrantmpcountA=\count80
+\@IEEEtrantmpcountB=\count81
+\@IEEEtrantmpcountC=\count82
+\@IEEEtrantmptoksA=\toks14
+LaTeX Font Info:    Try loading font information for OT1+ptm on input line 503.
+
+(c:/texlive/2019/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
+)
+-- Using 8.5in x 11in (letter) paper.
+-- Using PDF output.
+\@IEEEnormalsizeunitybaselineskip=\dimen105
+-- This is a 10 point document.
+\CLASSINFOnormalsizebaselineskip=\dimen106
+\CLASSINFOnormalsizeunitybaselineskip=\dimen107
+\IEEEnormaljot=\dimen108
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <10> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <11> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <11> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <17> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <17> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <20> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <20> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <24> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1090.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <24> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1090.
+
+\IEEEquantizedlength=\dimen109
+\IEEEquantizedlengthdiff=\dimen110
+\IEEEquantizedtextheightdiff=\dimen111
+\IEEEilabelindentA=\dimen112
+\IEEEilabelindentB=\dimen113
+\IEEEilabelindent=\dimen114
+\IEEEelabelindent=\dimen115
+\IEEEdlabelindent=\dimen116
+\IEEElabelindent=\dimen117
+\IEEEiednormlabelsep=\dimen118
+\IEEEiedmathlabelsep=\dimen119
+\IEEEiedtopsep=\skip41
+\c@section=\count83
+\c@subsection=\count84
+\c@subsubsection=\count85
+\c@paragraph=\count86
+\c@IEEEsubequation=\count87
+\abovecaptionskip=\skip42
+\belowcaptionskip=\skip43
+\c@figure=\count88
+\c@table=\count89
+\@IEEEeqnnumcols=\count90
+\@IEEEeqncolcnt=\count91
+\@IEEEsubeqnnumrollback=\count92
+\@IEEEquantizeheightA=\dimen120
+\@IEEEquantizeheightB=\dimen121
+\@IEEEquantizeheightC=\dimen122
+\@IEEEquantizeprevdepth=\dimen123
+\@IEEEquantizemultiple=\count93
+\@IEEEquantizeboxA=\box27
+\@IEEEtmpitemindent=\dimen124
+\IEEEPARstartletwidth=\dimen125
+\c@IEEEbiography=\count94
+\@IEEEtranrubishbin=\box28
+)
+** ATTENTION: Overriding command lockouts (line 2).
+(c:/texlive/2019/texmf-dist/tex/latex/cite/cite.sty
+LaTeX Info: Redefining \cite on input line 302.
+LaTeX Info: Redefining \nocite on input line 332.
+Package: cite 2015/02/27  v 5.5
+)
+(c:/texlive/2019/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2018/12/01 v2.17b AMS math features
+\@mathmargin=\skip44
+
+For additional information on amsmath, use the `?' option.
+(c:/texlive/2019/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2000/06/29 v2.01 AMS text
+
+(c:/texlive/2019/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks15
+\ex@=\dimen126
+))
+(c:/texlive/2019/texmf-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen127
+)
+(c:/texlive/2019/texmf-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 2016/03/08 v2.02 operator names
+)
+\inf@bad=\count95
+LaTeX Info: Redefining \frac on input line 223.
+\uproot@=\count96
+\leftroot@=\count97
+LaTeX Info: Redefining \overline on input line 385.
+\classnum@=\count98
+\DOTSCASE@=\count99
+LaTeX Info: Redefining \ldots on input line 482.
+LaTeX Info: Redefining \dots on input line 485.
+LaTeX Info: Redefining \cdots on input line 606.
+\Mathstrutbox@=\box29
+\strutbox@=\box30
+\big@size=\dimen128
+LaTeX Font Info:    Redeclaring font encoding OML on input line 729.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 730.
+\macc@depth=\count100
+\c@MaxMatrixCols=\count101
+\dotsspace@=\muskip10
+\c@parentequation=\count102
+\dspbrk@lvl=\count103
+\tag@help=\toks16
+\row@=\count104
+\column@=\count105
+\maxfields@=\count106
+\andhelp@=\toks17
+\eqnshift@=\dimen129
+\alignsep@=\dimen130
+\tagshift@=\dimen131
+\tagwidth@=\dimen132
+\totwidth@=\dimen133
+\lineht@=\dimen134
+\@envbody=\toks18
+\multlinegap=\skip45
+\multlinetaggap=\skip46
+\mathdisplay@stack=\toks19
+LaTeX Info: Redefining \[ on input line 2844.
+LaTeX Info: Redefining \] on input line 2845.
+)
+(c:/texlive/2019/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+
+(c:/texlive/2019/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+))
+(c:/texlive/2019/texmf-dist/tex/latex/amscls/amsthm.sty
+Package: amsthm 2017/10/31 v2.20.4
+\thm@style=\toks20
+\thm@bodyfont=\toks21
+\thm@headfont=\toks22
+\thm@notefont=\toks23
+\thm@headpunct=\toks24
+\thm@preskip=\skip47
+\thm@postskip=\skip48
+\thm@headsep=\skip49
+\dth@everypar=\toks25
+)
+(c:/texlive/2019/texmf-dist/tex/latex/algorithm2e/algorithm2e.sty
+Package: algorithm2e 2017/07/18 v5.2 algorithms environments
+\c@AlgoLine=\count107
+
+(c:/texlive/2019/texmf-dist/tex/latex/base/ifthen.sty
+Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
+)
+\algocf@hangindent=\skip50
+
+(c:/texlive/2019/texmf-dist/tex/latex/ifoddpage/ifoddpage.sty
+Package: ifoddpage 2016/04/23 v1.1 Conditionals for odd/even page detection
+\c@checkoddpage=\count108
+)
+(c:/texlive/2019/texmf-dist/tex/latex/tools/xspace.sty
+Package: xspace 2014/10/28 v1.13 Space after command names (DPC,MH)
+)
+(c:/texlive/2019/texmf-dist/tex/latex/relsize/relsize.sty
+Package: relsize 2013/03/29 ver 4.1
+)
+\skiptotal=\skip51
+\skiplinenumber=\skip52
+\skiprule=\skip53
+\skiphlne=\skip54
+\skiptext=\skip55
+\skiplength=\skip56
+\algomargin=\skip57
+\skipalgocfslide=\skip58
+\algowidth=\dimen135
+\inoutsize=\dimen136
+\inoutindent=\dimen137
+\interspacetitleruled=\dimen138
+\interspacealgoruled=\dimen139
+\interspacetitleboxruled=\dimen140
+\algocf@ruledwidth=\skip59
+\algocf@inoutbox=\box31
+\algocf@inputbox=\box32
+\AlCapSkip=\skip60
+\AlCapHSkip=\skip61
+\algoskipindent=\skip62
+\algocf@nlbox=\box33
+\algocf@hangingbox=\box34
+\algocf@untilbox=\box35
+\algocf@skipuntil=\skip63
+\algocf@capbox=\box36
+\algocf@lcaptionbox=\skip64
+\algoheightruledefault=\skip65
+\algoheightrule=\skip66
+\algotitleheightruledefault=\skip67
+\algotitleheightrule=\skip68
+\c@algocfline=\count109
+\c@algocfproc=\count110
+\c@algocf=\count111
+\algocf@algoframe=\box37
+\algocf@algobox=\box38
+)
+(c:/texlive/2019/texmf-dist/tex/latex/algorithms/algorithmic.sty
+Package: algorithmic 2009/08/24 v0.1 Document Style `algorithmic'
+
+(c:/texlive/2019/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks26
+)
+\c@ALC@unique=\count112
+\c@ALC@line=\count113
+\c@ALC@rem=\count114
+\c@ALC@depth=\count115
+\ALC@tlm=\skip69
+\algorithmicindent=\skip70
+)
+(c:/texlive/2019/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2017/06/01 v1.1a Enhanced LaTeX Graphics (DPC,SPQR)
+
+(c:/texlive/2019/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2017/06/25 v1.2c Standard LaTeX Graphics (DPC,SPQR)
+
+(c:/texlive/2019/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2016/01/03 v1.10 sin cos tan (DPC)
+)
+(c:/texlive/2019/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 99.
+
+(c:/texlive/2019/texmf-dist/tex/latex/graphics-def/pdftex.def
+File: pdftex.def 2018/01/08 v1.0l Graphics/color driver for pdftex
+))
+\Gin@req@height=\dimen141
+\Gin@req@width=\dimen142
+)
+(c:/texlive/2019/texmf-dist/tex/latex/base/textcomp.sty
+Package: textcomp 2018/08/11 v2.0j Standard LaTeX package
+Package textcomp Info: Sub-encoding information:
+(textcomp)               5 = only ISO-Adobe without \textcurrency
+(textcomp)               4 = 5 + \texteuro
+(textcomp)               3 = 4 + \textohm
+(textcomp)               2 = 3 + \textestimated + \textcurrency
+(textcomp)               1 = TS1 - \textcircled - \t
+(textcomp)               0 = TS1 (full)
+(textcomp)             Font families with sub-encoding setting implement
+(textcomp)             only a restricted character set as indicated.
+(textcomp)             Family '?' is the default used for unknown fonts.
+(textcomp)             See the documentation for details.
+Package textcomp Info: Setting ? sub-encoding to TS1/1 on input line 79.
+
+(c:/texlive/2019/texmf-dist/tex/latex/base/ts1enc.def
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+Now handling font encoding TS1 ...
+... processing UTF-8 mapping file for font encoding TS1
+
+(c:/texlive/2019/texmf-dist/tex/latex/base/ts1enc.dfu
+File: ts1enc.dfu 2018/10/05 v1.2f UTF-8 support for inputenc
+   defining Unicode char U+00A2 (decimal 162)
+   defining Unicode char U+00A3 (decimal 163)
+   defining Unicode char U+00A4 (decimal 164)
+   defining Unicode char U+00A5 (decimal 165)
+   defining Unicode char U+00A6 (decimal 166)
+   defining Unicode char U+00A7 (decimal 167)
+   defining Unicode char U+00A8 (decimal 168)
+   defining Unicode char U+00A9 (decimal 169)
+   defining Unicode char U+00AA (decimal 170)
+   defining Unicode char U+00AC (decimal 172)
+   defining Unicode char U+00AE (decimal 174)
+   defining Unicode char U+00AF (decimal 175)
+   defining Unicode char U+00B0 (decimal 176)
+   defining Unicode char U+00B1 (decimal 177)
+   defining Unicode char U+00B2 (decimal 178)
+   defining Unicode char U+00B3 (decimal 179)
+   defining Unicode char U+00B4 (decimal 180)
+   defining Unicode char U+00B5 (decimal 181)
+   defining Unicode char U+00B6 (decimal 182)
+   defining Unicode char U+00B7 (decimal 183)
+   defining Unicode char U+00B9 (decimal 185)
+   defining Unicode char U+00BA (decimal 186)
+   defining Unicode char U+00BC (decimal 188)
+   defining Unicode char U+00BD (decimal 189)
+   defining Unicode char U+00BE (decimal 190)
+   defining Unicode char U+00D7 (decimal 215)
+   defining Unicode char U+00F7 (decimal 247)
+   defining Unicode char U+0192 (decimal 402)
+   defining Unicode char U+02C7 (decimal 711)
+   defining Unicode char U+02D8 (decimal 728)
+   defining Unicode char U+02DD (decimal 733)
+   defining Unicode char U+0E3F (decimal 3647)
+   defining Unicode char U+2016 (decimal 8214)
+   defining Unicode char U+2020 (decimal 8224)
+   defining Unicode char U+2021 (decimal 8225)
+   defining Unicode char U+2022 (decimal 8226)
+   defining Unicode char U+2030 (decimal 8240)
+   defining Unicode char U+2031 (decimal 8241)
+   defining Unicode char U+203B (decimal 8251)
+   defining Unicode char U+203D (decimal 8253)
+   defining Unicode char U+2044 (decimal 8260)
+   defining Unicode char U+204E (decimal 8270)
+   defining Unicode char U+2052 (decimal 8274)
+   defining Unicode char U+20A1 (decimal 8353)
+   defining Unicode char U+20A4 (decimal 8356)
+   defining Unicode char U+20A6 (decimal 8358)
+   defining Unicode char U+20A9 (decimal 8361)
+   defining Unicode char U+20AB (decimal 8363)
+   defining Unicode char U+20AC (decimal 8364)
+   defining Unicode char U+20B1 (decimal 8369)
+   defining Unicode char U+2103 (decimal 8451)
+   defining Unicode char U+2116 (decimal 8470)
+   defining Unicode char U+2117 (decimal 8471)
+   defining Unicode char U+211E (decimal 8478)
+   defining Unicode char U+2120 (decimal 8480)
+   defining Unicode char U+2122 (decimal 8482)
+   defining Unicode char U+2126 (decimal 8486)
+   defining Unicode char U+2127 (decimal 8487)
+   defining Unicode char U+212E (decimal 8494)
+   defining Unicode char U+2190 (decimal 8592)
+   defining Unicode char U+2191 (decimal 8593)
+   defining Unicode char U+2192 (decimal 8594)
+   defining Unicode char U+2193 (decimal 8595)
+   defining Unicode char U+2329 (decimal 9001)
+   defining Unicode char U+232A (decimal 9002)
+   defining Unicode char U+2422 (decimal 9250)
+   defining Unicode char U+25E6 (decimal 9702)
+   defining Unicode char U+25EF (decimal 9711)
+   defining Unicode char U+266A (decimal 9834)
+   defining Unicode char U+FEFF (decimal 65279)
+))
+LaTeX Info: Redefining \oldstylenums on input line 334.
+Package textcomp Info: Setting cmr sub-encoding to TS1/0 on input line 349.
+Package textcomp Info: Setting cmss sub-encoding to TS1/0 on input line 350.
+Package textcomp Info: Setting cmtt sub-encoding to TS1/0 on input line 351.
+Package textcomp Info: Setting cmvtt sub-encoding to TS1/0 on input line 352.
+Package textcomp Info: Setting cmbr sub-encoding to TS1/0 on input line 353.
+Package textcomp Info: Setting cmtl sub-encoding to TS1/0 on input line 354.
+Package textcomp Info: Setting ccr sub-encoding to TS1/0 on input line 355.
+Package textcomp Info: Setting ptm sub-encoding to TS1/4 on input line 356.
+Package textcomp Info: Setting pcr sub-encoding to TS1/4 on input line 357.
+Package textcomp Info: Setting phv sub-encoding to TS1/4 on input line 358.
+Package textcomp Info: Setting ppl sub-encoding to TS1/3 on input line 359.
+Package textcomp Info: Setting pag sub-encoding to TS1/4 on input line 360.
+Package textcomp Info: Setting pbk sub-encoding to TS1/4 on input line 361.
+Package textcomp Info: Setting pnc sub-encoding to TS1/4 on input line 362.
+Package textcomp Info: Setting pzc sub-encoding to TS1/4 on input line 363.
+Package textcomp Info: Setting bch sub-encoding to TS1/4 on input line 364.
+Package textcomp Info: Setting put sub-encoding to TS1/5 on input line 365.
+Package textcomp Info: Setting uag sub-encoding to TS1/5 on input line 366.
+Package textcomp Info: Setting ugq sub-encoding to TS1/5 on input line 367.
+Package textcomp Info: Setting ul8 sub-encoding to TS1/4 on input line 368.
+Package textcomp Info: Setting ul9 sub-encoding to TS1/4 on input line 369.
+Package textcomp Info: Setting augie sub-encoding to TS1/5 on input line 370.
+Package textcomp Info: Setting dayrom sub-encoding to TS1/3 on input line 371.
+Package textcomp Info: Setting dayroms sub-encoding to TS1/3 on input line 372.
+
+Package textcomp Info: Setting pxr sub-encoding to TS1/0 on input line 373.
+Package textcomp Info: Setting pxss sub-encoding to TS1/0 on input line 374.
+Package textcomp Info: Setting pxtt sub-encoding to TS1/0 on input line 375.
+Package textcomp Info: Setting txr sub-encoding to TS1/0 on input line 376.
+Package textcomp Info: Setting txss sub-encoding to TS1/0 on input line 377.
+Package textcomp Info: Setting txtt sub-encoding to TS1/0 on input line 378.
+Package textcomp Info: Setting lmr sub-encoding to TS1/0 on input line 379.
+Package textcomp Info: Setting lmdh sub-encoding to TS1/0 on input line 380.
+Package textcomp Info: Setting lmss sub-encoding to TS1/0 on input line 381.
+Package textcomp Info: Setting lmssq sub-encoding to TS1/0 on input line 382.
+Package textcomp Info: Setting lmvtt sub-encoding to TS1/0 on input line 383.
+Package textcomp Info: Setting lmtt sub-encoding to TS1/0 on input line 384.
+Package textcomp Info: Setting qhv sub-encoding to TS1/0 on input line 385.
+Package textcomp Info: Setting qag sub-encoding to TS1/0 on input line 386.
+Package textcomp Info: Setting qbk sub-encoding to TS1/0 on input line 387.
+Package textcomp Info: Setting qcr sub-encoding to TS1/0 on input line 388.
+Package textcomp Info: Setting qcs sub-encoding to TS1/0 on input line 389.
+Package textcomp Info: Setting qpl sub-encoding to TS1/0 on input line 390.
+Package textcomp Info: Setting qtm sub-encoding to TS1/0 on input line 391.
+Package textcomp Info: Setting qzc sub-encoding to TS1/0 on input line 392.
+Package textcomp Info: Setting qhvc sub-encoding to TS1/0 on input line 393.
+Package textcomp Info: Setting futs sub-encoding to TS1/4 on input line 394.
+Package textcomp Info: Setting futx sub-encoding to TS1/4 on input line 395.
+Package textcomp Info: Setting futj sub-encoding to TS1/4 on input line 396.
+Package textcomp Info: Setting hlh sub-encoding to TS1/3 on input line 397.
+Package textcomp Info: Setting hls sub-encoding to TS1/3 on input line 398.
+Package textcomp Info: Setting hlst sub-encoding to TS1/3 on input line 399.
+Package textcomp Info: Setting hlct sub-encoding to TS1/5 on input line 400.
+Package textcomp Info: Setting hlx sub-encoding to TS1/5 on input line 401.
+Package textcomp Info: Setting hlce sub-encoding to TS1/5 on input line 402.
+Package textcomp Info: Setting hlcn sub-encoding to TS1/5 on input line 403.
+Package textcomp Info: Setting hlcw sub-encoding to TS1/5 on input line 404.
+Package textcomp Info: Setting hlcf sub-encoding to TS1/5 on input line 405.
+Package textcomp Info: Setting pplx sub-encoding to TS1/3 on input line 406.
+Package textcomp Info: Setting pplj sub-encoding to TS1/3 on input line 407.
+Package textcomp Info: Setting ptmx sub-encoding to TS1/4 on input line 408.
+Package textcomp Info: Setting ptmj sub-encoding to TS1/4 on input line 409.
+)
+(c:/texlive/2019/texmf-dist/tex/latex/xcolor/xcolor.sty
+Package: xcolor 2016/05/11 v2.12 LaTeX color extensions (UK)
+
+(c:/texlive/2019/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package xcolor Info: Driver file: pdftex.def on input line 225.
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1348.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1352.
+Package xcolor Info: Model `RGB' extended on input line 1364.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1366.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1367.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1368.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1370.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1371.
+)
+(c:/texlive/2019/texmf-dist/tex/latex/oberdiek/epstopdf.sty
+Package: epstopdf 2016/05/15 v2.6 Conversion with epstopdf on the fly (HO)
+
+(c:/texlive/2019/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
+Package: epstopdf-base 2016/05/15 v2.6 Base part for package epstopdf
+
+(c:/texlive/2019/texmf-dist/tex/generic/oberdiek/infwarerr.sty
+Package: infwarerr 2016/05/16 v1.4 Providing info/warning/error messages (HO)
+)
+(c:/texlive/2019/texmf-dist/tex/latex/oberdiek/grfext.sty
+Package: grfext 2016/05/16 v1.2 Manage graphics extensions (HO)
+
+(c:/texlive/2019/texmf-dist/tex/generic/oberdiek/kvdefinekeys.sty
+Package: kvdefinekeys 2016/05/16 v1.4 Define keys (HO)
+
+(c:/texlive/2019/texmf-dist/tex/generic/oberdiek/ltxcmds.sty
+Package: ltxcmds 2016/05/16 v1.23 LaTeX kernel commands for general use (HO)
+)))
+(c:/texlive/2019/texmf-dist/tex/latex/oberdiek/kvoptions.sty
+Package: kvoptions 2016/05/16 v3.12 Key value format for package options (HO)
+
+(c:/texlive/2019/texmf-dist/tex/generic/oberdiek/kvsetkeys.sty
+Package: kvsetkeys 2016/05/16 v1.17 Key value parser (HO)
+
+(c:/texlive/2019/texmf-dist/tex/generic/oberdiek/etexcmds.sty
+Package: etexcmds 2016/05/16 v1.6 Avoid name clashes with e-TeX commands (HO)
+
+(c:/texlive/2019/texmf-dist/tex/generic/oberdiek/ifluatex.sty
+Package: ifluatex 2016/05/16 v1.4 Provides the ifluatex switch (HO)
+Package ifluatex Info: LuaTeX not detected.
+))))
+(c:/texlive/2019/texmf-dist/tex/generic/oberdiek/pdftexcmds.sty
+Package: pdftexcmds 2018/09/10 v0.29 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(c:/texlive/2019/texmf-dist/tex/generic/oberdiek/ifpdf.sty
+Package: ifpdf 2018/09/07 v3.3 Provides the ifpdf switch
+)
+Package pdftexcmds Info: LuaTeX not detected.
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+)
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+38.
+Package grfext Info: Graphics extension search list:
+(grfext)             [.pdf,.png,.jpg,.mps,.jpeg,.jbig2,.jb2,.PDF,.PNG,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
+(grfext)             \AppendGraphicsExtensions on input line 456.
+
+(c:/texlive/2019/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+)))
+(c:/texlive/2019/texmf-dist/tex/latex/tools/multicol.sty
+Package: multicol 2018/12/27 v1.8v multicolumn formatting (FMi)
+\c@tracingmulticols=\count116
+\mult@box=\box39
+\multicol@leftmargin=\dimen143
+\c@unbalance=\count117
+\c@collectmore=\count118
+\doublecol@number=\count119
+\multicoltolerance=\count120
+\multicolpretolerance=\count121
+\full@width=\dimen144
+\page@free=\dimen145
+\premulticols=\dimen146
+\postmulticols=\dimen147
+\multicolsep=\skip71
+\multicolbaselineskip=\skip72
+\partial@page=\box40
+\last@line=\box41
+\maxbalancingoverflow=\dimen148
+\mult@rightbox=\box42
+\mult@grightbox=\box43
+\mult@gfirstbox=\box44
+\mult@firstbox=\box45
+\@tempa=\box46
+\@tempa=\box47
+\@tempa=\box48
+\@tempa=\box49
+\@tempa=\box50
+\@tempa=\box51
+\@tempa=\box52
+\@tempa=\box53
+\@tempa=\box54
+\@tempa=\box55
+\@tempa=\box56
+\@tempa=\box57
+\@tempa=\box58
+\@tempa=\box59
+\@tempa=\box60
+\@tempa=\box61
+\@tempa=\box62
+\c@columnbadness=\count122
+\c@finalcolumnbadness=\count123
+\last@try=\dimen149
+\multicolovershoot=\dimen150
+\multicolundershoot=\dimen151
+\mult@nat@firstbox=\box63
+\colbreak@box=\box64
+\mc@col@check@num=\count124
+)
+(c:/texlive/2019/texmf-dist/tex/latex/multirow/multirow.sty
+Package: multirow 2019/01/01 v2.4 Span multiple rows of a table
+\multirow@colwidth=\skip73
+\multirow@cntb=\count125
+\multirow@dima=\skip74
+\bigstrutjot=\dimen152
+)
+(c:/texlive/2019/texmf-dist/tex/latex/booktabs/booktabs.sty
+Package: booktabs 2016/04/27 v1.618033 publication quality tables
+\heavyrulewidth=\dimen153
+\lightrulewidth=\dimen154
+\cmidrulewidth=\dimen155
+\belowrulesep=\dimen156
+\belowbottomsep=\dimen157
+\aboverulesep=\dimen158
+\abovetopsep=\dimen159
+\cmidrulesep=\dimen160
+\cmidrulekern=\dimen161
+\defaultaddspace=\dimen162
+\@cmidla=\count126
+\@cmidlb=\count127
+\@aboverulesep=\dimen163
+\@belowrulesep=\dimen164
+\@thisruleclass=\count128
+\@lastruleclass=\count129
+\@thisrulewidth=\dimen165
+)
+(c:/texlive/2019/texmf-dist/tex/latex/mathtools/mathtools.sty
+Package: mathtools 2018/01/08 v1.21 mathematical typesetting tools
+
+(c:/texlive/2019/texmf-dist/tex/latex/tools/calc.sty
+Package: calc 2017/05/25 v4.3 Infix arithmetic (KKT,FJ)
+\calc@Acount=\count130
+\calc@Bcount=\count131
+\calc@Adimen=\dimen166
+\calc@Bdimen=\dimen167
+\calc@Askip=\skip75
+\calc@Bskip=\skip76
+LaTeX Info: Redefining \setlength on input line 80.
+LaTeX Info: Redefining \addtolength on input line 81.
+\calc@Ccount=\count132
+\calc@Cskip=\skip77
+)
+(c:/texlive/2019/texmf-dist/tex/latex/mathtools/mhsetup.sty
+Package: mhsetup 2017/03/31 v1.3 programming setup (MH)
+)
+LaTeX Info: Thecontrolsequence`\('isalreadyrobust on input line 129.
+LaTeX Info: Thecontrolsequence`\)'isalreadyrobust on input line 129.
+LaTeX Info: Thecontrolsequence`\['isalreadyrobust on input line 129.
+LaTeX Info: Thecontrolsequence`\]'isalreadyrobust on input line 129.
+\g_MT_multlinerow_int=\count133
+\l_MT_multwidth_dim=\dimen168
+\origjot=\skip78
+\l_MT_shortvdotswithinadjustabove_dim=\dimen169
+\l_MT_shortvdotswithinadjustbelow_dim=\dimen170
+\l_MT_above_intertext_sep=\dimen171
+\l_MT_below_intertext_sep=\dimen172
+\l_MT_above_shortintertext_sep=\dimen173
+\l_MT_below_shortintertext_sep=\dimen174
+)
+(c:/texlive/2019/texmf-dist/tex/latex/tools/bm.sty
+Package: bm 2017/01/16 v1.2c Bold Symbol Support (DPC/FMi)
+\symboldoperators=\mathgroup6
+\symboldletters=\mathgroup7
+\symboldsymbols=\mathgroup8
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 141.
+LaTeX Info: Redefining \bm on input line 207.
+)
+(c:/texlive/2019/texmf-dist/tex/latex/cases/cases.sty
+Package: cases 2002/05/02 ver 2.5 
+)
+(c:/texlive/2019/texmf-dist/tex/latex/tools/array.sty
+Package: array 2018/12/30 v2.4k Tabular extension package (FMi)
+\col@sep=\dimen175
+\ar@mcellbox=\box65
+\extrarowheight=\dimen176
+\NC@list=\toks27
+\extratabsurround=\skip79
+\backup@length=\skip80
+\ar@cellbox=\box66
+)
+(c:/texlive/2019/texmf-dist/tex/latex/listings/listings.sty
+\lst@mode=\count134
+\lst@gtempboxa=\box67
+\lst@token=\toks28
+\lst@length=\count135
+\lst@currlwidth=\dimen177
+\lst@column=\count136
+\lst@pos=\count137
+\lst@lostspace=\dimen178
+\lst@width=\dimen179
+\lst@newlines=\count138
+\lst@lineno=\count139
+\lst@maxwidth=\dimen180
+
+(c:/texlive/2019/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2019/02/27 1.8b (Carsten Heinz)
+\c@lstnumber=\count140
+\lst@skipnumbers=\count141
+\lst@framebox=\box68
+)
+(c:/texlive/2019/texmf-dist/tex/latex/listings/listings.cfg
+File: listings.cfg 2019/02/27 1.8b listings configuration
+))
+Package: listings 2019/02/27 1.8b (Carsten Heinz)
+
+(c:/texlive/2019/texmf-dist/tex/latex/tools/longtable.sty
+Package: longtable 2014/10/28 v4.11 Multi-page Table package (DPC)+ FMi change
+\LTleft=\skip81
+\LTright=\skip82
+\LTpre=\skip83
+\LTpost=\skip84
+\LTchunksize=\count142
+\LTcapwidth=\dimen181
+\LT@head=\box69
+\LT@firsthead=\box70
+\LT@foot=\box71
+\LT@lastfoot=\box72
+\LT@cols=\count143
+\LT@rows=\count144
+\c@LT@tables=\count145
+\c@LT@chunks=\count146
+\LT@p@ftn=\toks29
+)
+(c:/texlive/2019/texmf-dist/tex/latex/tools/indentfirst.sty
+Package: indentfirst 1995/11/23 v1.03 Indent first paragraph (DPC)
+)
+(c:/texlive/2019/texmf-dist/tex/latex/geometry/geometry.sty
+Package: geometry 2018/04/16 v5.8 Page Geometry
+
+(c:/texlive/2019/texmf-dist/tex/generic/oberdiek/ifvtex.sty
+Package: ifvtex 2016/05/16 v1.6 Detect VTeX and its facilities (HO)
+Package ifvtex Info: VTeX not detected.
+)
+(c:/texlive/2019/texmf-dist/tex/generic/ifxetex/ifxetex.sty
+Package: ifxetex 2010/09/12 v0.6 Provides ifxetex conditional
+)
+\Gm@cnth=\count147
+\Gm@cntv=\count148
+\c@Gm@tempcnt=\count149
+\Gm@bindingoffset=\dimen182
+\Gm@wd@mp=\dimen183
+\Gm@odd@mp=\dimen184
+\Gm@even@mp=\dimen185
+\Gm@layoutwidth=\dimen186
+\Gm@layoutheight=\dimen187
+\Gm@layouthoffset=\dimen188
+\Gm@layoutvoffset=\dimen189
+\Gm@dimlist=\toks30
+)
+(c:/texlive/2019/texmf-dist/tex/latex/float/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count150
+\float@exts=\toks31
+\float@box=\box73
+\@float@everytoks=\toks32
+\@floatcapt=\box74
+)
+(c:/texlive/2019/texmf-dist/tex/latex/subfig/subfig.sty
+Package: subfig 2005/06/28 ver: 1.3 subfig package
+
+(c:/texlive/2019/texmf-dist/tex/latex/caption/caption.sty
+Package: caption 2018/10/06 v3.3-154 Customizing captions (AR)
+
+(c:/texlive/2019/texmf-dist/tex/latex/caption/caption3.sty
+Package: caption3 2018/09/12 v1.8c caption3 kernel (AR)
+Package caption3 Info: TeX engine: e-TeX on input line 64.
+\captionmargin=\dimen190
+\captionmargin@=\dimen191
+\captionwidth=\dimen192
+\caption@tempdima=\dimen193
+\caption@indent=\dimen194
+\caption@parindent=\dimen195
+\caption@hangindent=\dimen196
+Package caption Info: Unknown document class (or package),
+(caption)             standard defaults will be used.
+)
+
+Package caption Warning: Unsupported document class (or package) detected,
+(caption)                usage of the caption package is not recommended.
+See the caption package documentation for explanation.
+
+Package caption Info: \@makecaption = \long macro:#1#2->\ifx \@captype \@IEEEta
+blestring \footnotesize \bgroup \par \centering \@IEEEtabletopskipstrut {\norma
+lfont \footnotesize #1}\\{\normalfont \footnotesize \scshape #2}\par \addvspace
+ {0.5\baselineskip }\egroup \@IEEEtablecaptionsepspace \else \@IEEEfigurecaptio
+nsepspace \setbox \@tempboxa \hbox {\normalfont \footnotesize {#1.}\nobreakspac
+e \nobreakspace #2}\ifdim \wd \@tempboxa >\hsize \setbox \@tempboxa \hbox {\nor
+malfont \footnotesize {#1.}\nobreakspace \nobreakspace }\parbox [t]{\hsize }{\n
+ormalfont \footnotesize \noindent \unhbox \@tempboxa #2}\else \ifCLASSOPTIONcon
+ference \hbox to\hsize {\normalfont \footnotesize \hfil \box \@tempboxa \hfil }
+\else \hbox to\hsize {\normalfont \footnotesize \box \@tempboxa \hfil }\fi \fi 
+\fi .
+\c@caption@flags=\count151
+\c@ContinuedFloat=\count152
+Package caption Info: float package is loaded.
+Package caption Info: listings package is loaded.
+Package caption Info: longtable package is loaded.
+(c:/texlive/2019/texmf-dist/tex/latex/caption/ltcaption.sty
+Package: ltcaption 2018/08/26 v1.4-95 longtable captions (AR)
+))
+\c@KVtest=\count153
+\sf@farskip=\skip85
+\sf@captopadj=\dimen197
+\sf@capskip=\skip86
+\sf@nearskip=\skip87
+\c@subfigure=\count154
+\c@subfigure@save=\count155
+\c@lofdepth=\count156
+\c@subtable=\count157
+\c@subtable@save=\count158
+\c@lotdepth=\count159
+\sf@top=\skip88
+\sf@bottom=\skip89
+)
+(c:/texlive/2019/texmf-dist/tex/latex/threeparttable/threeparttable.sty
+Package: threeparttable 2003/06/13  v 3.0
+\@tempboxb=\box75
+)
+(c:/texlive/2019/texmf-dist/tex/latex/tools/verbatim.sty
+Package: verbatim 2014/10/28 v1.5q LaTeX2e package for verbatim enhancements
+\every@verbatim=\toks33
+\verbatim@line=\toks34
+\verbatim@in@stream=\read1
+)
+(c:/texlive/2019/texmf-dist/tex/latex/svg/svg.sty
+Package: svg 2018/11/12 v2.02b (include SVG pictures)
+
+(c:/texlive/2019/texmf-dist/tex/latex/koma-script/scrbase.sty
+Package: scrbase 2019/02/01 v3.26b KOMA-Script package (KOMA-Script-independent
+ basics and keyval usage)
+
+(c:/texlive/2019/texmf-dist/tex/latex/koma-script/scrlfile.sty
+Package: scrlfile 2019/02/01 v3.26b KOMA-Script package (loading files)
+))
+(c:/texlive/2019/texmf-dist/tex/latex/tools/shellesc.sty
+Package: shellesc 2016/06/07 v0.02a unified shell escape interface for LaTeX
+Package shellesc Info: Restricted shell escape enabled on input line 69.
+)
+(c:/texlive/2019/texmf-dist/tex/latex/trimspaces/trimspaces.sty
+Package: trimspaces 2009/09/17 v1.1 Trim spaces around a token list
+)
+\svg@box=\box76
+\c@svg@param@lastpage=\count160
+\c@svg@param@currpage=\count161
+)
+(c:/texlive/2019/texmf-dist/tex/latex/oberdiek/transparent.sty
+Package: transparent 2018/11/18 v1.3 Transparency via pdfTeX's color stack (HO)
+
+
+(c:/texlive/2019/texmf-dist/tex/latex/oberdiek/auxhook.sty
+Package: auxhook 2016/05/16 v1.4 Hooks for auxiliary files (HO)
+))
+(c:/texlive/2019/texmf-dist/tex/latex/ms/ragged2e.sty
+Package: ragged2e 2009/05/21 v2.1 ragged2e Package (MS)
+
+(c:/texlive/2019/texmf-dist/tex/latex/ms/everysel.sty
+Package: everysel 2011/10/28 v1.2 EverySelectfont Package (MS)
+)
+\CenteringLeftskip=\skip90
+\RaggedLeftLeftskip=\skip91
+\RaggedRightLeftskip=\skip92
+\CenteringRightskip=\skip93
+\RaggedLeftRightskip=\skip94
+\RaggedRightRightskip=\skip95
+\CenteringParfillskip=\skip96
+\RaggedLeftParfillskip=\skip97
+\RaggedRightParfillskip=\skip98
+\JustifyingParfillskip=\skip99
+\CenteringParindent=\skip100
+\RaggedLeftParindent=\skip101
+\RaggedRightParindent=\skip102
+\JustifyingParindent=\skip103
+)
+(c:/texlive/2019/texmf-dist/tex/latex/pgf/frontendlayer/tikz.sty
+(c:/texlive/2019/texmf-dist/tex/latex/pgf/basiclayer/pgf.sty
+(c:/texlive/2019/texmf-dist/tex/latex/pgf/utilities/pgfrcs.sty
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfutil-common.tex
+\pgfutil@everybye=\toks35
+\pgfutil@tempdima=\dimen198
+\pgfutil@tempdimb=\dimen199
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfutil-common-lists.tex)
+) (c:/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfutil-latex.def
+\pgfutil@abb=\box77
+
+(c:/texlive/2019/texmf-dist/tex/latex/ms/everyshi.sty
+Package: everyshi 2001/05/15 v3.00 EveryShipout Package (MS)
+))
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfrcs.code.tex
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/pgf.revision.tex)
+Package: pgfrcs 2019/02/02 v3.1.1 (3.1.1)
+))
+Package: pgf 2019/02/02 v3.1.1 (3.1.1)
+
+(c:/texlive/2019/texmf-dist/tex/latex/pgf/basiclayer/pgfcore.sty
+(c:/texlive/2019/texmf-dist/tex/latex/pgf/systemlayer/pgfsys.sty
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/systemlayer/pgfsys.code.tex
+Package: pgfsys 2019/02/02 v3.1.1 (3.1.1)
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex
+\pgfkeys@pathtoks=\toks36
+\pgfkeys@temptoks=\toks37
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfkeysfiltered.code.tex
+\pgfkeys@tmptoks=\toks38
+))
+\pgf@x=\dimen256
+\pgf@y=\dimen257
+\pgf@xa=\dimen258
+\pgf@ya=\dimen259
+\pgf@xb=\dimen260
+\pgf@yb=\dimen261
+\pgf@xc=\dimen262
+\pgf@yc=\dimen263
+\w@pgf@writea=\write3
+\r@pgf@reada=\read2
+\c@pgf@counta=\count162
+\c@pgf@countb=\count163
+\c@pgf@countc=\count164
+\c@pgf@countd=\count165
+\t@pgf@toka=\toks39
+\t@pgf@tokb=\toks40
+\t@pgf@tokc=\toks41
+\pgf@sys@id@count=\count166
+ (c:/texlive/2019/texmf-dist/tex/generic/pgf/systemlayer/pgf.cfg
+File: pgf.cfg 2019/02/02 v3.1.1 (3.1.1)
+)
+Driver file for pgf: pgfsys-pdftex.def
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-pdftex.def
+File: pgfsys-pdftex.def 2019/02/02 v3.1.1 (3.1.1)
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-common-pdf.def
+File: pgfsys-common-pdf.def 2019/02/02 v3.1.1 (3.1.1)
+)))
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/systemlayer/pgfsyssoftpath.code.tex
+File: pgfsyssoftpath.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgfsyssoftpath@smallbuffer@items=\count167
+\pgfsyssoftpath@bigbuffer@items=\count168
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/systemlayer/pgfsysprotocol.code.tex
+File: pgfsysprotocol.code.tex 2019/02/02 v3.1.1 (3.1.1)
+)) (c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcore.code.tex
+Package: pgfcore 2019/02/02 v3.1.1 (3.1.1)
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathcalc.code.tex
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathutil.code.tex)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathparser.code.tex
+\pgfmath@dimen=\dimen264
+\pgfmath@count=\count169
+\pgfmath@box=\box78
+\pgfmath@toks=\toks42
+\pgfmath@stack@operand=\toks43
+\pgfmath@stack@operation=\toks44
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.code.tex
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.basic.code.te
+x)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.trigonometric
+.code.tex)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.random.code.t
+ex)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.comparison.co
+de.tex)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.base.code.tex
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.round.code.te
+x)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.misc.code.tex
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.integerarithm
+etics.code.tex)))
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfloat.code.tex
+\c@pgfmathroundto@lastzeros=\count170
+))
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepoints.code.tex
+File: pgfcorepoints.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgf@picminx=\dimen265
+\pgf@picmaxx=\dimen266
+\pgf@picminy=\dimen267
+\pgf@picmaxy=\dimen268
+\pgf@pathminx=\dimen269
+\pgf@pathmaxx=\dimen270
+\pgf@pathminy=\dimen271
+\pgf@pathmaxy=\dimen272
+\pgf@xx=\dimen273
+\pgf@xy=\dimen274
+\pgf@yx=\dimen275
+\pgf@yy=\dimen276
+\pgf@zx=\dimen277
+\pgf@zy=\dimen278
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathconstruct.cod
+e.tex
+File: pgfcorepathconstruct.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgf@path@lastx=\dimen279
+\pgf@path@lasty=\dimen280
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathusage.code.te
+x
+File: pgfcorepathusage.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgf@shorten@end@additional=\dimen281
+\pgf@shorten@start@additional=\dimen282
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorescopes.code.tex
+File: pgfcorescopes.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgfpic=\box79
+\pgf@hbox=\box80
+\pgf@layerbox@main=\box81
+\pgf@picture@serial@count=\count171
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcoregraphicstate.code
+.tex
+File: pgfcoregraphicstate.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgflinewidth=\dimen283
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretransformations.c
+ode.tex
+File: pgfcoretransformations.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgf@pt@x=\dimen284
+\pgf@pt@y=\dimen285
+\pgf@pt@temp=\dimen286
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorequick.code.tex
+File: pgfcorequick.code.tex 2019/02/02 v3.1.1 (3.1.1)
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreobjects.code.tex
+File: pgfcoreobjects.code.tex 2019/02/02 v3.1.1 (3.1.1)
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathprocessing.co
+de.tex
+File: pgfcorepathprocessing.code.tex 2019/02/02 v3.1.1 (3.1.1)
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorearrows.code.tex
+File: pgfcorearrows.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgfarrowsep=\dimen287
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreshade.code.tex
+File: pgfcoreshade.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgf@max=\dimen288
+\pgf@sys@shading@range@num=\count172
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreimage.code.tex
+File: pgfcoreimage.code.tex 2019/02/02 v3.1.1 (3.1.1)
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreexternal.code.tex
+File: pgfcoreexternal.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgfexternal@startupbox=\box82
+))
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorelayers.code.tex
+File: pgfcorelayers.code.tex 2019/02/02 v3.1.1 (3.1.1)
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretransparency.code
+.tex
+File: pgfcoretransparency.code.tex 2019/02/02 v3.1.1 (3.1.1)
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepatterns.code.tex
+File: pgfcorepatterns.code.tex 2019/02/02 v3.1.1 (3.1.1)
+) (c:/texlive/2019/texmf-dist/tex/generic/pgf/basiclayer/pgfcorerdf.code.tex
+File: pgfcorerdf.code.tex 2019/02/02 v3.1.1 (3.1.1)
+))) (c:/texlive/2019/texmf-dist/tex/generic/pgf/modules/pgfmoduleshapes.code.te
+x
+File: pgfmoduleshapes.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgfnodeparttextbox=\box83
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/modules/pgfmoduleplot.code.tex
+File: pgfmoduleplot.code.tex 2019/02/02 v3.1.1 (3.1.1)
+)
+(c:/texlive/2019/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-version-0-65.st
+y
+Package: pgfcomp-version-0-65 2019/02/02 v3.1.1 (3.1.1)
+\pgf@nodesepstart=\dimen289
+\pgf@nodesepend=\dimen290
+)
+(c:/texlive/2019/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-version-1-18.st
+y
+Package: pgfcomp-version-1-18 2019/02/02 v3.1.1 (3.1.1)
+)) (c:/texlive/2019/texmf-dist/tex/latex/pgf/utilities/pgffor.sty
+(c:/texlive/2019/texmf-dist/tex/latex/pgf/utilities/pgfkeys.sty
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex))
+(c:/texlive/2019/texmf-dist/tex/latex/pgf/math/pgfmath.sty
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex))
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgffor.code.tex
+Package: pgffor 2019/02/02 v3.1.1 (3.1.1)
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex)
+\pgffor@iter=\dimen291
+\pgffor@skip=\dimen292
+\pgffor@stack=\toks45
+\pgffor@toks=\toks46
+))
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/frontendlayer/tikz/tikz.code.tex
+Package: tikz 2019/02/02 v3.1.1 (3.1.1)
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/libraries/pgflibraryplothandlers.co
+de.tex
+File: pgflibraryplothandlers.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgf@plot@mark@count=\count173
+\pgfplotmarksize=\dimen293
+)
+\tikz@lastx=\dimen294
+\tikz@lasty=\dimen295
+\tikz@lastxsaved=\dimen296
+\tikz@lastysaved=\dimen297
+\tikzleveldistance=\dimen298
+\tikzsiblingdistance=\dimen299
+\tikz@figbox=\box84
+\tikz@figbox@bg=\box85
+\tikz@tempbox=\box86
+\tikz@tempbox@bg=\box87
+\tikztreelevel=\count174
+\tikznumberofchildren=\count175
+\tikznumberofcurrentchild=\count176
+\tikz@fig@count=\count177
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/modules/pgfmodulematrix.code.tex
+File: pgfmodulematrix.code.tex 2019/02/02 v3.1.1 (3.1.1)
+\pgfmatrixcurrentrow=\count178
+\pgfmatrixcurrentcolumn=\count179
+\pgf@matrix@numberofcolumns=\count180
+)
+\tikz@expandcount=\count181
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzli
+brarytopaths.code.tex
+File: tikzlibrarytopaths.code.tex 2019/02/02 v3.1.1 (3.1.1)
+)))
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzli
+brarymindmap.code.tex
+File: tikzlibrarymindmap.code.tex 2019/02/02 v3.1.1 (3.1.1)
+
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzli
+brarytrees.code.tex
+File: tikzlibrarytrees.code.tex 2019/02/02 v3.1.1 (3.1.1)
+)
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzli
+brarydecorations.code.tex
+(c:/texlive/2019/texmf-dist/tex/generic/pgf/modules/pgfmoduledecorations.code.t
+ex
+\pgfdecoratedcompleteddistance=\dimen300
+\pgfdecoratedremainingdistance=\dimen301
+\pgfdecoratedinputsegmentcompleteddistance=\dimen302
+\pgfdecoratedinputsegmentremainingdistance=\dimen303
+\pgf@decorate@distancetomove=\dimen304
+\pgf@decorate@repeatstate=\count182
+\pgfdecorationsegmentamplitude=\dimen305
+\pgfdecorationsegmentlength=\dimen306
+)
+\tikz@lib@dec@box=\box88
+)) (c:/texlive/2019/texmf-dist/tex/latex/cjk/texinput/CJK.sty
+Package: CJK 2015/04/18 4.8.4
+
+(c:/texlive/2019/texmf-dist/tex/latex/cjk/texinput/mule/MULEenc.sty
+Package: MULEenc 2015/04/18 4.8.4
+)
+(c:/texlive/2019/texmf-dist/tex/latex/cjk/texinput/CJK.enc
+File: CJK.enc 2015/04/18 4.8.4
+Now handling font encoding C00 ...
+... no UTF-8 mapping file for font encoding C00
+Now handling font encoding C05 ...
+... no UTF-8 mapping file for font encoding C05
+Now handling font encoding C09 ...
+... no UTF-8 mapping file for font encoding C09
+Now handling font encoding C10 ...
+... no UTF-8 mapping file for font encoding C10
+Now handling font encoding C20 ...
+... no UTF-8 mapping file for font encoding C20
+Now handling font encoding C19 ...
+... no UTF-8 mapping file for font encoding C19
+Now handling font encoding C40 ...
+... no UTF-8 mapping file for font encoding C40
+Now handling font encoding C42 ...
+... no UTF-8 mapping file for font encoding C42
+Now handling font encoding C43 ...
+... no UTF-8 mapping file for font encoding C43
+Now handling font encoding C50 ...
+... no UTF-8 mapping file for font encoding C50
+Now handling font encoding C52 ...
+... no UTF-8 mapping file for font encoding C52
+Now handling font encoding C49 ...
+... no UTF-8 mapping file for font encoding C49
+Now handling font encoding C60 ...
+... no UTF-8 mapping file for font encoding C60
+Now handling font encoding C61 ...
+... no UTF-8 mapping file for font encoding C61
+Now handling font encoding C63 ...
+... no UTF-8 mapping file for font encoding C63
+Now handling font encoding C64 ...
+... no UTF-8 mapping file for font encoding C64
+Now handling font encoding C65 ...
+... no UTF-8 mapping file for font encoding C65
+Now handling font encoding C70 ...
+... no UTF-8 mapping file for font encoding C70
+Now handling font encoding C31 ...
+... no UTF-8 mapping file for font encoding C31
+Now handling font encoding C32 ...
+... no UTF-8 mapping file for font encoding C32
+Now handling font encoding C33 ...
+... no UTF-8 mapping file for font encoding C33
+Now handling font encoding C34 ...
+... no UTF-8 mapping file for font encoding C34
+Now handling font encoding C35 ...
+... no UTF-8 mapping file for font encoding C35
+Now handling font encoding C36 ...
+... no UTF-8 mapping file for font encoding C36
+Now handling font encoding C37 ...
+... no UTF-8 mapping file for font encoding C37
+Now handling font encoding C80 ...
+... no UTF-8 mapping file for font encoding C80
+Now handling font encoding C81 ...
+... no UTF-8 mapping file for font encoding C81
+Now handling font encoding C01 ...
+... no UTF-8 mapping file for font encoding C01
+Now handling font encoding C11 ...
+... no UTF-8 mapping file for font encoding C11
+Now handling font encoding C21 ...
+... no UTF-8 mapping file for font encoding C21
+Now handling font encoding C41 ...
+... no UTF-8 mapping file for font encoding C41
+Now handling font encoding C62 ...
+... no UTF-8 mapping file for font encoding C62
+)
+LaTeX Info: Redefining \selectfont on input line 755.
+\CJK@indent=\box89
+)
+(c:/texlive/2019/texmf-dist/tex/latex/adjustbox/adjustbox.sty
+Package: adjustbox 2019/01/04 v1.2 Adjusting TeX boxes (trim, clip, ...)
+
+(c:/texlive/2019/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+Package: xkeyval 2014/12/03 v2.7a package option processing (HA)
+
+(c:/texlive/2019/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(c:/texlive/2019/texmf-dist/tex/generic/xkeyval/xkvutils.tex
+\XKV@toks=\toks47
+\XKV@tempa@toks=\toks48
+)
+\XKV@depth=\count183
+File: xkeyval.tex 2014/12/03 v2.7a key=value parser (HA)
+))
+(c:/texlive/2019/texmf-dist/tex/latex/adjustbox/adjcalc.sty
+Package: adjcalc 2012/05/16 v1.1 Provides advanced setlength with multiple back
+-ends (calc, etex, pgfmath)
+)
+(c:/texlive/2019/texmf-dist/tex/latex/adjustbox/trimclip.sty
+Package: trimclip 2018/04/08 v1.1 Trim and clip general TeX material
+
+(c:/texlive/2019/texmf-dist/tex/latex/collectbox/collectbox.sty
+Package: collectbox 2012/05/17 v0.4b Collect macro arguments as boxes
+\collectedbox=\box90
+)
+\tc@llx=\dimen307
+\tc@lly=\dimen308
+\tc@urx=\dimen309
+\tc@ury=\dimen310
+Package trimclip Info: Using driver 'tc-pdftex.def'.
+
+(c:/texlive/2019/texmf-dist/tex/latex/adjustbox/tc-pdftex.def
+File: tc-pdftex.def 2019/01/04 v2.2 Clipping driver for pdftex
+))
+\adjbox@Width=\dimen311
+\adjbox@Height=\dimen312
+\adjbox@Depth=\dimen313
+\adjbox@Totalheight=\dimen314
+\adjbox@pwidth=\dimen315
+\adjbox@pheight=\dimen316
+\adjbox@pdepth=\dimen317
+\adjbox@ptotalheight=\dimen318
+
+(c:/texlive/2019/texmf-dist/tex/latex/varwidth/varwidth.sty
+Package: varwidth 2009/03/30 ver 0.92;  Variable-width minipages
+\@vwid@box=\box91
+\sift@deathcycles=\count184
+\@vwid@loff=\dimen319
+\@vwid@roff=\dimen320
+))
+(c:/texlive/2019/texmf-dist/tex/latex/makecell/makecell.sty
+Package: makecell 2009/08/03 V0.1e Managing of Tab Column Heads and Cells
+\rotheadsize=\dimen321
+\c@nlinenum=\count185
+\TeXr@lab=\toks49
+)
+\c@definition=\count186
+\c@theorem=\count187
+\c@lemma=\count188
+\c@assumption=\count189
+\c@problem=\count190
+\c@observation=\count191
+\c@strategy=\count192
+\c@scenario=\count193
+
+
+LaTeX Warning: Unused global option(s):
+    [lettersize].
+
+(./main.aux)
+\openout1 = `main.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 56.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 56.
+ (c:/texlive/2019/texmf-dist/tex/latex/base/ts1cmr.fd
+File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C00/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C05/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C09/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C10/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C20/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C19/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C40/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C42/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C43/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C50/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C52/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C49/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C60/mj/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C61/mj/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C63/mj/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C64/mj/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C65/mj/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C70/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C31/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C32/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C33/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C34/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C35/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C36/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C37/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C80/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C81/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C01/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C11/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C21/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C41/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+LaTeX Font Info:    Checking defaults for C62/song/m/n on input line 56.
+LaTeX Font Info:    ... okay on input line 56.
+
+-- Lines per column: 63 (approximate, difference = 8.76636pt).
+(c:/texlive/2019/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count194
+\scratchdimen=\dimen322
+\scratchbox=\box92
+\nofMPsegments=\count195
+\nofMParguments=\count196
+\everyMPshowfont=\toks50
+\MPscratchCnt=\count197
+\MPscratchDim=\dimen323
+\MPnumerator=\count198
+\makeMPintoPDFobject=\count199
+\everyMPtoPDFconversion=\toks51
+)
+\c@lstlisting=\count266
+
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+*geometry* verbose mode - [ preamble ] result:
+* driver: pdftex
+* paper: a4paper
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(28.38199pt, 540.74388pt, 28.382pt)
+* v-part:(T,H,B)=(32.11218pt, 764.76636pt, 48.1683pt)
+* \paperwidth=597.50787pt
+* \paperheight=845.04684pt
+* \textwidth=540.74388pt
+* \textheight=764.76636pt
+* \oddsidemargin=-43.888pt
+* \evensidemargin=-43.888pt
+* \topmargin=-73.4998pt
+* \headheight=12.0pt
+* \headsep=21.342pt
+* \topskip=12.0pt
+* \footskip=25.80774pt
+* \marginparwidth=20.0pt
+* \marginparsep=10.0pt
+* \columnsep=12.0pt
+* \skip\footins=10.79993pt plus 4.79993pt minus 2.39996pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumntrue
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: subfig package v1.3 is loaded.
+Package caption Info: threeparttable package is loaded.
+Package caption Info: End \AtBeginDocument code.
+ABD: EverySelectfont initializing macros
+LaTeX Info: Redefining \selectfont on input line 56.
+ ABD: EveryShipout initializing macros
+(./Abstract.tex) (./Introduction.tex
+Package epstopdf Info: Source file: <Fig1.eps>
+(epstopdf)                    date: 2025-08-15 18:35:10
+(epstopdf)                    size: 4744810 bytes
+(epstopdf)             Output file: <Fig1-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-15 18:35:36
+(epstopdf)                    size: 75853 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig1-eps-converted-to.pdf 
+Fig1.eps>
+(epstopdf)             \includegraphics on input line 9.
+Package epstopdf Info: Output file is already uptodate.
+<Fig1-eps-converted-to.pdf, id=4, 434.62375pt x 243.91125pt>
+File: Fig1-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig1-eps-converted-to.pdf>
+Package pdftex.def Info: Fig1-eps-converted-to.pdf  used on input line 9.
+(pdftex.def)             Requested size: 264.37193pt x 148.37251pt.
+LaTeX Font Info:    Try loading font information for U+msa on input line 18.
+
+(c:/texlive/2019/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 18.
+
+(c:/texlive/2019/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+) [1{c:/Users/zhongkai/.texlive2019/texmf-var/fonts/map/pdftex/updmap/pdftex.ma
+p}
+
+
+ <./Fig1-eps-converted-to.pdf>]
+Underfull \hbox (badness 5592) in paragraph at lines 27--28
+[]\OT1/ptm/m/n/10 We for-mu-late cross-layer CPS re-silient re-cov-ery as
+ []
+
+
+Underfull \hbox (badness 2285) in paragraph at lines 30--31
+[]\OT1/ptm/m/n/10 We pro-vide a con-di-tional con-ver-gence anal-y-sis un-der
+ []
+
+) (./RelatedWork.tex [2]
+Underfull \hbox (badness 1603) in paragraph at lines 25--26
+\OT1/ptm/m/n/10 and lo-cal com-po-nents or use pro-to-types to han-dle client-
+ []
+
+) (./SystemModel.tex [3]
+Underfull \hbox (badness 3148) in paragraph at lines 42--44
+[]\OT1/ptm/m/n/10 At each up-date, agent $\OML/cmm/m/it/10 i$ \OT1/ptm/m/n/10 s
+am-ples a mini-batch $\OMS/cmsy/m/n/10 B[] \OT1/cmr/m/n/10 =
+ []
+
+Package epstopdf Info: Source file: <Fig2.eps>
+(epstopdf)                    date: 2025-08-05 00:04:32
+(epstopdf)                    size: 1016922 bytes
+(epstopdf)             Output file: <Fig2-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-05 00:04:48
+(epstopdf)                    size: 81291 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig2-eps-converted-to.pdf 
+Fig2.eps>
+(epstopdf)             \includegraphics on input line 65.
+Package epstopdf Info: Output file is already uptodate.
+<Fig2-eps-converted-to.pdf, id=42, 542.025pt x 377.41pt>
+File: Fig2-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig2-eps-converted-to.pdf>
+Package pdftex.def Info: Fig2-eps-converted-to.pdf  used on input line 65.
+(pdftex.def)             Requested size: 264.37193pt x 184.08597pt.
+[4 <./Fig2-eps-converted-to.pdf>]
+<Fig3_heterogeneous.png, id=81, 418.9251pt x 406.8801pt>
+File: Fig3_heterogeneous.png Graphic file (type png)
+<use Fig3_heterogeneous.png>
+Package pdftex.def Info: Fig3_heterogeneous.png  used on input line 111.
+(pdftex.def)             Requested size: 264.37193pt x 256.77661pt.
+ [5 <./Fig3_heterogeneous.png (PNG copy)>]
+Underfull \hbox (badness 2653) in paragraph at lines 252--254
+[]\OT1/ptm/b/n/10 Assumption 1 \OT1/ptm/m/n/10 (Smooth-ness)\OT1/ptm/b/n/10 . [
+]\OT1/ptm/m/it/10 Each $\OML/cmm/m/it/10 F[]$ \OT1/ptm/m/it/10 is $\OML/cmm/m/i
+t/10 L$\OT1/ptm/m/it/10 -smooth, i.e.,
+ []
+
+[6]
+Underfull \hbox (badness 1924) in paragraph at lines 275--278
+[]\OT1/ptm/b/n/10 Assumption 5 \OT1/ptm/m/n/10 (Bounded Cred-i-bil-ity Weights)
+\OT1/ptm/b/n/10 . []\OT1/ptm/m/it/10 The server
+ []
+
+) (./Experimental-RRDRQL.tex [7]
+<Fig4.png, id=93, 1043.39813pt x 589.4522pt>
+File: Fig4.png Graphic file (type png)
+<use Fig4.png>
+Package pdftex.def Info: Fig4.png  used on input line 13.
+(pdftex.def)             Requested size: 264.37193pt x 149.35042pt.
+Package epstopdf Info: Source file: <Fig5.eps>
+(epstopdf)                    date: 2025-08-12 18:42:42
+(epstopdf)                    size: 134699 bytes
+(epstopdf)             Output file: <Fig5-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-12 18:52:14
+(epstopdf)                    size: 45544 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig5-eps-converted-to.pdf 
+Fig5.eps>
+(epstopdf)             \includegraphics on input line 58.
+Package epstopdf Info: Output file is already uptodate.
+<Fig5-eps-converted-to.pdf, id=95, 483.4863pt x 384.47641pt>
+File: Fig5-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig5-eps-converted-to.pdf>
+Package pdftex.def Info: Fig5-eps-converted-to.pdf  used on input line 58.
+(pdftex.def)             Requested size: 264.37193pt x 210.23654pt.
+Package epstopdf Info: Source file: <Fig6.eps>
+(epstopdf)                    date: 2025-08-12 18:44:00
+(epstopdf)                    size: 123412 bytes
+(epstopdf)             Output file: <Fig6-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-12 18:52:28
+(epstopdf)                    size: 43747 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig6-eps-converted-to.pdf 
+Fig6.eps>
+(epstopdf)             \includegraphics on input line 68.
+Package epstopdf Info: Output file is already uptodate.
+<Fig6-eps-converted-to.pdf, id=96, 457.46912pt x 346.17331pt>
+File: Fig6-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig6-eps-converted-to.pdf>
+Package pdftex.def Info: Fig6-eps-converted-to.pdf  used on input line 68.
+(pdftex.def)             Requested size: 264.37193pt x 200.06227pt.
+ [8 <./Fig4.png> <./Fig5-eps-converted-to.pdf>]
+Package epstopdf Info: Source file: <Fig7.eps>
+(epstopdf)                    date: 2025-08-12 18:47:12
+(epstopdf)                    size: 113783 bytes
+(epstopdf)             Output file: <Fig7-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-12 18:52:38
+(epstopdf)                    size: 40163 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig7-eps-converted-to.pdf 
+Fig7.eps>
+(epstopdf)             \includegraphics on input line 78.
+Package epstopdf Info: Output file is already uptodate.
+<Fig7-eps-converted-to.pdf, id=147, 458.19182pt x 328.1058pt>
+File: Fig7-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig7-eps-converted-to.pdf>
+Package pdftex.def Info: Fig7-eps-converted-to.pdf  used on input line 78.
+(pdftex.def)             Requested size: 264.37193pt x 189.31021pt.
+
+Underfull \hbox (badness 1661) in paragraph at lines 92--93
+[]\OT1/ptm/m/n/10 We fur-ther eval-u-ate whether the adapter and prototype-
+ []
+
+Package epstopdf Info: Source file: <Fig15.eps>
+(epstopdf)                    date: 2026-07-27 16:13:42
+(epstopdf)                    size: 5746 bytes
+(epstopdf)             Output file: <Fig15-eps-converted-to.pdf>
+(epstopdf)                    date: 2026-07-27 16:14:15
+(epstopdf)                    size: 9140 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig15-eps-converted-to.pdf
+ Fig15.eps>
+(epstopdf)             \includegraphics on input line 98.
+Package epstopdf Info: Output file is already uptodate.
+<Fig15-eps-converted-to.pdf, id=148, 481.8pt x 311.1625pt>
+File: Fig15-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig15-eps-converted-to.pdf>
+Package pdftex.def Info: Fig15-eps-converted-to.pdf  used on input line 98.
+(pdftex.def)             Requested size: 264.37193pt x 170.74582pt.
+Package epstopdf Info: Source file: <Fig12.eps>
+(epstopdf)                    date: 2025-08-15 00:21:30
+(epstopdf)                    size: 473263 bytes
+(epstopdf)             Output file: <Fig12-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-15 00:22:14
+(epstopdf)                    size: 70607 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig12-eps-converted-to.pdf
+ Fig12.eps>
+(epstopdf)             \includegraphics on input line 109.
+Package epstopdf Info: Output file is already uptodate.
+<Fig12-eps-converted-to.pdf, id=149, 584.1825pt x 401.5pt>
+File: Fig12-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig12-eps-converted-to.pdf>
+Package pdftex.def Info: Fig12-eps-converted-to.pdf  used on input line 109.
+(pdftex.def)             Requested size: 264.37193pt x 181.70256pt.
+[9 <./Fig6-eps-converted-to.pdf> <./Fig7-eps-converted-to.pdf>]
+Package epstopdf Info: Source file: <Fig13.eps>
+(epstopdf)                    date: 2025-08-15 00:04:50
+(epstopdf)                    size: 30502 bytes
+(epstopdf)             Output file: <Fig13-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-15 00:05:06
+(epstopdf)                    size: 16388 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig13-eps-converted-to.pdf
+ Fig13.eps>
+(epstopdf)             \includegraphics on input line 119.
+Package epstopdf Info: Output file is already uptodate.
+<Fig13-eps-converted-to.pdf, id=235, 606.34532pt x 375.804pt>
+File: Fig13-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig13-eps-converted-to.pdf>
+Package pdftex.def Info: Fig13-eps-converted-to.pdf  used on input line 119.
+(pdftex.def)             Requested size: 264.37193pt x 163.85188pt.
+Package epstopdf Info: Source file: <Fig8.eps>
+(epstopdf)                    date: 2025-08-14 18:59:44
+(epstopdf)                    size: 57200 bytes
+(epstopdf)             Output file: <Fig8-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-14 19:00:38
+(epstopdf)                    size: 26520 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig8-eps-converted-to.pdf 
+Fig8.eps>
+(epstopdf)             \includegraphics on input line 133.
+Package epstopdf Info: Output file is already uptodate.
+<Fig8-eps-converted-to.pdf, id=236, 435.0654pt x 336.05548pt>
+File: Fig8-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig8-eps-converted-to.pdf>
+Package pdftex.def Info: Fig8-eps-converted-to.pdf  used on input line 133.
+(pdftex.def)             Requested size: 264.37193pt x 204.20386pt.
+Package epstopdf Info: Source file: <Fig9.eps>
+(epstopdf)                    date: 2025-08-14 19:32:14
+(epstopdf)                    size: 48719 bytes
+(epstopdf)             Output file: <Fig9-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-14 19:33:56
+(epstopdf)                    size: 22009 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig9-eps-converted-to.pdf 
+Fig9.eps>
+(epstopdf)             \includegraphics on input line 144.
+Package epstopdf Info: Output file is already uptodate.
+<Fig9-eps-converted-to.pdf, id=237, 509.50351pt x 383.75371pt>
+File: Fig9-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig9-eps-converted-to.pdf>
+Package pdftex.def Info: Fig9-eps-converted-to.pdf  used on input line 144.
+(pdftex.def)             Requested size: 264.37193pt x 199.11975pt.
+ [10 <./Fig15-eps-converted-to.pdf> <./Fig12-eps-converted-to.pdf> <./Fig13-eps
+-converted-to.pdf> <./Fig8-eps-converted-to.pdf>]
+Package epstopdf Info: Source file: <Fig10.eps>
+(epstopdf)                    date: 2025-08-14 18:50:46
+(epstopdf)                    size: 51827 bytes
+(epstopdf)             Output file: <Fig10-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-14 19:09:14
+(epstopdf)                    size: 24200 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig10-eps-converted-to.pdf
+ Fig10.eps>
+(epstopdf)             \includegraphics on input line 154.
+Package epstopdf Info: Output file is already uptodate.
+<Fig10-eps-converted-to.pdf, id=335, 510.22621pt x 354.84569pt>
+File: Fig10-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig10-eps-converted-to.pdf>
+Package pdftex.def Info: Fig10-eps-converted-to.pdf  used on input line 154.
+(pdftex.def)             Requested size: 264.37193pt x 183.86023pt.
+Package epstopdf Info: Source file: <Fig11.eps>
+(epstopdf)                    date: 2025-08-14 19:33:24
+(epstopdf)                    size: 46769 bytes
+(epstopdf)             Output file: <Fig11-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-08-14 19:34:08
+(epstopdf)                    size: 22410 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig11-eps-converted-to.pdf
+ Fig11.eps>
+(epstopdf)             \includegraphics on input line 164.
+Package epstopdf Info: Output file is already uptodate.
+<Fig11-eps-converted-to.pdf, id=336, 552.14282pt x 393.14879pt>
+File: Fig11-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig11-eps-converted-to.pdf>
+Package pdftex.def Info: Fig11-eps-converted-to.pdf  used on input line 164.
+(pdftex.def)             Requested size: 264.37193pt x 188.24734pt.
+ [11 <./Fig9-eps-converted-to.pdf> <./Fig10-eps-converted-to.pdf> <./Fig11-eps-
+converted-to.pdf>]
+Underfull \vbox (badness 7362) has occurred while \output is active []
+
+Package epstopdf Info: Source file: <Fig14-a.eps>
+(epstopdf)                    date: 2025-09-28 19:28:14
+(epstopdf)                    size: 2938248 bytes
+(epstopdf)             Output file: <Fig14-a-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-09-28 19:28:24
+(epstopdf)                    size: 95227 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig14-a-eps-converted-to.p
+df Fig14-a.eps>
+(epstopdf)             \includegraphics on input line 263.
+Package epstopdf Info: Output file is already uptodate.
+<Fig14-a-eps-converted-to.pdf, id=475, 543.02875pt x 468.75125pt>
+File: Fig14-a-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig14-a-eps-converted-to.pdf>
+Package pdftex.def Info: Fig14-a-eps-converted-to.pdf  used on input line 263.
+(pdftex.def)             Requested size: 129.54239pt x 125.19122pt.
+Package epstopdf Info: Source file: <Fig14-b.eps>
+(epstopdf)                    date: 2025-09-28 19:27:50
+(epstopdf)                    size: 2974042 bytes
+(epstopdf)             Output file: <Fig14-b-eps-converted-to.pdf>
+(epstopdf)                    date: 2025-09-28 19:28:30
+(epstopdf)                    size: 99684 bytes
+(epstopdf)             Command: <repstopdf --outfile=Fig14-b-eps-converted-to.p
+df Fig14-b.eps>
+(epstopdf)             \includegraphics on input line 267.
+Package epstopdf Info: Output file is already uptodate.
+<Fig14-b-eps-converted-to.pdf, id=476, 640.3925pt x 467.7475pt>
+File: Fig14-b-eps-converted-to.pdf Graphic file (type pdf)
+<use Fig14-b-eps-converted-to.pdf>
+Package pdftex.def Info: Fig14-b-eps-converted-to.pdf  used on input line 267.
+(pdftex.def)             Requested size: 129.54196pt x 113.81047pt.
+)
+(./Conclusion.tex [12 <./Fig14-a-eps-converted-to.pdf> <./Fig14-b-eps-converted
+-to.pdf>]) (./Acknowledgments.tex) (./main.bbl
+LaTeX Font Info:    Try loading font information for TS1+ptm on input line 169.
+
+
+(c:/texlive/2019/texmf-dist/tex/latex/psnfss/ts1ptm.fd
+File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
+) [13]) (./Shortbios.tex
+Package epstopdf Info: Source file: <author1-zhongkai.eps>
+(epstopdf)                    date: 2021-08-30 05:22:44
+(epstopdf)                    size: 635571 bytes
+(epstopdf)             Output file: <author1-zhongkai-eps-converted-to.pdf>
+(epstopdf)                    date: 2024-09-30 00:52:10
+(epstopdf)                    size: 56420 bytes
+(epstopdf)             Command: <repstopdf --outfile=author1-zhongkai-eps-conve
+rted-to.pdf author1-zhongkai.eps>
+(epstopdf)             \includegraphics on input line 2.
+Package epstopdf Info: Output file is already uptodate.
+<author1-zhongkai-eps-converted-to.pdf, id=515, 72.27pt x 100.375pt>
+File: author1-zhongkai-eps-converted-to.pdf Graphic file (type pdf)
+<use author1-zhongkai-eps-converted-to.pdf>
+Package pdftex.def Info: author1-zhongkai-eps-converted-to.pdf  used on input l
+ine 2.
+(pdftex.def)             Requested size: 65.04678pt x 90.34277pt.
+Package epstopdf Info: Source file: <author1-zhongkai.eps>
+(epstopdf)                    date: 2021-08-30 05:22:44
+(epstopdf)                    size: 635571 bytes
+(epstopdf)             Output file: <author1-zhongkai-eps-converted-to.pdf>
+(epstopdf)                    date: 2024-09-30 00:52:10
+(epstopdf)                    size: 56420 bytes
+(epstopdf)             Command: <repstopdf --outfile=author1-zhongkai-eps-conve
+rted-to.pdf author1-zhongkai.eps>
+(epstopdf)             \includegraphics on input line 2.
+Package epstopdf Info: Output file is already uptodate.
+File: author1-zhongkai-eps-converted-to.pdf Graphic file (type pdf)
+<use author1-zhongkai-eps-converted-to.pdf>
+Package pdftex.def Info: author1-zhongkai-eps-converted-to.pdf  used on input l
+ine 2.
+(pdftex.def)             Requested size: 65.04678pt x 90.34277pt.
+Package epstopdf Info: Source file: <author2-yangzb.eps>
+(epstopdf)                    date: 2021-08-30 05:05:30
+(epstopdf)                    size: 287723 bytes
+(epstopdf)             Output file: <author2-yangzb-eps-converted-to.pdf>
+(epstopdf)                    date: 2024-09-30 00:52:16
+(epstopdf)                    size: 82168 bytes
+(epstopdf)             Command: <repstopdf --outfile=author2-yangzb-eps-convert
+ed-to.pdf author2-yangzb.eps>
+(epstopdf)             \includegraphics on input line 7.
+Package epstopdf Info: Output file is already uptodate.
+<author2-yangzb-eps-converted-to.pdf, id=518, 1525.7pt x 2168.1pt>
+File: author2-yangzb-eps-converted-to.pdf Graphic file (type pdf)
+<use author2-yangzb-eps-converted-to.pdf>
+Package pdftex.def Info: author2-yangzb-eps-converted-to.pdf  used on input lin
+e 7.
+(pdftex.def)             Requested size: 63.55515pt x 90.31522pt.
+Package epstopdf Info: Source file: <author2-yangzb.eps>
+(epstopdf)                    date: 2021-08-30 05:05:30
+(epstopdf)                    size: 287723 bytes
+(epstopdf)             Output file: <author2-yangzb-eps-converted-to.pdf>
+(epstopdf)                    date: 2024-09-30 00:52:16
+(epstopdf)                    size: 82168 bytes
+(epstopdf)             Command: <repstopdf --outfile=author2-yangzb-eps-convert
+ed-to.pdf author2-yangzb.eps>
+(epstopdf)             \includegraphics on input line 7.
+Package epstopdf Info: Output file is already uptodate.
+File: author2-yangzb-eps-converted-to.pdf Graphic file (type pdf)
+<use author2-yangzb-eps-converted-to.pdf>
+Package pdftex.def Info: author2-yangzb-eps-converted-to.pdf  used on input lin
+e 7.
+(pdftex.def)             Requested size: 63.55515pt x 90.31522pt.
+<yumeng.png, id=521, 187.45032pt x 256.70906pt>
+File: yumeng.png Graphic file (type png)
+<use yumeng.png>
+Package pdftex.def Info: yumeng.png  used on input line 11.
+(pdftex.def)             Requested size: 65.96611pt x 90.33914pt.
+File: yumeng.png Graphic file (type png)
+<use yumeng.png>
+Package pdftex.def Info: yumeng.png  used on input line 11.
+(pdftex.def)             Requested size: 65.96611pt x 90.33914pt.
+Package epstopdf Info: Source file: <author3-yusiyang.eps>
+(epstopdf)                    date: 2023-05-14 18:05:38
+(epstopdf)                    size: 299159 bytes
+(epstopdf)             Output file: <author3-yusiyang-eps-converted-to.pdf>
+(epstopdf)                    date: 2024-09-30 00:52:20
+(epstopdf)                    size: 22726 bytes
+(epstopdf)             Command: <repstopdf --outfile=author3-yusiyang-eps-conve
+rted-to.pdf author3-yusiyang.eps>
+(epstopdf)             \includegraphics on input line 15.
+Package epstopdf Info: Output file is already uptodate.
+<author3-yusiyang-eps-converted-to.pdf, id=524, 128.48pt x 172.645pt>
+File: author3-yusiyang-eps-converted-to.pdf Graphic file (type pdf)
+<use author3-yusiyang-eps-converted-to.pdf>
+Package pdftex.def Info: author3-yusiyang-eps-converted-to.pdf  used on input l
+ine 15.
+(pdftex.def)             Requested size: 67.22755pt x 90.33702pt.
+Package epstopdf Info: Source file: <author3-yusiyang.eps>
+(epstopdf)                    date: 2023-05-14 18:05:38
+(epstopdf)                    size: 299159 bytes
+(epstopdf)             Output file: <author3-yusiyang-eps-converted-to.pdf>
+(epstopdf)                    date: 2024-09-30 00:52:20
+(epstopdf)                    size: 22726 bytes
+(epstopdf)             Command: <repstopdf --outfile=author3-yusiyang-eps-conve
+rted-to.pdf author3-yusiyang.eps>
+(epstopdf)             \includegraphics on input line 15.
+Package epstopdf Info: Output file is already uptodate.
+File: author3-yusiyang-eps-converted-to.pdf Graphic file (type pdf)
+<use author3-yusiyang-eps-converted-to.pdf>
+Package pdftex.def Info: author3-yusiyang-eps-converted-to.pdf  used on input l
+ine 15.
+(pdftex.def)             Requested size: 67.22755pt x 90.33702pt.
+Package epstopdf Info: Source file: <author4-liKenli.eps>
+(epstopdf)                    date: 2015-01-30 22:46:46
+(epstopdf)                    size: 312189 bytes
+(epstopdf)             Output file: <author4-liKenli-eps-converted-to.pdf>
+(epstopdf)                    date: 2024-09-30 00:52:26
+(epstopdf)                    size: 85817 bytes
+(epstopdf)             Command: <repstopdf --outfile=author4-liKenli-eps-conver
+ted-to.pdf author4-liKenli.eps>
+(epstopdf)             \includegraphics on input line 19.
+Package epstopdf Info: Output file is already uptodate.
+<author4-liKenli-eps-converted-to.pdf, id=527, 1862.96pt x 2168.1pt>
+File: author4-liKenli-eps-converted-to.pdf Graphic file (type pdf)
+<use author4-liKenli-eps-converted-to.pdf>
+Package pdftex.def Info: author4-liKenli-eps-converted-to.pdf  used on input li
+ne 19.
+(pdftex.def)             Requested size: 72.26001pt x 84.0957pt.
+Package epstopdf Info: Source file: <author4-liKenli.eps>
+(epstopdf)                    date: 2015-01-30 22:46:46
+(epstopdf)                    size: 312189 bytes
+(epstopdf)             Output file: <author4-liKenli-eps-converted-to.pdf>
+(epstopdf)                    date: 2024-09-30 00:52:26
+(epstopdf)                    size: 85817 bytes
+(epstopdf)             Command: <repstopdf --outfile=author4-liKenli-eps-conver
+ted-to.pdf author4-liKenli.eps>
+(epstopdf)             \includegraphics on input line 19.
+Package epstopdf Info: Output file is already uptodate.
+File: author4-liKenli-eps-converted-to.pdf Graphic file (type pdf)
+<use author4-liKenli-eps-converted-to.pdf>
+Package pdftex.def Info: author4-liKenli-eps-converted-to.pdf  used on input li
+ne 19.
+(pdftex.def)             Requested size: 72.26001pt x 84.0957pt.
+) [14 <./author1-zhongkai-eps-converted-to.pdf> <./author2-yangzb-eps-converted
+-to.pdf> <./yumeng.png> <./author3-yusiyang-eps-converted-to.pdf> <./author4-li
+Kenli-eps-converted-to.pdf>] (./main.aux) ) 
+Here is how much of TeX's memory you used:
+ 22940 strings out of 492623
+ 421865 string characters out of 6133291
+ 528622 words of memory out of 5000000
+ 26283 multiletter control sequences out of 15000+600000
+ 51561 words of font info for 107 fonts, out of 8000000 for 9000
+ 1144 hyphenation exceptions out of 8191
+ 64i,18n,87p,2062b,529s stack positions out of 5000i,500n,10000p,200000b,80000s
+{c:/texlive/2019/texmf-dist/fonts/en
+c/dvips/base/8r.enc}<c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmex10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pf
+b><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb><c:/texl
+ive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb><c:/texlive/2019/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/texlive/2019/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2019/texmf-dist/fonts/type
+1/public/amsfonts/cm/cmr5.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmr6.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mr7.pfb><c:/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:
+/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/
+2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb><c:/texlive/2019/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><c:/texlive/2019/texmf-dist/font
+s/type1/public/amsfonts/cm/cmsy8.pfb><c:/texlive/2019/texmf-dist/fonts/type1/pu
+blic/amsfonts/symbols/msbm10.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/ti
+mes/utmb8a.pfb><c:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb><c
+:/texlive/2019/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2019/tex
+mf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on main.pdf (14 pages, 2200651 bytes).
+PDF statistics:
+ 614 PDF objects out of 1000 (max. 8388607)
+ 196 compressed objects within 2 object streams
+ 0 named destinations out of 1000 (max. 500000)
+ 178 words of extra memory for PDF output out of 10000 (max. 10000000)
+

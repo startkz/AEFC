@@ -1,0 +1,375 @@
+\begin{thebibliography}{10}
+
+\bibitem{segovia2024survey}
+Mariana Segovia-Ferreira, Jose Rubio-Hernan, Ana Cavalli, and Joaquin
+  Garcia-Alfaro.
+\newblock A survey on cyber-resilience approaches for cyber-physical systems.
+\newblock {\em ACM Computing Surveys}, 56(8):1--37, 2024.
+
+\bibitem{o2024towards}
+Sean O’Toole and Hoda Mehrpouyan.
+\newblock Towards cyber-physical representation and cyber-resilience against
+  attack and failure within a hydraulic network simulation toolkit.
+\newblock In {\em 2024 IEEE Security and Privacy Workshops (SPW)}, pages
+  246--252. IEEE, 2024.
+
+\bibitem{lu2024recovery}
+Pengyuan Lu, Lin Zhang, Mengyu Liu, Kaustubh Sridhar, Oleg Sokolsky, Fanxin
+  Kong, and Insup Lee.
+\newblock Recovery from adversarial attacks in cyber-physical systems: Shallow,
+  deep, and exploratory works.
+\newblock {\em ACM Computing Surveys}, 56(8):1--31, 2024.
+
+\bibitem{11078001}
+Dongli Duan, Xiaohao Yang, Changchun Lv, and Zhiqiang Cai.
+\newblock Modeling and predicting malware propagation in double-layer computer
+  networks.
+\newblock {\em IEEE Transactions on Network Science and Engineering}, pages
+  1--11, 2025.
+
+\bibitem{yuan2024incomplete}
+Huanhuan Yuan, Yuan Yuan, Yifan Zhong, and Yuanqing Xia.
+\newblock Incomplete information-based resilient strategy design for
+  cyber-physical systems under stochastic communication protocol.
+\newblock {\em IEEE Transactions on Industrial Electronics},
+  71(11):14967--14976, 2024.
+
+\bibitem{kim2022survey}
+Sangjun Kim, Kyung-Joon Park, and Chenyang Lu.
+\newblock A survey on network security for cyber--physical systems: From
+  threats to resilient design.
+\newblock {\em IEEE Communications Surveys \& Tutorials}, 24(3):1534--1573,
+  2022.
+
+\bibitem{niu2022verifying}
+Luyao Niu, Dinuka Sahabandu, Andrew Clark, and Radha Poovendran.
+\newblock Verifying safety for resilient cyber-physical systems via reactive
+  software restart.
+\newblock In {\em 2022 ACM/IEEE 13th International Conference on Cyber-Physical
+  Systems (ICCPS)}, pages 104--115. IEEE, 2022.
+
+\bibitem{yu2024intelligent}
+Rongrong Yu, Xu~Zhao, Si~Lu, Ye-Hwa Chen, and Chenming Li.
+\newblock Intelligent game-theoretic approach for resilient robust control
+  design of cyber-physical systems: application to intelligent transportation
+  systems.
+\newblock {\em IEEE Transactions on Intelligent Transportation Systems},
+  25(11):16072--16083, 2024.
+
+\bibitem{xin2025learning}
+Liang Xin and Zhi-Qiang Long.
+\newblock A learning-based passive resilient controller for cyber-physical
+  systems: Countering stealthy deception attacks and complete loss of actuators
+  control authority.
+\newblock {\em IEEE/CAA Journal of Automatica Sinica}, 12(7):1368--1380, 2025.
+
+\bibitem{zhong2024deep}
+Kai Zhong, Zhibang Yang, Siyang Yu, and Kenli Li.
+\newblock Deep reinforcement learning-based multi-layer cascaded resilient
+  recovery for cyber-physical systems.
+\newblock {\em IEEE Transactions on Services Computing}, 2024.
+
+\bibitem{chen2019dynamic}
+Juntao Chen, Corinne Touati, and Quanyan Zhu.
+\newblock A dynamic game approach to strategic design of secure and resilient
+  infrastructure network.
+\newblock {\em IEEE Transactions on Information Forensics and security},
+  15:462--474, 2019.
+
+\bibitem{10552409}
+Rongrong Yu, Xu~Zhao, Si~Lu, Ye-Hwa Chen, and Chenming Li.
+\newblock Intelligent game-theoretic approach for resilient robust control
+  design of cyber-physical systems: Application to intelligent transportation
+  systems.
+\newblock {\em IEEE Transactions on Intelligent Transportation Systems},
+  25(11):16072--16083, 2024.
+
+\bibitem{olowononi2020resilient}
+Felix~O Olowononi, Danda~B Rawat, and Chunmei Liu.
+\newblock Resilient machine learning for networked cyber physical systems: A
+  survey for machine learning security to securing machine learning for cps.
+\newblock {\em IEEE Communications Surveys \& Tutorials}, 23(1):524--552, 2020.
+
+\bibitem{nguyen2021deep}
+Thanh~Thi Nguyen and Vijay~Janapa Reddi.
+\newblock Deep reinforcement learning for cyber security.
+\newblock {\em IEEE Transactions on Neural Networks and Learning Systems},
+  34(8):3779--3795, 2021.
+
+\bibitem{10105656}
+Yan Yu, Wen Yang, Wenjie Ding, and Jiayu Zhou.
+\newblock Reinforcement learning solution for cyber-physical systems security
+  against replay attacks.
+\newblock {\em IEEE Transactions on Information Forensics and Security},
+  18:2583--2595, 2023.
+
+\bibitem{10393887}
+Peng Su, Zhonghai Lu, and DeJiu Chen.
+\newblock Combining self-organizing map with reinforcement learning for
+  multivariate time series anomaly detection.
+\newblock In {\em 2023 IEEE International Conference on Systems, Man, and
+  Cybernetics (SMC)}, pages 1964--1969, 2023.
+
+\bibitem{yang2024adt}
+Xue Yang, Enda Howley, and Michael Schukat.
+\newblock Adt: Time series anomaly detection for cyber-physical systems via
+  deep reinforcement learning.
+\newblock {\em Computers \& Security}, 141:103825, 2024.
+
+\bibitem{liu2024deadline}
+Mengyu Liu, Pengyuan Lu, Xin Chen, Oleg Sokolsky, Insup Lee, and Fanxin Kong.
+\newblock Deadline-safe reach-avoid control synthesis for cyber-physical
+  systems with reinforcement learning.
+\newblock In {\em 2024 IEEE Real-Time Systems Symposium (RTSS)}, pages 96--108.
+  IEEE, 2024.
+
+\bibitem{zhang2021physical}
+Dan Zhang, Gang Feng, Yang Shi, and Dipti Srinivasan.
+\newblock Physical safety and cyber security analysis of multi-agent systems: A
+  survey of recent advances.
+\newblock {\em IEEE/CAA Journal of Automatica Sinica}, 8(2):319--333, 2021.
+
+\bibitem{jin2025comprehensive}
+Weiqiang Jin, Hongyang Du, Biao Zhao, Xingwu Tian, Bohang Shi, and Guang Yang.
+\newblock A comprehensive survey on multi-agent cooperative decision-making:
+  Scenarios, approaches, challenges and perspectives.
+\newblock {\em arXiv preprint arXiv:2503.13415}, 2025.
+
+\bibitem{al2022joint}
+Mohammed~S Al-Abiad, Md~Zoheb Hassan, and Md~Jahangir Hossain.
+\newblock A joint reinforcement-learning enabled caching and cross-layer
+  network code in f-ran with d2d communications.
+\newblock {\em IEEE Transactions on Communications}, 70(7):4400--4416, 2022.
+
+\bibitem{lagache2024toward}
+Zo{\'e} Lagache, Annabelle Mercier, Arthur Baudet, et~al.
+\newblock Toward cps security monitoring: Employing multi-agent systems and
+  digital twins.
+\newblock In {\em 2024 IEEE 35th International Symposium on Software
+  Reliability Engineering Workshops (ISSREW)}, pages 303--306. IEEE, 2024.
+
+\bibitem{wang2023multi}
+Yuhao Wang, Wenqian Xie, Zhihan Ding, Qianze Yang, Yan Lin, and Yijin Zhang.
+\newblock Multi-agent graph reinforcement learning based cross-layer routing
+  for mobile ad-hoc network.
+\newblock In {\em International Conference on Internet of Things, Communication
+  and Intelligent Technology}, pages 354--364. Springer, 2023.
+
+\bibitem{xi2025expert}
+Meng Xi, Jiabao Wen, Jingyi He, Shuai Xiao, and Jiachen Yang.
+\newblock An expert experience-enhanced security control approach for auvs of
+  the underwater transportation cyber-physical systems.
+\newblock {\em IEEE Transactions on Intelligent Transportation Systems}, 2025.
+
+\bibitem{kairouz2021advances}
+Peter Kairouz, H~Brendan McMahan, Brendan Avent, Aur{\'e}lien Bellet, Mehdi
+  Bennis, Arjun~Nitin Bhagoji, Kallista Bonawitz, Zachary Charles, Graham
+  Cormode, Rachel Cummings, et~al.
+\newblock Advances and open problems in federated learning.
+\newblock {\em Foundations and trends{\textregistered} in machine learning},
+  14(1--2):1--210, 2021.
+
+\bibitem{li2020federated}
+Tian Li, Anit~Kumar Sahu, Ameet Talwalkar, and Virginia Smith.
+\newblock Federated learning: Challenges, methods, and future directions.
+\newblock {\em IEEE signal processing magazine}, 37(3):50--60, 2020.
+
+\bibitem{quan2025federated}
+Minh~K Quan, Pubudu~N Pathirana, Mayuri Wijayasundara, Sujeeva Setunge, Dinh~C
+  Nguyen, Christopher~G Brinton, David~J Love, and H~Vincent Poor.
+\newblock Federated learning for cyber physical systems: a comprehensive
+  survey.
+\newblock {\em IEEE Communications Surveys \& Tutorials}, 2025.
+
+\bibitem{singh2025federated}
+Nikhil~Kumar Singh, Sakshi Patni, Sunhwan Lim, and Joohyung Lee.
+\newblock Federated learning-based secure computing mechanism for consumer
+  internet of vehicles-based transportation cyber-physical systems.
+\newblock {\em IEEE Transactions on Consumer Electronics}, 2025.
+
+\bibitem{qi2025federated}
+Hainan Qi, Wenjie Ma, and Bingsong Zhao.
+\newblock Federated heterogeneous multi-agent deep reinforcement learning-based
+  attack resilience scheduling for heterogeneous multi-integrated energy
+  system.
+\newblock {\em Energy Reports}, 14:116--127, 2025.
+
+\bibitem{10707001}
+Anastasios~E. Giannopoulos, Sotirios~T. Spantideas, Menelaos Zetas, Nikolaos
+  Nomikos, and Panagiotis Trakadas.
+\newblock Fedship: Federated over-the-air learning for communication-efficient
+  and privacy-aware smart shipping in 6g communications.
+\newblock {\em IEEE Transactions on Intelligent Transportation Systems},
+  25(12):19873--19888, 2024.
+
+\bibitem{miao2024esfl}
+Yinbin Miao, Ziteng Liu, Hongwei Li, Kim-Kwang~Raymond Choo, and Robert~H.
+  Deng.
+\newblock Efficient and secure federated learning against backdoor attacks.
+\newblock {\em IEEE Transactions on Dependable and Secure Computing},
+  21(5):4619--4636, 2024.
+
+\bibitem{miao2024asyfl}
+Yinbin Miao, Ziteng Liu, Xinghua Li, Meng Li, Hongwei Li, Kim-Kwang~Raymond
+  Choo, and Robert~H. Deng.
+\newblock Privacy-preserving byzantine-robust federated learning via blockchain
+  systems.
+\newblock {\em IEEE Transactions on Dependable and Secure Computing},
+  21(4):2361--2375, 2024.
+
+\bibitem{mu2024feddmc}
+Xutong Mu, Ke~Cheng, Yulong Shen, Xiaoxiao Li, Zhao Chang, Tao Zhang, and Xindi
+  Ma.
+\newblock Feddmc: Efficient and robust federated learning via detecting
+  malicious clients.
+\newblock {\em IEEE Transactions on Dependable and Secure Computing},
+  21(6):5259--5274, 2024.
+
+\bibitem{zhao2026sxgb}
+Jiaqi Zhao, Hui Zhu, Fengwei Wang, Rongxing Lu, and Hui Li.
+\newblock Sxgb: Secure and efficient vertical federated xgboost via trusted
+  execution environments.
+\newblock {\em IEEE Transactions on Dependable and Secure Computing},
+  23(2):2275--2288, 2026.
+
+\bibitem{kato2023olive}
+Fumiyuki Kato, Yang Cao, and Masatoshi Yoshikawa.
+\newblock Olive: Oblivious and differentially private federated learning on
+  trusted execution environment.
+\newblock {\em Proceedings of the VLDB Endowment}, 16(10):2404--2417, 2023.
+
+\bibitem{su2025joint}
+Yi~Su, Wenhao Fan, Qingcheng Meng, Penghui Chen, and Yuan'an Liu.
+\newblock Joint adaptive aggregation and resource allocation for hierarchical
+  federated learning systems based on edge-cloud collaboration.
+\newblock {\em IEEE Transactions on Cloud Computing}, 2025.
+
+\bibitem{fu2024distributed}
+Yuchuan Fu, Mengyuan Dong, Lingling Zhou, Changle Li, F~Richard Yu, and Nan
+  Cheng.
+\newblock A distributed incentive mechanism to balance demand and communication
+  overhead for multiple federated learning tasks in iov.
+\newblock {\em IEEE Internet of Things Journal}, 2024.
+
+\bibitem{nariman2025communication}
+Goran~Saman Nariman and Hozan~Khalid Hamarashid.
+\newblock Communication overhead reduction in federated learning: a review.
+\newblock {\em International Journal of Data Science and Analytics},
+  19(2):185--216, 2025.
+
+\bibitem{jia2025comprehensive}
+Ninghui Jia, Zhihao Qu, Baoliu Ye, Yanyan Wang, Shihong Hu, and Song Guo.
+\newblock A comprehensive survey on communication-efficient federated learning
+  in mobile edge environments.
+\newblock {\em IEEE Communications Surveys \& Tutorials}, 2025.
+
+\bibitem{11090013}
+Sihui Zheng, Liyan Zhang, Yuhan Dong, Xiaohuan Li, Xijun Wang, and Xiang Chen.
+\newblock Toward communication-efficient over-the-air federated learning:
+  Synergistic compression for uplink and downlink transmission.
+\newblock {\em IEEE Internet of Things Journal}, pages 1--1, 2025.
+
+\bibitem{zhao2026fedara}
+Ruonan Zhao, Zheng Wang, Debin Liu, Shijie Lv, and Laurence~Tianruo Yang.
+\newblock Fedara: Resource-adaptive low-rank personalized federated learning
+  via anchor-driven representation alignment on heterogeneous edge devices.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, 2026.
+
+\bibitem{park2026fedade}
+Heewon Park, Mugon Joe, Miru Kim, Kyungjin Im, and Minhae Kwon.
+\newblock Fed-ade: Adaptive learning rate for federated post-adaptation under
+  distribution shift.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, 2026.
+
+\bibitem{le2026feddap}
+Huy~Q. Le, Loc~X. Nguyen, Yu~Qiao, Seong~Tae Kim, Eui-Nam Huh, and Choong~Seon
+  Hong.
+\newblock Feddap: Domain-aware prototype learning for federated learning under
+  domain shift.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, 2026.
+
+\bibitem{wang2026f2dc}
+Huan Wang, Jun Shen, Jun Yan, and Guansong Pang.
+\newblock Domain-skewed federated learning with feature decoupling and
+  calibration.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, 2026.
+
+\bibitem{liu2026dpfedadamw}
+Jin Liu, Ning Xi, Yinbin Miao, and Junkang Liu.
+\newblock Dp-fedadamw: An efficient optimizer for differentially private
+  federated large models.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, 2026.
+
+\bibitem{zhao2026fedmop}
+Yunlong Zhao, Xiaoheng Deng, Hongyan Xu, Zhuohua Qiu, Xiaowen Hu, Shan You,
+  Yi~Chen, Chang Xu, and Xiu Su.
+\newblock Fedmop: Achieving enhanced privacy and performance in federated
+  learning via momentum orthogonal projection.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, 2026.
+
+\bibitem{patel2026pfdm}
+Kumar~Kshitij Patel, Bingqing Jiang, A~F M~Mahfuzul Kabir, Weitong Zhang, Difan
+  Zou, and Lingxiao Wang.
+\newblock Personalized federated training of diffusion models with privacy
+  guarantees.
+\newblock In {\em Proceedings of the IEEE/CVF Conference on Computer Vision and
+  Pattern Recognition}, 2026.
+
+\bibitem{qi2021federated}
+Jiaju Qi, Qihao Zhou, Lei Lei, and Kan Zheng.
+\newblock Federated reinforcement learning: Techniques, applications, and open
+  challenges.
+\newblock {\em arXiv preprint arXiv:2108.11887}, 2021.
+
+\bibitem{10908884}
+Chao Feng, Alberto~Huertas Celdrán, Pedro Miguel~Sánchez Sánchez, Jan
+  Kreischer, Jan von~der Assen, Gérôme Bovet, Gregorio~Martínez Pérez, and
+  Burkhard Stiller.
+\newblock Cyberforce: A federated reinforcement learning framework for malware
+  mitigation.
+\newblock {\em IEEE Transactions on Dependable and Secure Computing},
+  22(4):4398--4411, 2025.
+
+\bibitem{10483278}
+Thanveer Shaik, Xiaohui Tao, Lin Li, Haoran Xie, Taotao Cai, Xiaofeng Zhu, and
+  Qing Li.
+\newblock Framu: Attention-based machine unlearning using federated
+  reinforcement learning.
+\newblock {\em IEEE Transactions on Knowledge and Data Engineering},
+  36(10):5153--5167, 2024.
+
+\bibitem{10536634}
+Lu~Yang, Songtao Guo, Chen-Khong Tham, Mingyan Li, Guiyan Liu, and Pengzhan
+  Zhou.
+\newblock Prem-fediov: A novel federated reinforcement learning framework for
+  predictive maintenance in iov.
+\newblock {\em IEEE Transactions on Mobile Computing}, 23(12):11954--11970,
+  2024.
+
+\bibitem{zhang2025runtime}
+Xiyue Zhang, Xiaoyong Xue, Xiaoning Du, Xiaofei Xie, Yang Liu, and Meng Sun.
+\newblock Runtime backdoor detection for deep reinforcement learning.
+\newblock {\em IEEE Transactions on Dependable and Secure Computing},
+  22(5):4607--4624, 2025.
+
+\bibitem{liu2024vertical}
+Yang Liu, Yan Kang, Tianyuan Zou, Yanhong Pu, Yuanqin He, Xiaozhou Ye,
+  Ye~Ouyang, Ya-Qin Zhang, and Qiang Yang.
+\newblock Vertical federated learning: Concepts, advances, and challenges.
+\newblock {\em IEEE transactions on knowledge and data engineering},
+  36(7):3615--3634, 2024.
+
+\bibitem{lowe2017multi}
+Ryan Lowe, Yi~I Wu, Aviv Tamar, Jean Harb, OpenAI Pieter~Abbeel, and Igor
+  Mordatch.
+\newblock Multi-agent actor-critic for mixed cooperative-competitive
+  environments.
+\newblock {\em Advances in neural information processing systems}, 30, 2017.
+
+\end{thebibliography}
