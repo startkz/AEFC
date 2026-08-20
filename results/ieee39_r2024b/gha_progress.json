@@ -1,1 +1,7 @@
-{"stage":"matlab-setup-ok","success":true,"run_id":"32346633600","source_sha":"4c639c9abef23d075414c633d7bf7f8edee7a598"}
+{
+  "stage": "smoke-finished",
+  "success": false,
+  "smoke_outcome": "failure",
+  "run_id": "32346633600",
+  "source_sha": "4c639c9abef23d075414c633d7bf7f8edee7a598"
+}
