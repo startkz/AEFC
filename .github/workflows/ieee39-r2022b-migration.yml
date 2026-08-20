@@ -1,0 +1,50 @@
+name: IEEE39 R2022b Migration Smoke
+
+on:
+  push:
+    branches:
+      - revision/ieee39-r2022b-actions
+  workflow_dispatch:
+
+jobs:
+  migrate-smoke:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v6
+
+      - name: Set up MATLAB R2022b
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2022b
+          products: >
+            Simulink
+            Simscape
+            Simscape_Electrical
+
+      - name: Record MATLAB product evidence
+        uses: matlab-actions/run-command@v3
+        with:
+          command: >-
+            disp(version); disp(version('-release')); disp(matlabroot); ver;
+            assert(~isempty(ver('simulink')),'Simulink unavailable');
+            assert(~isempty(ver('simscape')),'Simscape unavailable');
+
+      - name: Migrate and smoke-test real IEEE39 plant
+        uses: matlab-actions/run-command@v3
+        with:
+          command: >-
+            addpath('matlab');
+            aefc_migrate_ieee39_r2022b('Figures/IEEE-39-bus-power.zip','build/ieee39_r2022b');
+
+      - name: Upload migration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ieee39-r2022b-migration-evidence
+          path: |
+            build/ieee39_r2022b/report/**
+            build/ieee39_r2022b/migrated/**
+          if-no-files-found: warn
+          retention-days: 30
