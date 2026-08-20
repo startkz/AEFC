@@ -1,14 +1,9 @@
 \documentclass[lettersize,journal,10pt]{IEEEtran}
 \IEEEoverridecommandlockouts
-% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{algorithmic}
-%\usepackage{algpseudocode}
-%\usepackage{algorithmicx}
-%\usepackage{algorithmic}
-%\usepackage{algorithm}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
@@ -16,9 +11,7 @@
 \usepackage{multicol}
 \usepackage{multirow}
 \usepackage{booktabs}
-
 \usepackage{mathtools}
-\usepackage{amsfonts}
 \usepackage{bm}
 \usepackage{cases}
 \usepackage{array}
@@ -32,10 +25,8 @@
 \usepackage{verbatim}
 \usepackage{svg}
 \usepackage{ragged2e}
-
 \usepackage{tikz}
 \usetikzlibrary{mindmap,trees}
-\usepackage{verbatim}
 \usepackage{CJK}
 \usepackage{adjustbox}
 \usepackage{makecell}
@@ -51,24 +42,18 @@
 
 \hyphenation{op-tical net-works semi-conduc-tor}
 \geometry{a4paper,scale=0.905}
-%\geometry{a4paper,left=2cm,right=2cm,top=1cm,bottom=1cm}
 
 \begin{document}
-
 \input{Abstract.tex}
 \input{Introduction.tex}
 \input{RelatedWork.tex}
-%\input{ProblemDefinition.tex}
 \input{SystemModel.tex}
-%\input{DRQL.tex}
 \input{Experimental-RRDRQL.tex}
+\input{SecurityValidation.tex}
 \input{Conclusion.tex}
 \input{Acknowledgments.tex}
-
 \bibliography{ref}{}
 \bibliographystyle{unsrt}
-
 \input{Shortbios.tex}
-
 \end{document}
 \endinput
