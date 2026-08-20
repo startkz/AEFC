@@ -1,0 +1,23 @@
+\subsection{Security Validation Protocol for Trustworthy Recovery}
+The preceding experiments quantify recovery performance, communication cost, heterogeneity stress, and empirical robustness of the existing implementation. The revised trustworthy-recovery formulation introduces stronger mechanism-level claims that require a correspondingly stronger validation protocol. We therefore separate \emph{reported measurements} from \emph{required certificate tests}: no numerical value is claimed below unless it is produced by the released implementation and trace logs.
+
+\textbf{Certificate validation.} For each recovery episode, the implementation should record the minimum robust barrier margin
+\begin{equation}
+M_{\mathrm{CBF}}=\min_{t,i,\ell}\inf_{x\in\widehat{\mathcal X}_i,d\in\mathcal D_i}
+\left[\dot h_{i,\ell}+\alpha_{\ell}(h_{i,\ell})\right],
+\end{equation}
+the number of safety-QP infeasibility events, the fraction of learned actions modified by the shield, and the first hitting time of the recovery set. A certificate-valid run requires $M_{\mathrm{CBF}}\ge0$ and zero safety-QP infeasibility under the modeled uncertainty set. The empirical recovery time should also be compared with the analytical bound derived from the recovery Lyapunov condition.
+
+\textbf{Policy-independent attack test.} To test the separation between learning utility and physical safety, the learned proposal should be replaced by intentionally unsafe actions and by actors corrupted through model-replacement attacks. The unshielded controller and the shielded controller are then evaluated from identical initial states. This test is designed to verify the theorem's operational meaning: the learning policy may fail catastrophically in utility while the execution layer still preserves the modeled safety contract.
+
+\textbf{Adaptive Byzantine test.} The Byzantine evaluation should include random updates and sign-flip attacks retained from the original experiments, together with adaptive model replacement, coordinate-wise extremal poisoning, colluding Byzantine clients, and metadata spoofing. In particular, an attacker is allowed to fabricate advantages, prototypes, confidence values, and sparse indices. This setting directly tests why the revised server does not use client-reported credibility as a trust root. For each round, the implementation should log $\|\widehat g_t-\mu_t^H\|_2$ and compare it with the honest-coordinate envelope $\|r_t\|_2$.
+
+\textbf{Compression audit.} For each honest client and federation round, the implementation should verify
+\begin{equation}
+\frac{\|z_i^t-C_k(z_i^t)\|_2^2}{\|z_i^t\|_2^2}\le1-\frac{k}{d}.
+\end{equation}
+This diagnostic is deterministic and directly checks the Top-$k$ lemma rather than estimating an unspecified compression coefficient.
+
+\textbf{Privacy extension.} If the optional trajectory-level Gaussian mechanism is enabled, the evaluation must report the privacy unit, clipping norm $C$, sampling rate, number of compositions, accountant type, and the final $(\varepsilon,\delta)$ budget. Membership-inference AUC may be reported as an additional empirical attack metric, but it is not used as evidence of formal privacy.
+
+\textbf{Code-to-claim consistency.} The final release should expose one executable configuration for each manuscript mechanism: heterogeneous adapters, prioritized replay, certificate-gated update construction, error-feedback Top-$k$, Byzantine-resilient aggregation, robust safety-recovery shielding, and optional differential privacy. Every figure and table should be traceable to a committed configuration and raw log. This requirement is included because reproducibility is part of the trust boundary of a security-oriented recovery mechanism.
