@@ -24,9 +24,20 @@ jobs:
   migrate-and-simulate:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      MLM_LICENSE_TOKEN: ${{ secrets.MLM_LICENSE_TOKEN }}
     steps:
       - name: Checkout revision branch
         uses: actions/checkout@v4
+
+      - name: Verify MATLAB batch-license secret is configured
+        shell: bash
+        run: |
+          if [ -z "${MLM_LICENSE_TOKEN}" ]; then
+            echo "MLM_LICENSE_TOKEN repository secret is not configured."
+            exit 2
+          fi
+          echo "MATLAB batch-license token is configured."
 
       - name: Set up MATLAB R2024a and Simulink electrical stack
         uses: matlab-actions/setup-matlab@v3
