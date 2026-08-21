@@ -9,6 +9,13 @@ on:
       - 'Figures/IEEE-39-bus-power.zip'
       - 'matlab/ieee39_migrate_r2024a.m'
       - '.github/workflows/ieee39-r2024a-migration.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'Figures/IEEE-39-bus-power.zip'
+      - 'matlab/ieee39_migrate_r2024a.m'
+      - '.github/workflows/ieee39-r2024a-migration.yml'
 
 permissions:
   contents: read
