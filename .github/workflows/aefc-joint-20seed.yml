@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
-      - run: python -m pip install --upgrade pip numpy matplotlib
+      - run: python -m pip install --upgrade pip numpy matplotlib scipy
       - name: Execute 20 matched seeds for all four corruption cells and ablations
         run: |
           AEFC_COMMIT_SHA=${{ github.sha }} PYTHONPATH=. python experiments/run_joint.py --output results/joint20 --config configs/joint20.json
@@ -41,6 +41,7 @@ jobs:
           git push origin HEAD:experiment/ieee39-r2024b-actions
 
   ieee39-native-discovery:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
