@@ -1,0 +1,66 @@
+name: AEFC native IEEE39 mapping and validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/ieee39-r2024b-actions]
+    paths:
+      - 'ci/ieee39-native-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  native-mapping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      MLM_LICENSE_TOKEN: ${{ secrets.MATLAB_BATCH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: License-token preflight
+        shell: bash
+        run: |
+          if [ -z "$MLM_LICENSE_TOKEN" ]; then
+            echo 'MATLAB_BATCH_TOKEN is not configured in repository Actions secrets.' >&2
+            echo 'Configure Settings > Secrets and variables > Actions > New repository secret, then rerun this failed job.' >&2
+            exit 78
+          fi
+
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+
+      - name: Bootstrap, discover topology, and causally validate mapping
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_interface_discovery; aefc_ieee39_mapping_probe
+
+      - name: Upload immutable native mapping evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ieee39-native-mapping-${{ github.sha }}
+          path: |
+            results/ieee39_r2024b/interface_discovery.json
+            results/ieee39_r2024b/interface_mapping.json
+            results/ieee39_r2024b/mapping_status.json
+            results/ieee39_r2024b/bootstrap_inventory.json
+            results/ieee39_r2024b/smoke_summary.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Persist validated native mapping on branch
+        if: always()
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/ieee39_r2024b/*.json || true
+          git commit -m 'Persist native IEEE39 mapping evidence [skip ci]' || true
+          git fetch origin experiment/ieee39-r2024b-actions
+          git rebase -X theirs origin/experiment/ieee39-r2024b-actions
+          git push origin HEAD:experiment/ieee39-r2024b-actions
