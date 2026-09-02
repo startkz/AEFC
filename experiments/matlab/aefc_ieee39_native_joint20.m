@@ -2,8 +2,8 @@ function aefc_ieee39_native_joint20
 % Execute 20 matched seeds x four corruption cells x seven methods on the
 % instrumented native MathWorks IEEE39BusSystem model. Every manuscript
 % number is derived from per-run SimulationOutput evidence and raw JSONL.
-% Method and Scenario are nontunable System-object parameters, so Fast
-% Restart is scoped to the 20 seeds of one method/scenario cell only.
+% MethodCode, ScenarioCode, and Seed are numeric tunable System-object
+% parameters, so the complete 7x4x20 matrix reuses one Fast Restart compile.
 repo=pwd;
 cfgPath=fullfile(repo,'configs','ieee39_joint20.json');
 cfg=jsondecode(fileread(cfgPath));
@@ -26,21 +26,21 @@ rows=struct([]); rowIdx=0;
 ctrl=[model '/AEFC_NATIVE_CONTROLLER'];
 dt=double(cfg.sample_time); stopTime=double(cfg.stop_time); tq=(0:dt:stopTime)';
 
+% Compile once. All experimental selectors are numeric tunable parameters.
+set_param(ctrl,'MethodCode','1','ScenarioCode','1','Seed','0');
+try, set_param(model,'SimulationCommand','update'); catch, end
+fastRestart=false;
+try, set_param(model,'FastRestart','on'); fastRestart=true; catch, end
+assert(fastRestart,'AEFC:FastRestart','Full native matrix requires Fast Restart to avoid per-episode Simscape recompilation.');
+
 for si=1:numel(scenarios)
     scenario=scenarios{si};
     for mi=1:numel(methods)
         method=methods{mi};
-        % Method/Scenario are changed only while Fast Restart is off.
-        try, set_param(model,'FastRestart','off'); catch, end
-        set_param(ctrl,'Method',method,'Scenario',scenario,'Seed','0');
-        try, set_param(model,'SimulationCommand','update'); catch, end
-        fastRestart=false;
-        try, set_param(model,'FastRestart','on'); fastRestart=true; catch, end
-
         runDir=fullfile(outRoot,scenario,method); if ~exist(runDir,'dir'),mkdir(runDir);end
         for seed=0:double(cfg.seeds)-1
-            set_param(ctrl,'Seed',num2str(seed));
             simIn=Simulink.SimulationInput(model);
+            simIn=simIn.setBlockParameter(ctrl,'MethodCode',num2str(mi),'ScenarioCode',num2str(si),'Seed',num2str(seed));
             simIn=simIn.setModelParameter('StopTime',num2str(stopTime,'%.17g'),'ReturnWorkspaceOutputs','on');
             out=sim(simIn);
             obs=zeros(numel(tq),4);
@@ -89,19 +89,18 @@ for si=1:numel(scenarios)
             rows(rowIdx).backend='mathworks_ieee39_r2024b_native';
             s=rows(rowIdx); saveSummary(fullfile(runDir,sprintf('seed_%02d.summary.json',seed)),s);
         end
-        if fastRestart, try, set_param(model,'FastRestart','off'); catch, end, end
     end
 end
 
+try, set_param(model,'FastRestart','off'); catch, end
 T=struct2table(rows); writetable(T,fullfile(outRoot,'summary.csv'));
 manifest=struct('backend','mathworks_ieee39_r2024b_native','commit_sha',commitSha,'config_path','configs/ieee39_joint20.json', ...
     'config_id',configId,'mapping_path',cfg.mapping_path,'mapping_policy',mapping.selection_policy, ...
     'seeds',double(cfg.seeds),'methods',{methods},'scenarios',{scenarios},'rows',height(T), ...
     'native_model',model,'native_mapping_validated',logical(mapping.validated), ...
-    'sample_time_s',dt,'fast_restart_scope','within matched seeds of each method/scenario cell', ...
+    'sample_time_s',dt,'fast_restart_scope','single compile across full 7x4x20 matrix using numeric tunable selectors', ...
     'evidence_capture','explicit To Workspace via SimulationOutput');
 saveSummary(fullfile(outRoot,'manifest.json'),manifest);
-try, set_param(model,'FastRestart','off'); catch, end
 close_system(model,0);
 end
 
