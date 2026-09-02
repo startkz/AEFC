@@ -1,0 +1,146 @@
+{
+  "model": "IEEE39BusSystem",
+  "release": "2024b",
+  "mapping_type": "native_r2024b_causal_probe",
+  "observation_edges": [
+    {
+      "src_block": "IEEE39BusSystem/Generators/Gen10@Bus30/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/wref",
+      "src_port": 1,
+      "dst_block": "IEEE39BusSystem/Generators/Gen10@Bus30/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Delta\nspeed",
+      "dst_port": 1,
+      "observation_score": 5,
+      "control_score": 6,
+      "observation_reason": "rotor-speed",
+      "control_reason": "governor,generator-path"
+    },
+    {
+      "src_block": "IEEE39BusSystem/Generators/Gen10@Bus30/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/w",
+      "src_port": 1,
+      "dst_block": "IEEE39BusSystem/Generators/Gen10@Bus30/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Delta\nspeed",
+      "dst_port": 2,
+      "observation_score": 5,
+      "control_score": 6,
+      "observation_reason": "rotor-speed",
+      "control_reason": "governor,generator-path"
+    },
+    {
+      "src_block": "IEEE39BusSystem/Generators/Gen10@Bus30/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Delta\nspeed",
+      "src_port": 1,
+      "dst_block": "IEEE39BusSystem/Generators/Gen10@Bus30/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/1//droop",
+      "dst_port": 1,
+      "observation_score": 5,
+      "control_score": 6,
+      "observation_reason": "rotor-speed",
+      "control_reason": "governor,generator-path"
+    },
+    {
+      "src_block": "IEEE39BusSystem/Generators/Gen1@Bus39/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/wref",
+      "src_port": 1,
+      "dst_block": "IEEE39BusSystem/Generators/Gen1@Bus39/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Delta\nspeed",
+      "dst_port": 1,
+      "observation_score": 5,
+      "control_score": 6,
+      "observation_reason": "rotor-speed",
+      "control_reason": "governor,generator-path"
+    }
+  ],
+  "control_edges": [
+    {
+      "src_block": "IEEE39BusSystem/Generators/Gen10@Bus30/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Pref",
+      "src_port": 1,
+      "dst_block": "IEEE39BusSystem/Generators/Gen10@Bus30/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Delta\nload\nsetpoint",
+      "dst_port": 1,
+      "observation_score": 0,
+      "control_score": 15,
+      "observation_reason": "",
+      "control_reason": "power-reference,governor,reference-control,generator-path"
+    },
+    {
+      "src_block": "IEEE39BusSystem/Generators/Gen1@Bus39/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Pref",
+      "src_port": 1,
+      "dst_block": "IEEE39BusSystem/Generators/Gen1@Bus39/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Delta\nload\nsetpoint",
+      "dst_port": 1,
+      "observation_score": 0,
+      "control_score": 15,
+      "observation_reason": "",
+      "control_reason": "power-reference,governor,reference-control,generator-path"
+    },
+    {
+      "src_block": "IEEE39BusSystem/Generators/Gen2@Bus31/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Pref",
+      "src_port": 1,
+      "dst_block": "IEEE39BusSystem/Generators/Gen2@Bus31/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Delta\nload\nsetpoint",
+      "dst_port": 1,
+      "observation_score": 0,
+      "control_score": 15,
+      "observation_reason": "",
+      "control_reason": "power-reference,governor,reference-control,generator-path"
+    },
+    {
+      "src_block": "IEEE39BusSystem/Generators/Gen3@Bus32/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Pref",
+      "src_port": 1,
+      "dst_block": "IEEE39BusSystem/Generators/Gen3@Bus32/Governor and\nPrime Mover/Governor and\nPrime Mover\n/Governor/Delta\nload\nsetpoint",
+      "dst_port": 1,
+      "observation_score": 0,
+      "control_score": 15,
+      "observation_reason": "",
+      "control_reason": "power-reference,governor,reference-control,generator-path"
+    }
+  ],
+  "observation_workspace_names": [
+    "AEFC_PROBE_OBS_01",
+    "AEFC_PROBE_OBS_02",
+    "AEFC_PROBE_OBS_03",
+    "AEFC_PROBE_OBS_04"
+  ],
+  "observation_transform": "real scalar; complex native signals are mapped to magnitude",
+  "baseline_observation": [
+    1,
+    0.99999041475122874,
+    -9.585248771259991E-6,
+    1
+  ],
+  "probe_stop_time": 0.3,
+  "probe_epsilon": 0.001,
+  "sensitivity_matrix": [
+    [
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0.0027014703940508866,
+      4.377680384859417E-5,
+      5.4054577702800088E-5,
+      6.1271990481337468E-5
+    ],
+    [
+      0.0027014703940286826,
+      4.3776803870798292E-5,
+      5.4054577736107118E-5,
+      6.1271990592359771E-5
+    ],
+    [
+      0,
+      0,
+      0,
+      0
+    ]
+  ],
+  "control_valid": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "control_errors": [
+    [],
+    [],
+    [],
+    []
+  ],
+  "sensitivity_rank": 2,
+  "validated": true,
+  "validation_rule": "Each selected actuator must cause a finite nontrivial response in explicit native IEEE39 observations; sensitivity matrix rank must be at least two.",
+  "probe_model_file": "results/ieee39_r2024b/IEEE39BusSystem_AEFCProbe.slx"
+}

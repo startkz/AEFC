@@ -1,0 +1,7 @@
+{
+  "validated": true,
+  "valid_controls": 4,
+  "requested_controls": 4,
+  "sensitivity_rank": 2,
+  "mapping_file": "results/ieee39_r2024b/interface_mapping.json"
+}
