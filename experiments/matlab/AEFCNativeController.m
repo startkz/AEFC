@@ -5,15 +5,19 @@ classdef AEFCNativeController < matlab.System
 % observation channels feed PATBU -> risk gate -> trust-gated adaptation ->
 % sensitivity-based robust shield. Post-shield corruption is emitted on a
 % separate output so the Simulink model adds it after the shield boundary.
+%
+% MethodCode: 1 FedRL, 2 RobustAgg, 3 AEFC-no-PATBU, 4 AEFC-no-Gate,
+%             5 AEFC-no-TGOPA, 6 AEFC-no-Shield, 7 AEFC-Full.
+% ScenarioCode: 1 clean, 2 knowledge, 3 physical, 4 joint.
 
 properties(Nontunable)
-    Method = 'AEFC-Full'
-    Scenario = 'joint'
     ConfigPath = 'configs/ieee39_joint20.json'
     MappingPath = 'results/ieee39_r2024b/interface_mapping.json'
 end
 
 properties
+    MethodCode = 7
+    ScenarioCode = 4
     Seed = 0
 end
 
@@ -42,9 +46,6 @@ methods(Access=protected)
     end
 
     function [uShield,uPost,diagOut]=stepImpl(obj,obsPhysical)
-        % MATLAB System objects may be cloned while locked during Fast
-        % Restart. Explicitly rehydrate private runtime data if a clone did
-        % not retain the decoded JSON structures or derived matrices.
         obj.ensureRuntimeState();
 
         obsPhysical=double(obsPhysical(:));
@@ -53,7 +54,9 @@ methods(Access=protected)
             obsPhysical(end+1:4,1)=0;
         end
         t=obj.stepCount;
-        [physicalOn,knowledgeOn]=obj.scenarioFlags(obj.Scenario);
+        mc=round(double(obj.MethodCode));
+        sc=round(double(obj.ScenarioCode));
+        [physicalOn,knowledgeOn]=obj.scenarioFlags(sc);
         attackActive=t>=obj.cfg.attack_start_step && t<=obj.cfg.attack_end_step;
         physicalActive=physicalOn && attackActive;
         knowledgeActive=knowledgeOn && attackActive;
@@ -81,7 +84,7 @@ methods(Access=protected)
             evidence(:,j)=ev;
         end
 
-        if strcmp(obj.Method,'FedRL')
+        if mc==1
             agg=mean(updates,2); trust=0.5;
         else
             agg=obj.robustAggregate(updates,f,obj.cfg.common_support_k);
@@ -92,7 +95,7 @@ methods(Access=protected)
         if isempty(cleanK), cleanK=zeros(4,1); end
         obj.cleanBelief=0.72*obj.cleanBelief + 0.20*zPhysical + 0.08*cleanK;
 
-        if strcmp(obj.Method,'AEFC-no-PATBU') || strcmp(obj.Method,'FedRL') || strcmp(obj.Method,'RobustAgg')
+        if any(mc==[1 2 3])
             beliefNow=obsReceived;
         else
             weights=zeros(1,nClients); weighted=zeros(4,nClients);
@@ -122,7 +125,7 @@ methods(Access=protected)
         risk=0.62*safetyShortfall + 0.16*recoveryShortfall + 0.14*uncertainty + 0.08*(1-trust);
         gateAllowed=(risk <= obj.cfg.gate.rho_max-obj.cfg.gate.risk_margin) && (trust>=obj.cfg.gate.q_min);
         dangerous=max(abs(pred))>obj.cfg.normalized_safe_limit;
-        if strcmp(obj.Method,'FedRL') || strcmp(obj.Method,'RobustAgg') || strcmp(obj.Method,'AEFC-no-Gate')
+        if any(mc==[1 2 4])
             gateAllowed=true;
         end
         if ~gateAllowed, proposal=-0.05*(obj.Bn')*beliefNow; end
@@ -140,14 +143,14 @@ methods(Access=protected)
         valBefore=norm(beliefNow,2)+0.08*norm(obj.theta,2);
         valAfter=norm(beliefNow,2)+0.08*norm(candidate,2);
         adaptAccepted=trust>=obj.cfg.adaptation.q_min && gateAllowed && valAfter<=valBefore+obj.cfg.adaptation.validation_slack;
-        if strcmp(obj.Method,'FedRL') || strcmp(obj.Method,'RobustAgg') || strcmp(obj.Method,'AEFC-no-TGOPA')
+        if any(mc==[1 2 5])
             obj.theta=obj.theta-0.12*agg; adaptAccepted=true;
         elseif adaptAccepted
             obj.theta=candidate;
         end
         policyDrift=norm(obj.theta,2);
 
-        if strcmp(obj.Method,'FedRL') || strcmp(obj.Method,'RobustAgg') || strcmp(obj.Method,'AEFC-no-Shield')
+        if any(mc==[1 2 6])
             uShield=obj.clipVec(proposal,obj.cfg.action_limit);
             predShield=beliefNow+obj.Bn*uShield;
             intervention=0;
@@ -250,8 +253,8 @@ methods(Access=private)
     end
 
     function [physical,knowledge]=scenarioFlags(~,s)
-        physical=strcmp(s,'physical') || strcmp(s,'joint');
-        knowledge=strcmp(s,'knowledge') || strcmp(s,'joint');
+        physical=(s==3 || s==4);
+        knowledge=(s==2 || s==4);
     end
 
     function v=detNoise(obj,t,salt)
