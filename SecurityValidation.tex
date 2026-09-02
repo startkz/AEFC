@@ -1,23 +1,43 @@
-\subsection{Security Validation Protocol for Trustworthy Recovery}
-The preceding experiments quantify recovery performance, communication cost, heterogeneity stress, and empirical robustness of the existing implementation. The revised trustworthy-recovery formulation introduces stronger mechanism-level claims that require a correspondingly stronger validation protocol. We therefore separate \emph{reported measurements} from \emph{required certificate tests}: no numerical value is claimed below unless it is produced by the released implementation and trace logs.
+\section{SECURITY VALIDATION AND LIMITATIONS}
 
-\textbf{Certificate validation.} For each recovery episode, the implementation should record the minimum robust barrier margin
+\subsection{Mechanism-to-Claim Validation}
+Each formal claim is paired with an operational test.
+
+\textbf{G1: bounded belief distortion.}
+Under bounded observation and knowledge corruption, log
+$\|b_t-b_t^\circ\|$ and compare it with the analytical envelope in
+\eqref{eq:belief-bound}. Attack-stop experiments should verify the predicted contraction rate or reveal where the assumed $\lambda_b$ is invalid.
+
+\textbf{G2: bounded false authorization.}
+Estimate the false-authorization rate using an offline oracle or conservative ground-truth risk computation. The risk gate should be tested under observation replay, stale federated knowledge, metadata spoofing, and model replacement.
+
+\textbf{G3--G4: bounded adaptation and correction.}
+Record every candidate and deployed-policy hash, the accepted update norm, and the number of accepted poisoned rounds. If rollback is implemented, report detection delay and the checkpoint used. If rollback is not implemented, the paper must rely only on the stated post-attack contraction condition and must not claim finite exact recovery of policy parameters.
+
+\textbf{G5: physical forward invariance.}
+For each episode, record the minimum robust CBF margin and safety-QP feasibility. The policy-independent test replaces the learned proposal with intentionally unsafe actions and separately injects a poisoned policy. Shielded and unshielded controllers start from identical initial conditions.
+
+\subsection{Adaptive Byzantine and Sparse-Support Validation}
+The attacker may fabricate update values, sparse indices, advantages, prototypes, confidence values, and stale metadata. Consequently, self-reported quantities cannot be used as authentication signals. If a common support mask is used, the experiment should verify that all clients report the same requested coordinate set. If client-specific Top-$k$ remains in the implementation, the manuscript must replace the simple coordinate-wise trimmed-mean theorem with a support-aware robust-aggregation result.
+
+For every federation round, record
 \begin{equation}
-M_{\mathrm{CBF}}=\min_{t,i,\ell}\inf_{x\in\widehat{\mathcal X}_i,d\in\mathcal D_i}
-\left[\dot h_{i,\ell}+\alpha_{\ell}(h_{i,\ell})\right],
+\|\widehat g_t-\mu_t^H\|_2
 \end{equation}
-the number of safety-QP infeasibility events, the fraction of learned actions modified by the shield, and the first hitting time of the recovery set. A certificate-valid run requires $M_{\mathrm{CBF}}\ge0$ and zero safety-QP infeasibility under the modeled uncertainty set. The empirical recovery time should also be compared with the analytical bound derived from the recovery Lyapunov condition.
+and compare it with the assumed aggregation envelope.
 
-\textbf{Policy-independent attack test.} To test the separation between learning utility and physical safety, the learned proposal should be replaced by intentionally unsafe actions and by actors corrupted through model-replacement attacks. The unshielded controller and the shielded controller are then evaluated from identical initial states. This test is designed to verify the theorem's operational meaning: the learning policy may fail catastrophically in utility while the execution layer still preserves the modeled safety contract.
-
-\textbf{Adaptive Byzantine test.} The Byzantine evaluation should include random updates and sign-flip attacks retained from the original experiments, together with adaptive model replacement, coordinate-wise extremal poisoning, colluding Byzantine clients, and metadata spoofing. In particular, an attacker is allowed to fabricate advantages, prototypes, confidence values, and sparse indices. This setting directly tests why the revised server does not use client-reported credibility as a trust root. For each round, the implementation should log $\|\widehat g_t-\mu_t^H\|_2$ and compare it with the honest-coordinate envelope $\|r_t\|_2$.
-
-\textbf{Compression audit.} For each honest client and federation round, the implementation should verify
+\subsection{Compression Audit}
+For each honest client and round, verify
 \begin{equation}
-\frac{\|z_i^t-C_k(z_i^t)\|_2^2}{\|z_i^t\|_2^2}\le1-\frac{k}{d}.
+\frac{\|z_i^t-C_k(z_i^t)\|_2^2}{\|z_i^t\|_2^2}
+\le1-\frac{k}{d}.
 \end{equation}
-This diagnostic is deterministic and directly checks the Top-$k$ lemma rather than estimating an unspecified compression coefficient.
+This diagnostic checks the deterministic Top-$k$ statement directly. Top-$k$ is not used as evidence of privacy or Byzantine authentication.
 
-\textbf{Privacy extension.} If the optional trajectory-level Gaussian mechanism is enabled, the evaluation must report the privacy unit, clipping norm $C$, sampling rate, number of compositions, accountant type, and the final $(\varepsilon,\delta)$ budget. Membership-inference AUC may be reported as an additional empirical attack metric, but it is not used as evidence of formal privacy.
+\subsection{Privacy Scope}
+The base AEFC security claim concerns integrity and physical safety, not formal confidentiality. Data locality and sparse updates do not provide a differential-privacy guarantee. If a Gaussian mechanism is enabled, the released evaluation must specify the privacy unit, clipping norm, sampling rate, number of compositions, accountant, and final $(\varepsilon,\delta)$ budget. Membership-inference AUC, if retained, is only an empirical secondary metric.
 
-\textbf{Code-to-claim consistency.} The final release should expose one executable configuration for each manuscript mechanism: heterogeneous adapters, prioritized replay, certificate-gated update construction, error-feedback Top-$k$, Byzantine-resilient aggregation, robust safety-recovery shielding, and optional differential privacy. Every figure and table should be traceable to a committed configuration and raw log. This requirement is included because reproducibility is part of the trust boundary of a security-oriented recovery mechanism.
+\subsection{Implementation and Reproducibility Limitations}
+Several implementation conditions must be visible in the final submission. First, provenance authenticity requires a concrete cryptographic or attestation mechanism; a client-provided source identifier alone is not authenticated provenance. Second, the reduced-order 20-seed experiment in the artifact is a mechanism-integration test and is not an IEEE 39-bus substitute. Third, the native IEEE 39-bus R2024b path requires a successful licensed MATLAB execution and validated observation/actuation interfaces before native-model security Results can be claimed. Fourth, IEEE 33-bus and 8500-node results are outside the current artifact unless adapters and raw traces are added. Fifth, the physical safety theorem is conditional on uncertainty-set coverage and robust-shield feasibility. Finally, an attacker that can impose arbitrary unbounded actuation after the shield is outside the guarantee.
+
+These limitations are part of the security model rather than implementation footnotes. Stating them explicitly prevents the experimental section from overstating what the present code establishes.
