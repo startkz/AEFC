@@ -1,17 +1,20 @@
 classdef AEFCNativeController < matlab.System
 % AEFCNativeController
 % Interpreted MATLAB System implementation of the bounded-authority
-% pipeline for the instrumented native IEEE39 model.  Four causally probed
+% pipeline for the instrumented native IEEE39 model. Four causally probed
 % observation channels feed PATBU -> risk gate -> trust-gated adaptation ->
-% sensitivity-based robust shield.  Post-shield corruption is emitted on a
+% sensitivity-based robust shield. Post-shield corruption is emitted on a
 % separate output so the Simulink model adds it after the shield boundary.
 
-properties
+properties(Nontunable)
     Method = 'AEFC-Full'
     Scenario = 'joint'
-    Seed = 0
     ConfigPath = 'configs/ieee39_joint20.json'
     MappingPath = 'results/ieee39_r2024b/interface_mapping.json'
+end
+
+properties
+    Seed = 0
 end
 
 properties(Access=private)
