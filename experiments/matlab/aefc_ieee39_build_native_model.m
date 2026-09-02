@@ -1,6 +1,6 @@
 function aefc_ieee39_build_native_model
 % Build an editable native IEEE39 copy whose real logged observations feed
-% AEFCNativeController.  The shield output and post-shield attack leave the
+% AEFCNativeController. The shield output and post-shield attack leave the
 % controller on separate ports and are added to the validated control edge
 % in that order: original reference + shield correction + post-shield attack.
 repo=pwd; resDir=fullfile(repo,'results','ieee39_r2024b');
@@ -10,12 +10,15 @@ m=jsondecode(fileread(mapPath));
 assert(m.validated,'AEFC:MappingInvalid','interface_mapping.json is not validated.');
 assert(numel(m.observation_edges)==4 && numel(m.control_edges)==4,'AEFC:MappingDimension','Expected 4 observation and 4 control edges.');
 
-original='IEEE39BusSystem'; nativeModel='IEEE39BusSystem_AEFCNative';
+[original,~]=aefc_ieee39_load_official;
+nativeModel='IEEE39BusSystem_AEFCNative';
 nativePath=fullfile(resDir,[nativeModel '.slx']);
-try, load_system(original); catch, openExample('simscapeelectrical/IEEE39BusSystemExample'); load_system(original); end
 if bdIsLoaded(nativeModel), close_system(nativeModel,0); end
 if exist(nativePath,'file'), delete(nativePath); end
-save_system(original,nativePath); close_system(original,0); load_system(nativePath);
+save_system(original,nativePath);
+if bdIsLoaded(original), close_system(original,0); end
+if ~bdIsLoaded(nativeModel), load_system(nativePath); end
+assert(bdIsLoaded(nativeModel),'AEFC:NativeModelLoad','Native AEFC model was not loaded after Save As.');
 set_param(nativeModel,'SignalLogging','on');
 try, set_param(nativeModel,'SignalLoggingName','logsout'); catch, end
 
