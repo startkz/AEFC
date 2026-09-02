@@ -52,6 +52,8 @@ for si=1:numel(scenarios)
             diagv=sampleOutput(out,'AEFC_DIAG',tq,10);
             ushield=sampleOutput(out,'AEFC_SHIELD_VECTOR',tq,4);
             upost=sampleOutput(out,'AEFC_POST_ATTACK_VECTOR',tq,4);
+            validateEvidence(diagv,upost,mi,si,cfg);
+
             z=(obs-center')./scale';
             maxabs=max(abs(z),[],2);
             safe=maxabs<=double(cfg.normalized_safe_limit)+1e-9;
@@ -101,7 +103,7 @@ manifest=struct('backend','mathworks_ieee39_r2024b_native','commit_sha',commitSh
     'seeds',double(cfg.seeds),'methods',{methods},'scenarios',{scenarios},'rows',height(T), ...
     'native_model',model,'native_mapping_validated',logical(mapping.validated), ...
     'sample_time_s',dt,'fast_restart_scope','single compile across full 7x4x20 matrix using numeric tunable selectors', ...
-    'evidence_capture','explicit To Workspace via SimulationOutput');
+    'evidence_capture','explicit To Workspace via orientation-safe SimulationOutput extraction with per-episode semantic guards');
 saveSummary(fullfile(outRoot,'manifest.json'),manifest);
 close_system(model,0);
 end
@@ -110,15 +112,57 @@ function X=sampleOutput(out,name,tq,dim)
 try, v=out.get(name); catch, v=[]; end
 assert(~isempty(v),'AEFC:OutputMissing','Missing SimulationOutput variable %s',name);
 [t,d]=extractSeries(v);
-t=double(t(:)); d=double(d); d=squeeze(d);
+t=double(t(:)); d=double(d);
 if ~isreal(d), d=abs(d); end
-if isvector(d) && dim==1, d=d(:); else
-    if size(d,1)~=numel(t), d=reshape(d,numel(t),[]); end
-end
-assert(size(d,2)>=dim,'AEFC:OutputDimension','Signal %s has insufficient dimension.',name);
+d=normalizeTimeMajor(d,numel(t),dim,name);
 [t,ia]=unique(t,'stable'); d=d(ia,:);
 assert(numel(t)>=2,'AEFC:OutputSamples','Signal %s has fewer than two samples.',name);
-X=interp1(t,d(:,1:dim),tq,'previous','extrap');
+if numel(t)==numel(tq) && max(abs(t-tq))<=1e-9
+    X=d(:,1:dim);
+else
+    X=interp1(t,d(:,1:dim),tq,'nearest','extrap');
+end
+assert(isequal(size(X),[numel(tq) dim]),'AEFC:OutputShape','Signal %s did not normalize to time-major %dx%d.',name,numel(tq),dim);
+assert(all(isfinite(X),'all'),'AEFC:OutputFinite','Signal %s contains non-finite values.',name);
+end
+
+function d=normalizeTimeMajor(d,nT,dim,name)
+sz=size(d);
+if isvector(d) && dim==1
+    assert(numel(d)==nT,'AEFC:OutputSamples','Scalar signal %s sample count mismatch.',name);
+    d=d(:); return;
+end
+if numel(d)~=nT*dim
+    error('AEFC:OutputDimension','Signal %s has %d values; expected %d samples x %d channels.',name,numel(d),nT,dim);
+end
+nd=ndims(d);
+timeDim=find(sz==nT,1,'last');
+assert(~isempty(timeDim),'AEFC:OutputTimeDimension','Cannot identify time dimension for %s.',name);
+perm=[timeDim setdiff(1:nd,timeDim,'stable')];
+d=permute(d,perm);
+d=reshape(d,nT,[]);
+assert(size(d,2)==dim,'AEFC:OutputDimension','Signal %s normalized to %d channels; expected %d.',name,size(d,2),dim);
+end
+
+function validateEvidence(diagv,upost,mi,si,cfg)
+tol=1e-10;
+assert(size(diagv,2)==10 && size(upost,2)==4,'AEFC:EvidenceShape','Native evidence vector shape mismatch.');
+if any(mi==[1 2 6])
+    assert(max(abs(diagv(:,6)))<=tol,'AEFC:InterventionSemantics','Method code %d must have zero shield intervention.',mi);
+end
+if any(mi==[1 2 3])
+    assert(max(abs(diagv(:,1)-0.5))<=tol,'AEFC:TrustSemantics','Method code %d must retain fixed trust 0.5.',mi);
+end
+active=false(size(upost,1),1); active(double(cfg.attack_start_step)+1:double(cfg.attack_end_step)+1)=true;
+amp=max(abs(upost),[],2);
+if any(si==[1 2])
+    assert(max(amp)<=tol,'AEFC:PostAttackSemantics','Clean/knowledge-only scenario contains post-shield physical attack.');
+else
+    assert(all(amp(~active)<=tol),'AEFC:PostAttackWindow','Post-shield attack appears outside configured window.');
+    assert(all(amp(active)>tol),'AEFC:PostAttackWindow','Post-shield attack missing inside configured window.');
+    assert(max(amp)<=double(cfg.post_shield_control_attack)+1e-10,'AEFC:PostAttackBound','Post-shield attack exceeds configured bound.');
+end
+assert(sum(diagv(:,8)>0.5)==double(cfg.attack_end_step-cfg.attack_start_step+1),'AEFC:AttackFlag','Attack-window diagnostic length mismatch.');
 end
 
 function [t,d]=extractSeries(v)
