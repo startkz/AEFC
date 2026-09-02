@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+import csv, json, math
+from collections import defaultdict
+from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import wilcoxon
+
+ROOT=Path('results/ieee39_joint20'); GEN=Path('results/ieee39_generated'); GEN.mkdir(parents=True,exist_ok=True)
+rows=list(csv.DictReader((ROOT/'summary.csv').open()))
+num=['safety_violation','min_native_margin','false_authorization_rate','max_belief_distortion','max_policy_drift','recovery_success','recovery_time','shield_intervention_ratio']
+for r in rows:
+    r['seed']=int(float(r['seed']))
+    for k in num: r[k]=float(r[k])
+g=defaultdict(list)
+for r in rows: g[(r['scenario'],r['method'])].append(r)
+for key in g: g[key]=sorted(g[key],key=lambda x:x['seed'])
+methods=['FedRL','RobustAgg','AEFC-no-PATBU','AEFC-no-Gate','AEFC-no-TGOPA','AEFC-no-Shield','AEFC-Full']
+
+def mean_ci(xs):
+    x=np.asarray(xs,float); m=x.mean(); se=x.std(ddof=1)/math.sqrt(len(x)) if len(x)>1 else 0.0
+    return m,m-1.96*se,m+1.96*se
+
+def wilson(k,n,z=1.96):
+    if not n: return np.nan,np.nan,np.nan
+    p=k/n; den=1+z*z/n; c=(p+z*z/(2*n))/den; h=z*math.sqrt(p*(1-p)/n+z*z/(4*n*n))/den
+    return p,max(0,c-h),min(1,c+h)
+
+def fmt(xs,binary=False,bounded=False):
+    x=np.asarray(xs,float)
+    if binary: m,lo,hi=wilson(int(round(x.sum())),len(x))
+    else:
+        m,lo,hi=mean_ci(x)
+        if bounded: lo=max(0,lo); hi=min(1,hi)
+    return m,lo,hi,f'{m:.3f} [{lo:.3f}, {hi:.3f}]'
+
+def holm(ps):
+    ps=np.asarray(ps,float); m=len(ps); order=np.argsort(ps); adj=np.empty(m); running=0
+    for rank,idx in enumerate(order):
+        running=max(running,(m-rank)*ps[idx]); adj[idx]=min(1,running)
+    return adj
+
+joint={m:g[('joint',m)] for m in methods}
+metrics=[('safety_violation','SVR',True),('min_native_margin','Min native margin',False),('false_authorization_rate','FAR','bounded'),('max_belief_distortion','Belief dist.',False),('max_policy_drift','Policy drift',False),('recovery_success','Rec. success',True),('recovery_time','Rec. time',False)]
+with (GEN/'ieee39_joint_main.csv').open('w',newline='') as f:
+    w=csv.writer(f); w.writerow(['method']+[b for _,b,_ in metrics])
+    for m in methods:
+        rr=joint[m]; w.writerow([m]+[fmt([r[k] for r in rr],b is True,b=='bounded')[3] for k,_,b in metrics])
+
+stat_metrics=['max_belief_distortion','max_policy_drift','recovery_time','min_native_margin']
+stat=[]; full=joint['AEFC-Full']
+for metric in stat_metrics:
+    x=np.asarray([r[metric] for r in full]); ps=[]; tmp=[]
+    for m in methods[:-1]:
+        y=np.asarray([r[metric] for r in joint[m]])
+        try: p=float(wilcoxon(x,y,zero_method='wilcox').pvalue)
+        except ValueError: p=1.0
+        ps.append(p); tmp.append((m,float(np.median(x-y)),p))
+    for (m,med,p),pa in zip(tmp,holm(ps)): stat.append([metric,m,med,p,float(pa)])
+with (GEN/'ieee39_joint_statistics.csv').open('w',newline='') as f:
+    w=csv.writer(f); w.writerow(['metric','comparison','median_paired_difference_full_minus_comparison','wilcoxon_p','holm_adjusted_p']); w.writerows(stat)
+
+tex=[r'\begin{table*}[t]',r'\centering',r'\caption{Native MathWorks IEEE 39-bus joint-corruption results over 20 matched seeds. Values are means with 95\% confidence intervals; Wilson intervals are used for binary rates.}',r'\label{tab:ieee39-joint-native}',r'\scriptsize',r'\begin{tabular}{lcccccc}',r'\toprule',r'Method & SVR $\downarrow$ & FAR $\downarrow$ & Belief dist. $\downarrow$ & Policy drift $\downarrow$ & Rec. success $\uparrow$ & Rec. time $\downarrow$\\',r'\midrule']
+for m in methods:
+    rr=joint[m]; vals=[]
+    for k,b in [('safety_violation',True),('false_authorization_rate','bounded'),('max_belief_distortion',False),('max_policy_drift',False),('recovery_success',True),('recovery_time',False)]: vals.append(fmt([r[k] for r in rr],b is True,b=='bounded')[3])
+    name=r'\textbf{AEFC-Full}' if m=='AEFC-Full' else m; tex.append(name+' & '+' & '.join(vals)+r'\\')
+tex += [r'\bottomrule',r'\end{tabular}',r'\end{table*}']
+(GEN/'IEEE39-Joint-Table-Auto.tex').write_text('\n'.join(tex)+'\n')
+
+lines=[r'\subsection{Native IEEE 39-Bus 20-Seed Joint-Corruption Results}',
+       r'The native experiment uses the MathWorks R2024b \texttt{IEEE39BusSystem} plant. Observation and actuation edges are selected only after topology discovery and finite-difference causal validation. The same seven methods, four corruption cells, and 20 matched seeds used in the mechanism-level experiment are then executed with post-shield control corruption applied on the validated native control edge.',
+       r'\input{results/ieee39_generated/IEEE39-Joint-Table-Auto.tex}']
+for key,label,binary in [('safety_violation','episode safety-violation rate',True),('false_authorization_rate','false-authorization rate','bounded'),('max_belief_distortion','maximum belief distortion',False),('max_policy_drift','maximum deployed-policy drift',False),('recovery_success','recovery success rate',True),('recovery_time','post-attack recovery time',False)]:
+    mf,lf,hf,_=fmt([r[key] for r in full],binary is True,binary=='bounded'); base=joint['FedRL']; mb,lb,hb,_=fmt([r[key] for r in base],binary is True,binary=='bounded')
+    lines.append(f'Under joint corruption, AEFC-Full yields {label} {mf:.4f} (95\\% CI [{lf:.4f}, {hf:.4f}]), versus {mb:.4f} ([{lb:.4f}, {hb:.4f}]) for FedRL.')
+lines.append(r'Continuous integrity, safety-margin, and recovery metrics use paired Wilcoxon tests across matched seeds with Holm correction across the six alternative methods; machine-readable values are released in \texttt{results/ieee39\_generated/ieee39\_joint\_statistics.csv}.')
+(GEN/'IEEE39-Results-Auto.tex').write_text('\n\n'.join(lines)+'\n')
+
+fig,ax=plt.subplots(figsize=(7.2,3.6)); means=[]; los=[]; his=[]
+for m in methods:
+    x=np.asarray([r['safety_violation'] for r in joint[m]]); mean,lo,hi=wilson(int(round(x.sum())),len(x)); means.append(mean); los.append(mean-lo); his.append(hi-mean)
+ax.bar(np.arange(len(methods)),means); ax.errorbar(np.arange(len(methods)),means,yerr=np.vstack([los,his]),fmt='none',capsize=3)
+ax.set_xticks(np.arange(len(methods)),methods,rotation=35,ha='right'); ax.set_ylabel('Native IEEE39 safety-violation rate'); ax.set_ylim(0,1.05); fig.tight_layout(); fig.savefig(GEN/'ieee39_joint_safety.pdf'); plt.close(fig)
+manifest=json.loads((ROOT/'manifest.json').read_text()); manifest['generated_from']='results/ieee39_joint20/summary.csv'; manifest['statistics']='paired Wilcoxon + Holm; Wilson CI for binary rates'; (GEN/'generation_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
