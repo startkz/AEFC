@@ -14,19 +14,13 @@ jobs:
   native-ieee39:
     runs-on: ubuntu-latest
     timeout-minutes: 360
-    env:
-      MLM_LICENSE_TOKEN: ${{ secrets.MATLAB_BATCH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: License-token preflight
-        shell: bash
+      - name: Public-repository licensing mode
         run: |
-          if [ -z "$MLM_LICENSE_TOKEN" ]; then
-            echo 'MATLAB_BATCH_TOKEN is not configured in repository Actions secrets.' >&2
-            echo 'Configure Settings > Secrets and variables > Actions > New repository secret, then rerun this failed job.' >&2
-            exit 78
-          fi
+          echo 'Repository is public: use MathWorks public-project licensing on the GitHub-hosted runner.'
+          echo 'No MATLAB batch licensing token is required for MATLAB/Simulink/Simscape products in this workflow.'
 
       - uses: actions/setup-python@v5
         with:
