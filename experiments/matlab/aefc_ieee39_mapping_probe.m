@@ -1,7 +1,7 @@
 function aefc_ieee39_mapping_probe
 % Validate native IEEE39 observation/actuation candidates by instrumenting a
 % disposable model copy, logging real signals, and applying small additive
-% perturbations on candidate control edges.  Only causally responsive edges
+% perturbations on candidate control edges. Only causally responsive edges
 % are emitted as validated mapping evidence.
 repo=pwd;
 resDir=fullfile(repo,'results','ieee39_r2024b');
@@ -87,6 +87,8 @@ for j=1:nAct
         err{j}=[ME.identifier ': ' ME.message];
     end
 end
+Bfinite=B; Bfinite(~isfinite(Bfinite))=0;
+rankB=rank(Bfinite);
 
 mapping=struct;
 mapping.model='IEEE39BusSystem';
@@ -100,13 +102,14 @@ mapping.probe_epsilon=epsilon;
 mapping.sensitivity_matrix=B;
 mapping.control_valid=ok;
 mapping.control_errors=err;
-mapping.validated=all(ok) && rank(B)>=min(2,min(size(B)));
+mapping.sensitivity_rank=rankB;
+mapping.validated=all(ok) && rankB>=min(2,min(size(B)));
 mapping.validation_rule='Each selected actuator must cause a finite nontrivial response in logged native IEEE39 signals; sensitivity matrix rank must be at least two.';
 mapping.probe_model_file=strrep(probePath,[repo filesep],'');
 writejson(fullfile(resDir,'interface_mapping.json'),mapping);
 
 status=struct('validated',mapping.validated,'valid_controls',sum(ok),'requested_controls',nAct, ...
-              'sensitivity_rank',rank(B),'mapping_file','results/ieee39_r2024b/interface_mapping.json');
+              'sensitivity_rank',rankB,'mapping_file','results/ieee39_r2024b/interface_mapping.json');
 writejson(fullfile(resDir,'mapping_status.json'),status);
 close_system(probeModel,0);
 assert(mapping.validated,'AEFC:MappingProbeFailed','Native mapping probe did not validate all requested actuator edges. Review interface_mapping.json.');
@@ -151,7 +154,9 @@ for i=1:numel(names)
     data=double(el.Values.Data);
     data=data(:);
     assert(~isempty(data),'AEFC:SignalEmpty','Empty logged signal %s',names{i});
-    tail=data(max(1,end-min(9,numel(data)-1)):end);
+    nData=numel(data);
+    first=max(1,nData-9);
+    tail=data(first:nData);
     y(i)=mean(tail,'omitnan');
 end
 end
