@@ -1,4 +1,4 @@
-\title{Trustworthy Heterogeneous Federated Reinforcement Learning for Certified Resilient Recovery of Cyber-Physical Systems\\}
+\title{Bounded-Authority Federated Recovery of Cyber--Physical Systems under Joint Physical-Channel Corruption and Recovery-Knowledge Poisoning}
 
 \author{
         Kai~Zhong,
@@ -18,17 +18,17 @@
 }
 
 \markboth{IEEE TRANSACTIONS ON DEPENDABLE AND SECURE COMPUTING,~2026}%
-{Zhong \MakeLowercase{\textit{et al.}}: Trustworthy Heterogeneous Federated Reinforcement Learning for Certified Resilient Recovery of CPS}
+{Zhong \MakeLowercase{\textit{et al.}}: Bounded-Authority Federated Recovery of CPS}
 
 \IEEEtitleabstractindextext{
 \begin{abstract}
 \justifying{
-Cross-layer attacks against cyber-physical systems (CPS) can simultaneously corrupt observations, communication, control commands, and the federated knowledge used for post-attack recovery. This creates a recovery-integrity problem that is not addressed by conventional federated reinforcement learning (FRL): a globally shared recovery policy may be trained from heterogeneous clients whose updates are stale, incompatible, or Byzantine, and a poisoned policy may subsequently drive the physical plant outside its safe operating region. We therefore formulate \emph{trustworthy heterogeneous federated recovery}, in which both local observations and federated recovery knowledge are treated as potentially untrusted. We redesign AEFC as a certificate-gated federated recovery mechanism with three layers. First, heterogeneous clients retain subsystem-specific observation/action adapters and share only an aligned recovery backbone. Second, recovery knowledge is admitted to federation only when it is supported by local recovery value and safety certificates, while server aggregation uses Byzantine-resilient trimming rather than client-reported credibility as a trust root. Third, each learned action is passed through a robust safety-recovery shield before execution, separating learning utility from physical safety. Under bounded state/attack uncertainty and shield feasibility, we prove forward invariance of the safe set for arbitrary learned policy proposals, including proposals induced by model poisoning. For Top-$k$ communication, we derive an explicit deterministic contraction factor $\delta_k=k/d$ and combine it with a Byzantine aggregation deviation bound instead of assuming an unverifiable credibility bias. Existing IEEE 39-bus and IEEE 118-bus experiments are retained only for the performance and communication claims they directly support; the revised evaluation protocol further specifies certificate, adaptive-Byzantine, and privacy tests required for high-assurance deployment.
+Federated recovery introduces an integrity dependency that is largely absent from conventional cyber--physical system (CPS) recovery formulations: a controller may need to restore a plant while its observations and control channel are corrupted, yet the distributed recovery knowledge used to adapt the controller may itself be stale, inconsistent, or adversarially poisoned. We formulate this problem as \emph{bounded-authority federated recovery}. Instead of treating federated knowledge as trusted state, AEFC treats it as untrusted evidence whose influence is explicitly bounded along three security-critical transitions: evidence-to-belief, belief-to-action authority, and accepted evidence-to-deployed-policy adaptation. AEFC combines a provenance-aware temporal belief update, a risk-aware recovery gate, trust-gated online policy adaptation, Byzantine-resilient federated coordination, and a robust physical execution shield. Under bounded physical corruption, bounded robust-aggregation error, contractive belief dynamics, bounded adaptation steps, uncertainty-set coverage, and shield feasibility, we establish bounded belief distortion, bounded false authorization, bounded deployed-policy deviation, finite $\varepsilon$-correction after poisoning under an explicit recovery condition, and policy-independent forward invariance of the physical safe set. Heterogeneous local adapters and deterministic Top-$k$ communication are retained as implementation mechanisms rather than security roots. Numerical security claims are included only when they are traceable to executable configurations and raw per-seed logs; native IEEE 39-bus claims remain conditional on successful R2024b execution.
 }
 \end{abstract}
 
 \begin{IEEEkeywords}
-Cyber-physical systems, resilient recovery, trustworthy federated reinforcement learning, Byzantine robustness, safety certificate, heterogeneous multi-agent reinforcement learning.
+Cyber-physical systems, resilient recovery, federated reinforcement learning, Byzantine robustness, recovery integrity, control barrier function, trustworthy learning.
 \end{IEEEkeywords}}
 \maketitle
 \IEEEdisplaynontitleabstractindextext
