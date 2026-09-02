@@ -1,0 +1,17 @@
+\subsection{Mechanism-Level 20-Seed Joint-Corruption Results}
+
+The executable security pipeline was first validated on the released reduced-order CPS backend. This backend exercises the complete PATBU--gate--adaptation--shield path and the post-shield attack ordering, but it is not reported as an IEEE 39-bus result. Each entry below is computed from 20 matched seeds and immutable raw JSONL traces produced by the same commit and configuration.
+
+For the joint physical/knowledge attack, AEFC-Full obtains episode safety-violation rate 0.0000 $\pm$ 0.0000 (95\% normal-approximation CI half-width), compared with 1.0000 $\pm$ 0.0000 for FedRL.
+
+For the joint physical/knowledge attack, AEFC-Full obtains false-authorization rate 0.0000 $\pm$ 0.0000 (95\% normal-approximation CI half-width), compared with 1.0000 $\pm$ 0.0000 for FedRL.
+
+For the joint physical/knowledge attack, AEFC-Full obtains maximum belief distortion 0.4813 $\pm$ 0.0025 (95\% normal-approximation CI half-width), compared with 1.2896 $\pm$ 0.0867 for FedRL.
+
+For the joint physical/knowledge attack, AEFC-Full obtains maximum deployed-policy drift 0.0360 $\pm$ 0.0024 (95\% normal-approximation CI half-width), compared with 3.4224 $\pm$ 0.3630 for FedRL.
+
+For the joint physical/knowledge attack, AEFC-Full obtains recovery success rate 1.0000 $\pm$ 0.0000 (95\% normal-approximation CI half-width), compared with 0.9500 $\pm$ 0.0980 for FedRL.
+
+For the joint physical/knowledge attack, AEFC-Full obtains post-attack recovery time 4.3000 $\pm$ 0.4519 (95\% normal-approximation CI half-width), compared with 40.9000 $\pm$ 2.2161 for FedRL.
+
+These measurements validate executable mechanism composition only. IEEE 39-bus claims remain pending until the licensed R2024b workflow produces native-model traces.
