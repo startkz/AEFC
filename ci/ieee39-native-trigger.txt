@@ -1,1 +1,1 @@
-trigger=2026-09-02-syntax-clean-authoritative-v12
+trigger=2026-09-02-fast-restart-state-v13
