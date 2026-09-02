@@ -35,6 +35,14 @@ jobs:
           products: Simulink Simscape Simscape_Electrical
           cache: true
 
+      - name: Locate installed IEEE39 assets without openExample
+        shell: bash
+        run: |
+          mkdir -p results/ieee39_r2024b
+          find /opt/hostedtoolcache/MATLAB -type f \( -iname 'IEEE39BusSystem.slx' -o -iname '*IEEE39*' -o -iname '*39BusSystem*' \) -print 2>/dev/null | sort -u | tee results/ieee39_r2024b/install_asset_search.txt
+          echo '--- exact IEEE39BusSystem.slx matches ---'
+          grep -i '/IEEE39BusSystem\.slx$' results/ieee39_r2024b/install_asset_search.txt || true
+
       - name: Bootstrap, discover topology, causally validate mapping, and build native AEFC model
         uses: matlab-actions/run-command@v3
         with:
@@ -54,6 +62,8 @@ jobs:
         with:
           name: ieee39-native-joint20-${{ github.sha }}
           path: |
+            results/ieee39_r2024b/install_asset_search.txt
+            results/ieee39_r2024b/model_resolution.json
             results/ieee39_r2024b/interface_discovery.json
             results/ieee39_r2024b/interface_mapping.json
             results/ieee39_r2024b/mapping_status.json
@@ -71,7 +81,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add results/ieee39_r2024b/*.json || true
+          git add results/ieee39_r2024b/*.json results/ieee39_r2024b/install_asset_search.txt || true
           git add results/ieee39_joint20/summary.csv results/ieee39_joint20/manifest.json results/ieee39_generated || true
           git commit -m 'Generate native IEEE39 20-seed bounded-authority evidence [skip ci]' || true
           git fetch origin experiment/ieee39-r2024b-actions
