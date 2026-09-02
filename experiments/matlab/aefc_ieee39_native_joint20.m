@@ -2,17 +2,20 @@ function aefc_ieee39_native_joint20
 % Execute 20 matched seeds x four corruption cells x seven methods on the
 % instrumented native MathWorks IEEE39BusSystem model. Every manuscript
 % number is derived from per-run SimulationOutput evidence and raw JSONL.
+% Method and Scenario are nontunable System-object parameters, so Fast
+% Restart is scoped to the 20 seeds of one method/scenario cell only.
 repo=pwd;
 cfgPath=fullfile(repo,'configs','ieee39_joint20.json');
 cfg=jsondecode(fileread(cfgPath));
 mapPath=fullfile(repo,cfg.mapping_path); mapping=jsondecode(fileread(mapPath));
 assert(mapping.validated,'AEFC:MappingInvalid','Native mapping must be validated before the joint matrix is enabled.');
+assert(isfield(mapping,'selection_policy') && strcmp(mapping.selection_policy,'paired-generator-physical-speed-v2'), ...
+    'AEFC:MappingPolicy','Authoritative native matrix requires paired-generator-physical-speed-v2 mapping.');
 model=char(cfg.model); modelPath=fullfile(repo,'results','ieee39_r2024b',[model '.slx']);
 if exist(modelPath,'file')~=2, aefc_ieee39_build_native_model; end
 load_system(modelPath);
 try, set_param(model,'ReturnWorkspaceOutputs','on'); catch, end
 try, set_param(model,'SignalLogging','off'); catch, end
-try, set_param(model,'FastRestart','on'); catch, end
 
 methods={'FedRL','RobustAgg','AEFC-no-PATBU','AEFC-no-Gate','AEFC-no-TGOPA','AEFC-no-Shield','AEFC-Full'};
 scenarios={'clean','knowledge','physical','joint'};
@@ -27,9 +30,16 @@ for si=1:numel(scenarios)
     scenario=scenarios{si};
     for mi=1:numel(methods)
         method=methods{mi};
+        % Method/Scenario are changed only while Fast Restart is off.
+        try, set_param(model,'FastRestart','off'); catch, end
+        set_param(ctrl,'Method',method,'Scenario',scenario,'Seed','0');
+        try, set_param(model,'SimulationCommand','update'); catch, end
+        fastRestart=false;
+        try, set_param(model,'FastRestart','on'); fastRestart=true; catch, end
+
         runDir=fullfile(outRoot,scenario,method); if ~exist(runDir,'dir'),mkdir(runDir);end
         for seed=0:double(cfg.seeds)-1
-            set_param(ctrl,'Method',method,'Scenario',scenario,'Seed',num2str(seed));
+            set_param(ctrl,'Seed',num2str(seed));
             simIn=Simulink.SimulationInput(model);
             simIn=simIn.setModelParameter('StopTime',num2str(stopTime,'%.17g'),'ReturnWorkspaceOutputs','on');
             out=sim(simIn);
@@ -53,7 +63,8 @@ for si=1:numel(scenarios)
             fid=fopen(tracePath,'w'); assert(fid>0,'AEFC:IO','Cannot open trace file.');
             cleanup=onCleanup(@()safeClose(fid)); %#ok<NASGU>
             for k=1:numel(tq)
-                r=struct('commit_sha',commitSha,'config_id',configId,'seed',seed,'method',method,'scenario',scenario,'time',tq(k), ...
+                r=struct('commit_sha',commitSha,'config_id',configId,'mapping_policy',mapping.selection_policy, ...
+                    'seed',seed,'method',method,'scenario',scenario,'time',tq(k), ...
                     'observation_native',obs(k,:),'observation_normalized',z(k,:),'trust_score',diagv(k,1),'risk_upper_bound',diagv(k,2), ...
                     'gate_decision',logical(gate(k)),'belief_distortion',diagv(k,4),'policy_drift',diagv(k,5), ...
                     'shield_intervention',diagv(k,6),'predicted_margin',diagv(k,7),'attack_active',logical(diagv(k,8)>0.5), ...
@@ -66,7 +77,7 @@ for si=1:numel(scenarios)
 
             rowIdx=rowIdx+1;
             rows(rowIdx).commit_sha=commitSha; %#ok<AGROW>
-            rows(rowIdx).config_id=configId;
+            rows(rowIdx).config_id=configId; rows(rowIdx).mapping_policy=mapping.selection_policy;
             rows(rowIdx).seed=seed; rows(rowIdx).method=method; rows(rowIdx).scenario=scenario;
             rows(rowIdx).safety_violation=double(any(~safe));
             rows(rowIdx).min_native_margin=min(double(cfg.normalized_safe_limit)-maxabs);
@@ -78,13 +89,17 @@ for si=1:numel(scenarios)
             rows(rowIdx).backend='mathworks_ieee39_r2024b_native';
             s=rows(rowIdx); saveSummary(fullfile(runDir,sprintf('seed_%02d.summary.json',seed)),s);
         end
+        if fastRestart, try, set_param(model,'FastRestart','off'); catch, end, end
     end
 end
 
 T=struct2table(rows); writetable(T,fullfile(outRoot,'summary.csv'));
 manifest=struct('backend','mathworks_ieee39_r2024b_native','commit_sha',commitSha,'config_path','configs/ieee39_joint20.json', ...
-    'config_id',configId,'mapping_path',cfg.mapping_path,'seeds',double(cfg.seeds),'methods',{methods},'scenarios',{scenarios},'rows',height(T), ...
-    'native_model',model,'native_mapping_validated',logical(mapping.validated),'evidence_capture','explicit To Workspace via SimulationOutput');
+    'config_id',configId,'mapping_path',cfg.mapping_path,'mapping_policy',mapping.selection_policy, ...
+    'seeds',double(cfg.seeds),'methods',{methods},'scenarios',{scenarios},'rows',height(T), ...
+    'native_model',model,'native_mapping_validated',logical(mapping.validated), ...
+    'sample_time_s',dt,'fast_restart_scope','within matched seeds of each method/scenario cell', ...
+    'evidence_capture','explicit To Workspace via SimulationOutput');
 saveSummary(fullfile(outRoot,'manifest.json'),manifest);
 try, set_param(model,'FastRestart','off'); catch, end
 close_system(model,0);
