@@ -20,16 +20,19 @@ SCENARIOS = {
 
 def h(v): return hashlib.sha256(np.asarray(v,dtype=float).tobytes()).hexdigest()[:16]
 
-def run(seed, method, scenario, out_dir, steps=120, nclients=7, f=2, config_id='embedded'):
+def run(seed, method, scenario, out_dir, cfg, steps=120, nclients=7, f=2, config_id='embedded'):
     physical, knowledge = SCENARIOS[scenario]
     rng = np.random.default_rng(seed*1009 + sum(map(ord,method)) + sum(map(ord,scenario)))
     env = ReducedOrderCPS(dim=4, seed=seed)
     x = env.reset()
-    patbu = ProvenanceAwareTemporalBelief(4, PATBUConfig(trim_f=f))
-    gate = RiskAwareRecoveryGate(GateConfig())
-    adapt = TrustGatedAdaptation(4, AdaptConfig())
-    shield = RobustBoxShield(ShieldConfig())
-    atk = AttackConfig()
+    patbu_cfg = dict(cfg.get('patbu', {})); patbu_cfg['trim_f'] = f
+    patbu = ProvenanceAwareTemporalBelief(4, PATBUConfig(**patbu_cfg))
+    gate = RiskAwareRecoveryGate(GateConfig(**cfg.get('gate', {})))
+    adapt = TrustGatedAdaptation(4, AdaptConfig(**cfg.get('adaptation', {})))
+    shield_cfg = dict(cfg.get('shield', {})); shield_cfg['state_limit'] = float(cfg.get('safe_state_limit', 0.35))
+    shield = RobustBoxShield(ShieldConfig(**shield_cfg))
+    atk = AttackConfig(**cfg.get('attack', {}))
+    common_k = int(cfg.get('common_support_k', 3))
     out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
     trace_path = out_dir / f"seed_{seed:02d}.jsonl"
     violation = False; recovery_time = None; interventions = 0; false_auth = 0; dangerous = 0
@@ -53,7 +56,7 @@ def run(seed, method, scenario, out_dir, steps=120, nclients=7, f=2, config_id='
             if method == "FedRL":
                 agg=np.mean(np.vstack(client_updates),axis=0); support=np.arange(4); trust=0.5
             else:
-                agg,support=robust_sparse_aggregate(client_updates,f=f,k=3)
+                agg,support=robust_sparse_aggregate(client_updates,f=f,k=common_k)
                 trust=0.5
             bytes_tx += nclients*len(support)*(8+4)
             clean_k=np.mean(np.vstack([e.value for e in evidence if e.provenance_valid]),axis=0) if evidence else np.zeros(4)
@@ -128,7 +131,7 @@ def main():
     for scenario in SCENARIOS:
         for method in METHODS:
             od=Path(args.output)/scenario/method
-            for seed in range(seeds): rows.append(run(seed,method,scenario,od,steps,nclients,f,config_id))
+            for seed in range(seeds): rows.append(run(seed,method,scenario,od,cfg,steps,nclients,f,config_id))
     p=Path(args.output); p.mkdir(parents=True,exist_ok=True)
     with (p/'summary.csv').open('w',newline='') as f:
         w=csv.DictWriter(f,fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
