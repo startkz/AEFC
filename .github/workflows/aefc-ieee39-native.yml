@@ -42,28 +42,15 @@ jobs:
           MATROOT="$(printf '%s\n' /opt/hostedtoolcache/MATLAB/*/x64 | head -n 1)"
           if [ ! -d "$MATROOT" ]; then
             echo "Could not resolve MATLAB root under /opt/hostedtoolcache/MATLAB" >&2
-            find /opt/hostedtoolcache/MATLAB -maxdepth 3 -type d -print 2>/dev/null | sort >&2
             exit 1
           fi
           echo "$MATROOT" > results/ieee39_r2024b/matlabroot_path.txt
-          echo "MATROOT=$MATROOT"
-          find "$MATROOT" -type f \( -iname 'IEEE39BusSystem.slx' -o -iname '*IEEE39*' -o -iname '*39BusSystem*' \) -print 2>/dev/null | sort -u | tee results/ieee39_r2024b/install_asset_search.txt
-          grep -RIl -I -m 1 'openExample is not supported in this configuration' "$MATROOT" 2>/dev/null | head -n 50 | tee results/ieee39_r2024b/openexample_unsupported_files.txt || true
-          find "$MATROOT" -type f \( -name 'openExample.m' -o -name 'openExample.p' \) -print 2>/dev/null | sort -u | tee results/ieee39_r2024b/openexample_files.txt
-          : > results/ieee39_r2024b/openexample_source.txt
-          while IFS= read -r f; do
-            [ -f "$f" ] || continue
-            echo "===== $f =====" >> results/ieee39_r2024b/openexample_source.txt
-            case "$f" in
-              *.m) sed -n '1,320p' "$f" >> results/ieee39_r2024b/openexample_source.txt ;;
-              *) echo '[p-coded implementation]' >> results/ieee39_r2024b/openexample_source.txt ;;
-            esac
-          done < results/ieee39_r2024b/openexample_files.txt
+          find "$MATROOT" -type f \( -name 'openExample.m' -o -name 'openExample.p' \) -print 2>/dev/null | sort -u > results/ieee39_r2024b/openexample_files.txt
 
       - name: Bootstrap, validate or reuse mapping, and build native AEFC model
         uses: matlab-actions/run-command@v3
         with:
-          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mp=fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'); needMap=true; if exist(mp,'file')==2, try, mm=jsondecode(fileread(mp)); needMap=~isfield(mm,'validated') || ~logical(mm.validated); catch, needMap=true; end, end; if needMap, aefc_ieee39_interface_discovery; aefc_ieee39_mapping_probe; else, disp('Reusing committed validated IEEE39 causal mapping.'); end; aefc_ieee39_build_native_model
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mp=fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'); needMap=true; if exist(mp,'file')==2, try, mm=jsondecode(fileread(mp)); needMap=~isfield(mm,'validated') || ~logical(mm.validated) || ~isfield(mm,'selection_policy') || ~strcmp(mm.selection_policy,'paired-generator-physical-speed-v2'); catch, needMap=true; end, end; if needMap, aefc_ieee39_interface_discovery; aefc_ieee39_mapping_probe; else, disp('Reusing committed validated paired-generator IEEE39 causal mapping.'); end; aefc_ieee39_build_native_model
 
       - name: Execute native IEEE39 20-seed joint matrix
         uses: matlab-actions/run-command@v3
