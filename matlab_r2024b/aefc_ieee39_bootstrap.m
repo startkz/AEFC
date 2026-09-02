@@ -60,16 +60,13 @@ end
 % are the backend used by MathWorks to resolve and materialize the example.
 if isempty(resolvedModel)
     oe = which('openExample');
-    if ~isempty(oe)
-        addpath(fileparts(oe));
-    end
+    if ~isempty(oe), addpath(fileparts(oe)); end
     headless.findExample_path = which('findExample');
     headless.setupExample_path = which('setupExample');
-    ids = { ...
-        'sps/IEEE39BusSystemExample', ...
-        'simscapeelectrical/IEEE39BusSystemExample', ...
-        'sps/IEEE39BusSystem', ...
-        'simscapeelectrical/IEEE39BusSystem'};
+    ids = {'sps/IEEE39BusSystemExample', ...
+           'simscapeelectrical/IEEE39BusSystemExample', ...
+           'sps/IEEE39BusSystem', ...
+           'simscapeelectrical/IEEE39BusSystem'};
     workRoot = fullfile(resDir,'official_mathworks_example');
     if ~exist(workRoot,'dir'), mkdir(workRoot); end
     for k=1:numel(ids)
@@ -81,9 +78,7 @@ if isempty(resolvedModel)
             if ~exist(workDir,'dir'), mkdir(workDir); end
             [materializedDir,~] = setupExample(metadata,workDir);
             m = dir(fullfile(materializedDir,'**',[modelName '.slx']));
-            if isempty(m)
-                m = dir(fullfile(workDir,'**',[modelName '.slx']));
-            end
+            if isempty(m), m = dir(fullfile(workDir,'**',[modelName '.slx'])); end
             if ~isempty(m)
                 resolvedModel = fullfile(m(1).folder,m(1).name);
                 resolutionMethod = ['headless-findExample-setupExample:' ids{k}];
@@ -118,15 +113,18 @@ assert(~isempty(resolvedModel),'AEFC:ModelNotFound', ...
     ['The official IEEE39BusSystem example could not be materialized on the headless runner. ' ...
      'Inspect headless_example_setup.json and MathWorks example-backend diagnostics.']);
 
+% Preserve an immutable copy without renaming the currently loaded block
+% diagram. save_system(model,newPath) changes the loaded diagram identity;
+% copyfile avoids that and keeps all subsequent calls addressed to
+% IEEE39BusSystem.
+copyPath = fullfile(outDir,'IEEE39BusSystem_AEFC.slx');
+copyfile(resolvedModel,copyPath,'f');
 load_system(resolvedModel);
 assert(bdIsLoaded(modelName),'AEFC:ModelNotLoaded','IEEE39BusSystem is not loaded.');
 
 try, set_param(modelName,'SignalLogging','on'); catch, end
 try, set_param(modelName,'SaveOutput','on'); catch, end
 try, set_param(modelName,'SaveTime','on'); catch, end
-
-copyPath = fullfile(outDir,'IEEE39BusSystem_AEFC.slx');
-save_system(modelName, copyPath);
 
 blocks = find_system(modelName,'LookUnderMasks','all','FollowLinks','on','Type','Block');
 records = repmat(struct('path','','name','','block_type','','mask_type','','reference_block',''),numel(blocks),1);
@@ -192,11 +190,11 @@ catch ME
     smoke.error_identifier = ME.identifier;
     smoke.error_message = ME.message;
     writejson(fullfile(resDir,'smoke_summary.json'),smoke);
+    close_system(modelName,0);
     rethrow(ME);
 end
 
 writejson(fullfile(resDir,'smoke_summary.json'),smoke);
-save_system(modelName, copyPath);
 close_system(modelName,0);
 end
 
