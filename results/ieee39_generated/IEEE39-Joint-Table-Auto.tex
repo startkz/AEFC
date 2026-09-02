@@ -1,0 +1,19 @@
+\begin{table*}[t]
+\centering
+\caption{Native MathWorks IEEE 39-bus joint-corruption results over 20 matched seeds. Values are means with 95\% confidence intervals; Wilson intervals are used for binary rates.}
+\label{tab:ieee39-joint-native}
+\scriptsize
+\begin{tabular}{lcccccc}
+\toprule
+Method & SVR $\downarrow$ & FAR $\downarrow$ & Belief dist. $\downarrow$ & Policy drift $\downarrow$ & Rec. success $\uparrow$ & Rec. time $\downarrow$\\
+\midrule
+FedRL & 0.000 [0.000, 0.161] & 0.000 [0.000, 0.000] & 1.000 [1.000, 1.000] & 1.000 [1.000, 1.000] & 1.000 [0.839, 1.000] & 0.017 [0.017, 0.017]\\
+RobustAgg & 0.000 [0.000, 0.161] & 0.000 [0.000, 0.000] & 1.000 [1.000, 1.000] & 1.000 [1.000, 1.000] & 1.000 [0.839, 1.000] & 0.017 [0.017, 0.017]\\
+AEFC-no-PATBU & 0.000 [0.000, 0.161] & 0.000 [0.000, 0.000] & 1.000 [1.000, 1.000] & 1.000 [1.000, 1.000] & 1.000 [0.839, 1.000] & 0.017 [0.017, 0.017]\\
+AEFC-no-Gate & 0.000 [0.000, 0.161] & 0.258 [0.258, 0.258] & 1.000 [1.000, 1.000] & 1.000 [1.000, 1.000] & 1.000 [0.839, 1.000] & 0.017 [0.017, 0.017]\\
+AEFC-no-TGOPA & 0.000 [0.000, 0.161] & 0.258 [0.258, 0.258] & 1.000 [1.000, 1.000] & 1.000 [1.000, 1.000] & 1.000 [0.839, 1.000] & 0.017 [0.017, 0.017]\\
+AEFC-no-Shield & 0.000 [0.000, 0.161] & 0.258 [0.258, 0.258] & 1.000 [1.000, 1.000] & 1.000 [1.000, 1.000] & 1.000 [0.839, 1.000] & 0.017 [0.017, 0.017]\\
+\textbf{AEFC-Full} & 0.000 [0.000, 0.161] & 0.258 [0.258, 0.258] & 1.000 [1.000, 1.000] & 1.000 [1.000, 1.000] & 1.000 [0.839, 1.000] & 0.017 [0.017, 0.017]\\
+\bottomrule
+\end{tabular}
+\end{table*}
