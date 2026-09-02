@@ -2,7 +2,8 @@
   "model": "IEEE39BusSystem",
   "matlab_release": "2024b",
   "matlabroot": "/opt/hostedtoolcache/MATLAB/2024.2.999/x64",
-  "resolved_model": "",
-  "resolution_method": "",
-  "openExample_used": false
+  "resolved_model": "/home/runner/work/AEFC/AEFC/results/ieee39_r2024b/official_mathworks_example/candidate_02/IEEE39BusSystem.slx",
+  "resolution_method": "headless-findExample-setupExample:simscapeelectrical/IEEE39BusSystemExample",
+  "openExample_used": false,
+  "headless_backend_attempted": true
 }

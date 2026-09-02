@@ -1,0 +1,21 @@
+{
+  "openExample_path": "/opt/hostedtoolcache/MATLAB/2024.2.999/x64/toolbox/matlab/helptools/openExample.m",
+  "findExample_path": "/opt/hostedtoolcache/MATLAB/2024.2.999/x64/toolbox/matlab/helptools/findExample.m",
+  "setupExample_path": "/opt/hostedtoolcache/MATLAB/2024.2.999/x64/toolbox/matlab/helptools/setupExample.m",
+  "attempts": [
+    {
+      "id": "sps/IEEE39BusSystemExample",
+      "success": false,
+      "resolved_model": "",
+      "error_identifier": "MATLAB:examples:InvalidExample",
+      "error_message": "Unable to find \"sps/IEEE39BusSystemExample\". Check the example name and try again."
+    },
+    {
+      "id": "simscapeelectrical/IEEE39BusSystemExample",
+      "success": true,
+      "resolved_model": "/home/runner/work/AEFC/AEFC/results/ieee39_r2024b/official_mathworks_example/candidate_02/IEEE39BusSystem.slx",
+      "error_identifier": "",
+      "error_message": ""
+    }
+  ]
+}
