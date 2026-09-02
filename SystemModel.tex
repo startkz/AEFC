@@ -1,177 +1,324 @@
 \section{METHODOLOGY}
-\subsection{Trustworthy Heterogeneous Recovery Model}
-We consider a CPS partitioned into $N$ interacting subsystems. Subsystem $i$ has physical state $x_i\in\mathbb{R}^{n_i}$, control input $u_i\in\mathbb{R}^{m_i}$, and local observation $y_i$. Its attacked dynamics are
-\begin{equation}
-\dot{x}_i=f_i(x_i,x_{-i})+g_i(x_i)\big(u_i+d_i^u\big)+d_i^x,
-\end{equation}
-\begin{equation}
-y_i=h_i(x_i)+d_i^y,
-\end{equation}
-where $x_{-i}$ denotes coupled neighboring states, and $d_i^x,d_i^u,d_i^y$ represent physical, actuation/control, and sensing/communication corruption. Each subsystem maintains an uncertainty set $\widehat{\mathcal X}_i(t)$ and an admissible attack set $\mathcal D_i(t)$ such that the true state and attack are assumed to satisfy
-\begin{equation}
-x_i(t)\in\widehat{\mathcal X}_i(t),\qquad d_i(t)\in\mathcal D_i(t).
-\end{equation}
-The sets may be constructed by a resilient observer, engineering bounds, or interval estimation. Our safety theorem is conditional on their coverage and on feasibility of the execution shield stated below.
 
-For subsystem $i$, let
+\subsection{System Model and Recovery Objective}
+We consider a CPS partitioned into $N$ interacting subsystems. Subsystem $i$ has state $x_i\in\mathbb R^{n_i}$ and control input $u_i\in\mathbb R^{m_i}$. Its attacked dynamics are
 \begin{equation}
-\mathcal S_i=\{x_i:h_{i,\ell}(x_i)\ge0,~\ell=1,\ldots,M_i\}
+\dot x_i=f_i(x_i,x_{-i})+g_i(x_i)(u_i+a_i^u)+w_i,
+\label{eq:dynamics}
 \end{equation}
-be the safe operating region. Let $V_i(x_i)\ge0$ be a recovery Lyapunov candidate and define a recovery target
+and the received observation is
 \begin{equation}
-\mathcal R_i=\{x_i:V_i(x_i)\le\varepsilon_i\}.
+y_i=h_i(x_i)+a_i^y,
+\label{eq:obs}
 \end{equation}
-The learning objective is to minimize recovery cost while preserving the physical safety contract.
+where $a_i^y$ models observation/communication corruption, $a_i^u$ models corruption between the shield output and the plant input, and $w_i$ represents bounded modeling disturbance.
+
+Let
+\begin{equation}
+\mathcal S_i=\{x_i:h_{i,\ell}(x_i)\ge0,\ \ell=1,\ldots,M_i\}
+\end{equation}
+denote the physical safe set and
+\begin{equation}
+\mathcal R_i=\{x_i:V_i(x_i)\le\varepsilon_i\}
+\end{equation}
+a recovery set defined by a Lyapunov candidate $V_i$. Each subsystem maintains a state uncertainty set $\widehat{\mathcal X}_i(t)$ and admissible attack/disturbance sets $\mathcal A_i^u(t)$ and $\mathcal W_i(t)$. The physical guarantees below are conditional on
+\begin{equation}
+x_i(t)\in\widehat{\mathcal X}_i(t),\quad
+a_i^u(t)\in\mathcal A_i^u(t),\quad
+w_i(t)\in\mathcal W_i(t).
+\label{eq:coverage}
+\end{equation}
 
 \subsection{Threat Model and Trust Boundary}
-We distinguish physical-layer and federated-layer adversaries. A physical adversary can corrupt measurements, delay or alter communication, perturb actuation, or modify part of the physical dynamics within the modeled uncertainty sets. At the federation layer, at most $f$ of the $N$ participating clients are Byzantine. Byzantine clients may collude and submit arbitrary sparse update values, arbitrary indices, fabricated advantages, fabricated prototypes, or other metadata. Consequently, client-reported confidence is never used as a security root.
+The adversary may act at two layers.
 
-The coordination server follows the aggregation protocol. Raw local trajectories, local observation adapters, and local action/safety adapters are not uploaded. We do not claim confidentiality against a fully compromised server unless an additional privacy mechanism is enabled. The principal security objective of the base framework is recovery integrity: adversarial federated knowledge should have bounded influence on the shared model and should not be able to cause direct violation of the modeled physical safety set.
+\textbf{Physical-channel adversary.}
+The attacker can bias, replay, delay, or partially suppress observations and can perturb the command after it leaves the controller, subject to the modeled attack envelope. An attacker that can impose an unbounded arbitrary actuator command is outside the guarantee.
+
+\textbf{Federated recovery-knowledge adversary.}
+At most $f$ of $N$ participating clients are Byzantine. Byzantine clients may collude and submit arbitrary update values, sparse supports, timestamps, prototypes, advantages, confidence values, or other self-reported metadata. They may also replay stale but syntactically valid recovery knowledge. The server follows the coordination protocol.
+
+Authenticated provenance fields and client self-reported semantic fields are conceptually distinct. When cryptographic source authentication, secure time, or remote attestation is unavailable, the corresponding provenance property must be treated as an implementation assumption rather than inferred from a client-provided identifier.
+
+The central security requirement is:
+\begin{quote}
+Corrupted federated knowledge may affect recovery utility, but its influence on belief, authorization, deployed-policy adaptation, and physical actuation must remain bounded by explicit mechanisms and assumptions.
+\end{quote}
 
 \subsection{Heterogeneous Local Recovery Learner}
-Each client uses a personalized policy decomposition
+Client $i$ uses
 \begin{equation}
-\pi_i(o_i)=g_{\xi_i}\big(b_{\theta}(e_{\psi_i}(o_i))\big),
+\pi_i(o_i)=g_{\xi_i}\!\left(b_{\theta}(e_{\psi_i}(o_i))\right),
 \end{equation}
-where $e_{\psi_i}$ is a local observation adapter, $b_{\theta}$ is the shared recovery backbone, and $g_{\xi_i}$ is a local action/safety adapter. Only $\theta$ is federated. This avoids direct averaging of incompatible input/output layers across heterogeneous subsystems.
+where $e_{\psi_i}$ is a local observation adapter, $b_{\theta}$ is the shared recovery backbone, and $g_{\xi_i}$ is a local action adapter. Only $\theta$ is federated. This design prevents direct averaging of incompatible subsystem input/output layers.
 
-The local actor--critic learner may use prioritized replay or another off-policy MARL optimizer. Let $Q_i(s,a)$ denote the local recovery critic and let
+Let $Q_i(s,a)$ be the local recovery critic. The recovery advantage
 \begin{equation}
-A_i(s,a)=Q_i(s,a)-Q_i\big(s,\pi(s)\big)
+A_i(s,a)=Q_i(s,a)-Q_i(s,\pi(s))
 \end{equation}
-be the recovery advantage relative to the current policy. Advantage is used as a utility signal, not as proof of safety.
+is used only as a utility signal and never as a security credential.
 
-\subsection{Certificate-Gated Recovery Knowledge}
-A learned transition is eligible for federation only if it is both recovery-useful and consistent with the local safety-recovery certificate. For a candidate transition $\tau=(s,a,r,s')$, define the robust safety margin
+\subsection{Provenance-Aware Temporal Belief Update}
+Let evidence from source $j$ at time $t$ be
 \begin{equation}
-\label{eq:safety-margin}
-m_i^{\mathrm{safe}}(\tau)=\min_{\ell}\inf_{\substack{x\in\widehat{\mathcal X}_i\\d\in\mathcal D_i}}
-\left[L_fh_{i,\ell}(x)+L_gh_{i,\ell}(x)(u+d^u)+\alpha_{\ell}(h_{i,\ell}(x))\right],
+e_{j,t}=(z_{j,t},p_{j,t}),
 \end{equation}
-and the recovery margin
+where $z_{j,t}$ is the recovery evidence and
 \begin{equation}
-\label{eq:recovery-margin}
-m_i^{\mathrm{rec}}(\tau)=-\sup_{\substack{x\in\widehat{\mathcal X}_i\\d\in\mathcal D_i}}
-\left[\dot V_i(x,u,d)+c_iV_i(x)\right].
+p_{j,t}=(\mathrm{src}_j,\tau_{j,t},v_{j,t}^{\mathrm{model}},\ell_{j,t})
 \end{equation}
-The certificate-gated subset is
-\begin{equation}
-\mathcal B_i^{+}=\{\tau:A_i(\tau)>\zeta_A,~m_i^{\mathrm{safe}}(\tau)\ge0,~m_i^{\mathrm{rec}}(\tau)>\zeta_V\}.
-\end{equation}
-An honest client forms the shared-backbone update
-\begin{equation}
-g_i^t=\nabla_{\theta}L_i(\theta_t;\mathcal B_i^{+}).
-\end{equation}
-This gate prevents an honest client from sharing a transition merely because its critic assigns high value. It does not attempt to prove that a Byzantine client reports truthful certificates; Byzantine robustness is handled independently at the server.
+contains provenance attributes such as source, timestamp, model version, and lineage.
 
-\subsection{Recovery-State Alignment}
-Heterogeneous clients can have different observation spaces and attack contexts even when they share a recovery objective. For coarse recovery state $m\in\{\mathrm{unsafe},\mathrm{recovering},\mathrm{stable}\}$, honest client $i$ forms a latent prototype
+Let $\chi_{j,t}\in\{0,1\}$ denote provenance validity under the deployed authenticity mechanism, $\Delta_{j,t}=t-\tau_{j,t}$ the evidence age, and
 \begin{equation}
-p_{i,m}=\frac{1}{|\mathcal B_{i,m}|}\sum_{o\in\mathcal B_{i,m}}e_{\psi_i}(o).
+r_{j,t}=d\!\left(z_{j,t},\mathcal C(b_{t-1},\widehat{\mathcal X}_t)\right)
 \end{equation}
-A robust center of the received prototypes is used only for representation alignment, not client authentication. The local regularizer is
+a physics/temporal consistency residual. We define a bounded influence weight
 \begin{equation}
-L_{\mathrm{align}}^i=\sum_m\frac{1}{|\mathcal B_{i,m}|}\sum_{o\in\mathcal B_{i,m}}
-\|e_{\psi_i}(o)-\bar p_m\|_2^2.
+\omega_{j,t}=\chi_{j,t}e^{-\beta\Delta_{j,t}}\psi_c(r_{j,t}),
+\qquad 0\le\psi_c(\cdot)\le1.
 \end{equation}
-The purpose of this term is to reduce honest-client dispersion so that a shared backbone remains meaningful under heterogeneous sensing and actuation.
+A robust recovery-knowledge summary is
+\begin{equation}
+\bar k_t=\mathcal R_f(\{\omega_{j,t}z_{j,t}\}_{j=1}^{N}),
+\end{equation}
+and the recovery belief is updated by
+\begin{equation}
+b_{t+1}=\Pi_{\mathcal B}T(b_t,\widehat y_t,\bar k_t).
+\label{eq:belief}
+\end{equation}
 
-\subsection{Sparse Recovery Update with Error Feedback}
-Let $d$ be the dimension of the shared-backbone update and let $C_k(\cdot)$ retain the $k$ largest-magnitude coordinates. Client $i$ maintains an error-feedback residual $e_i^t$ and computes
+\begin{assumption}[Contractive recovery-belief dynamics]
+There exist $0\le\lambda_b<1$, $L_y\ge0$, and $L_k\ge0$ such that
+\begin{align}
+\|T(b,y,k)-T(b',y',k')\|
+\le&\ \lambda_b\|b-b'\| \nonumber\\
+&+L_y\|y-y'\|+L_k\|k-k'\|.
+\end{align}
+\end{assumption}
+
+\begin{theorem}[Bounded belief distortion]
+Let $b_t^\circ$ denote the clean counterfactual belief. If
+$\|a_t^y\|\le\epsilon_y$ and
+$\|\bar k_t-\bar k_t^\circ\|\le\epsilon_k$ for all $t$, then
+\begin{align}
+\|b_t-b_t^\circ\|
+\le&\ \lambda_b^t\|b_0-b_0^\circ\| \nonumber\\
+&+\frac{L_y\epsilon_y+L_k\epsilon_k}{1-\lambda_b}
+(1-\lambda_b^t).
+\label{eq:belief-bound}
+\end{align}
+\end{theorem}
+\begin{proof}
+Projection onto $\mathcal B$ is non-expansive. Applying the Lipschitz condition to the attacked and clean recursions gives
+$e_{t+1}\le\lambda_b e_t+L_y\epsilon_y+L_k\epsilon_k$.
+Unrolling the recursion yields \eqref{eq:belief-bound}.
+\end{proof}
+
+If poisoning stops at $T_p$ and the post-attack disturbance becomes $\epsilon_{\mathrm{clean}}$, the same recursion gives geometric correction toward an $\epsilon_{\mathrm{clean}}/(1-\lambda_b)$ neighborhood. Exact finite-time return is not claimed without an additional reset/rollback mechanism.
+
+\subsection{Certificate-Supported Local Recovery Knowledge}
+For an honest client, a local transition $\tau=(s,a,r,s')$ is eligible for federation only when it is recovery-useful and consistent with local safety/recovery evidence. Define
+\begin{equation}
+m_i^{\mathrm{safe}}(\tau)=
+\min_\ell\inf_{\substack{x\in\widehat{\mathcal X}_i\\a^u\in\mathcal A_i^u\\w\in\mathcal W_i}}
+\left[\nabla h_{i,\ell}^{\top}
+(f_i+g_i(u+a^u)+w)+\alpha_\ell(h_{i,\ell})\right]
+\end{equation}
+and
+\begin{equation}
+m_i^{\mathrm{rec}}(\tau)=-
+\sup_{\substack{x\in\widehat{\mathcal X}_i\\a^u\in\mathcal A_i^u\\w\in\mathcal W_i}}
+[\dot V_i(x,u,a^u,w)+c_iV_i(x)].
+\end{equation}
+The honest-client sharing set is
+\begin{equation}
+\mathcal B_i^+=
+\{\tau:A_i(\tau)>\zeta_A,\ 
+m_i^{\mathrm{safe}}(\tau)\ge0,\ 
+m_i^{\mathrm{rec}}(\tau)>\zeta_V\}.
+\end{equation}
+This gate limits what an honest client shares. It does not authenticate Byzantine certificates.
+
+\subsection{Representation Alignment and Sparse Coordination}
+For coarse recovery mode $m$, honest client $i$ may construct a latent prototype
+\begin{equation}
+p_{i,m}=\frac{1}{|\mathcal B_{i,m}|}\sum_{o\in\mathcal B_{i,m}}e_{\psi_i}(o)
+\end{equation}
+and use a robust center $\bar p_m$ only to reduce honest-client representation drift.
+
+For communication, let $C_k(v)$ retain the $k$ largest-magnitude coordinates. With error feedback,
 \begin{align}
 z_i^t&=g_i^t+e_i^t,\\
 U_i^t&=C_k(z_i^t),\\
 e_i^{t+1}&=z_i^t-U_i^t.
 \end{align}
-Only the index--value representation of $U_i^t$ is transmitted.
 
 \begin{lemma}[Deterministic Top-$k$ contraction]
-For any $v\in\mathbb R^d$ and deterministic Top-$k$ operator $C_k$,
+For any $v\in\mathbb R^d$,
 \begin{equation}
-\|v-C_k(v)\|_2^2\le\left(1-\frac{k}{d}\right)\|v\|_2^2.
-\end{equation}
-Hence the contraction coefficient can be set explicitly to $\delta_k=k/d$.
-\end{lemma}
-\begin{proof}
-Let $|v|_{(1)}\ge\cdots\ge|v|_{(d)}$ be the ordered magnitudes. The average energy of the largest $k$ coordinates is at least the average energy over all $d$ coordinates; therefore $\sum_{j=1}^{k}|v|_{(j)}^2\ge(k/d)\|v\|_2^2$. Subtracting the retained energy from $\|v\|_2^2$ gives the result.
-\end{proof}
-
-\subsection{Byzantine-Resilient Federated Coordination}
-Because client-reported advantage, norm, or prototype similarity can be fabricated, the server does not use such metadata as trust scores. For each coordinate $j$, the server reconstructs the received sparse values with missing coordinates treated as zero after the common sparsification convention, removes the largest $f$ and smallest $f$ values, and averages the remaining coordinates. Let $\operatorname{Trim}_f$ denote this coordinate-wise $f$-trimmed mean:
-\begin{equation}
-\widehat g_{t,j}=\operatorname{Trim}_f\{U_{1,j}^t,\ldots,U_{N,j}^t\},\qquad f<N/2.
-\end{equation}
-The global backbone is updated by
-\begin{equation}
-\theta_{t+1}=\theta_t-\eta_t\widehat g_t.
-\end{equation}
-
-\begin{lemma}[Byzantine aggregation envelope]
-Assume at most $f<N/2$ clients are Byzantine. For coordinate $j$, let the honest update center be $\mu^H_{t,j}$ and suppose all honest values satisfy
-\begin{equation}
-|U_{i,j}^t-\mu^H_{t,j}|\le r_{t,j}.
-\end{equation}
-Then the coordinate-wise $f$-trimmed mean satisfies
-\begin{equation}
-|\widehat g_{t,j}-\mu^H_{t,j}|\le r_{t,j},
-\end{equation}
-and consequently
-\begin{equation}
-\|\widehat g_t-\mu_t^H\|_2\le\|r_t\|_2.
+\|v-C_k(v)\|_2^2
+\le\left(1-\frac{k}{d}\right)\|v\|_2^2.
 \end{equation}
 \end{lemma}
-\begin{proof}
-Any Byzantine value outside the honest coordinate interval must lie beyond at least one honest endpoint and is removed when the $f$ largest and $f$ smallest coordinates are trimmed. Any Byzantine value that remains after trimming lies inside the honest interval. The average of retained values therefore remains inside the same interval.
-\end{proof}
 
-\subsection{Policy-Independent Safety-Recovery Shield}
-The federated policy produces a candidate control $u_i^{\mathrm{RL}}$. This action is never applied directly. Instead, subsystem $i$ solves the robust quadratic program
-\begin{equation}
-\label{eq:shield}
-u_i^\star=\arg\min_{u\in\mathcal U_i,\,\delta_i\ge0}\|u-u_i^{\mathrm{RL}}\|_2^2+\lambda_\delta\delta_i^2
-\end{equation}
-subject to, for all safety functions $h_{i,\ell}$,
-\begin{equation}
-\inf_{\substack{x\in\widehat{\mathcal X}_i\\d\in\mathcal D_i}}
-\left[L_fh_{i,\ell}+L_gh_{i,\ell}(u+d^u)+\alpha_\ell(h_{i,\ell})\right]\ge0,
-\end{equation}
-and the soft recovery constraint
-\begin{equation}
-\sup_{\substack{x\in\widehat{\mathcal X}_i\\d\in\mathcal D_i}}
-\left[\dot V_i(x,u,d)+c_iV_i(x)\right]\le\delta_i.
-\end{equation}
-The safety constraints contain no relaxation variable; the recovery condition may use $\delta_i$ to preserve feasibility.
+The contraction result does not justify treating an untransmitted coordinate as an observed numerical zero in a Byzantine proof. To keep the aggregation semantics well-defined, the preferred implementation uses a common support $S_t$, $|S_t|=k$, determined independently of any single client's report; all participating clients then upload $g_{i,t}[S_t]$. If client-specific supports are used instead, the server must employ a support-aware robust estimator and the corresponding theorem must be changed accordingly.
 
-\begin{theorem}[Policy-independent physical safety]
-Suppose the true subsystem state and attack remain inside $\widehat{\mathcal X}_i(t)$ and $\mathcal D_i(t)$, respectively. If the safety part of QP~\eqref{eq:shield} is feasible for all $t$ and $x_i(0)\in\mathcal S_i$, then
+On a common coordinate population, the server applies a Byzantine-resilient estimator $\mathcal R_f$. For coordinate-wise $f$-trimmed mean, if all honest values on a coordinate lie in
+$[\mu^H_{t,j}-r_{t,j},\mu^H_{t,j}+r_{t,j}]$ and $f<N/2$, then
 \begin{equation}
-x_i(t)\in\mathcal S_i,\qquad\forall t\ge0,
+|\widehat g_{t,j}-\mu^H_{t,j}|\le r_{t,j}.
 \end{equation}
-for any candidate policy action $u_i^{\mathrm{RL}}$, including actions generated by an arbitrarily poisoned federated model.
+This envelope is the source of $\epsilon_k$ used in the belief analysis; client-reported confidence or advantage is not.
+
+\subsection{Risk-Aware Recovery Gate}
+The belief and learned policy produce a candidate $u_t^\pi$. Before this proposal is allowed to exercise recovery authority, AEFC computes a robust safety shortfall
+\begin{equation}
+R_t^{\mathrm{safe}}(u)=
+\max_\ell
+\sup_{\substack{x\in\mathcal X(b_t)\\
+a^u\in\mathcal A_t^u\\
+w\in\mathcal W_t}}
+[-\mathcal B_\ell(x,u,a^u,w)]_+,
+\end{equation}
+where
+\begin{equation}
+\mathcal B_\ell(x,u,a^u,w)=
+\nabla h_\ell(x)^\top[f(x)+g(x)(u+a^u)+w]
++\alpha_\ell(h_\ell(x)).
+\end{equation}
+We combine this term with recovery and uncertainty penalties:
+\begin{align}
+\widehat{\mathfrak R}_t(u)=&
+\lambda_sR_t^{\mathrm{safe}}(u)
++\lambda_r[-m_t^{\mathrm{rec}}(u)]_+ \nonumber\\
+&+\lambda_b\,\mathrm{diam}(\mathcal X(b_t))
++\lambda_p(1-q_t),
+\end{align}
+where $q_t\in[0,1]$ is a protocol-level trust state derived from provenance validity, age, cross-source consistency, and belief uncertainty.
+
+The learned proposal is authorized only when
+\begin{equation}
+G_t(u)=
+\mathbf 1\{\widehat{\mathfrak R}_t(u)\le\rho_{\max}-\epsilon_R\}
+\mathbf 1\{q_t\ge q_{\min}\}.
+\end{equation}
+Then
+\begin{equation}
+u_t^{\mathrm{prop}}=
+\begin{cases}
+u_t^\pi,&G_t=1,\\
+u_t^{\mathrm{fallback}},&G_t=0.
+\end{cases}
+\end{equation}
+
+\begin{theorem}[Bounded false authorization]
+Assume
+\begin{equation}
+\Pr[
+\mathfrak R_t^{\mathrm{true}}(u)
+\le\widehat{\mathfrak R}_t(u)+\epsilon_R]\ge1-\delta_g.
+\end{equation}
+Then
+\begin{equation}
+\Pr[G_t(u)=1\ \wedge\
+\mathfrak R_t^{\mathrm{true}}(u)>\rho_{\max}]
+\le\delta_g.
+\end{equation}
+\end{theorem}
+If all uncertainty sets are deterministic outer approximations, $\delta_g$ can be zero.
+
+\subsection{Trust-Gated Online Policy Adaptation}
+AEFC separates a candidate model from the deployed controller. Given robust aggregate $g_t$, the candidate is
+\begin{equation}
+\widetilde\theta_{t+1}=
+\Pi_{\mathbb B(\theta_t^{\mathrm{dep}},\Delta_\theta)}
+\left[\theta_t^{\mathrm{dep}}
+-\eta_t q_t\,\operatorname{clip}_C(g_t)\right].
+\end{equation}
+Deployment requires
+\begin{equation}
+A_t=
+\mathbf 1\{q_t\ge q_{\min}\}
+\mathbf 1\{G_t=1\}
+\mathbf 1\{\mathrm{validation}_t=1\},
+\end{equation}
+and
+\begin{equation}
+\theta_{t+1}^{\mathrm{dep}}=
+A_t\widetilde\theta_{t+1}
++(1-A_t)\theta_t^{\mathrm{dep}}.
+\end{equation}
+
+\begin{theorem}[Bounded deployed-policy deviation]
+For every accepted round,
+\begin{equation}
+\|\theta_{t+1}^{\mathrm{dep}}-\theta_t^{\mathrm{dep}}\|
+\le
+\min\{\eta_tC,\Delta_\theta\}.
+\end{equation}
+If $\pi_\theta$ is $L_\pi$-Lipschitz in its parameters, then
+\begin{equation}
+\|\pi_{\theta_{t+1}^{\mathrm{dep}}}(x)
+-\pi_{\theta_t^{\mathrm{dep}}}(x)\|
+\le
+L_\pi\min\{\eta_tC,\Delta_\theta\}.
+\end{equation}
+\end{theorem}
+
+Finite correction after poisoning additionally requires either finite detection and rollback to a certified checkpoint, or a clean post-attack contraction
+\begin{equation}
+\|\theta_{t+1}-\theta^c\|
+\le\kappa\|\theta_t-\theta^c\|+\epsilon_c,
+\qquad \kappa<1.
+\end{equation}
+Without such an assumption, finite correction is not claimed.
+
+\subsection{Robust Physical Execution Shield}
+The authorized or fallback proposal is still not directly applied. AEFC solves
+\begin{equation}
+u_t^\star=
+\arg\min_{u,\delta\ge0}
+\|u-u_t^{\mathrm{prop}}\|_2^2+\lambda_\delta\delta^2
+\label{eq:shield-new}
+\end{equation}
+subject to the hard robust safety constraints
+\begin{equation}
+\inf_{\substack{x\in\widehat{\mathcal X}_t\\
+a^u\in\mathcal A_t^u\\
+w\in\mathcal W_t}}
+\left[
+\nabla h_\ell(x)^\top(f(x)+g(x)(u+a^u)+w)
++\alpha_\ell(h_\ell(x))
+\right]\ge0
+\label{eq:robust-cbf}
+\end{equation}
+and a soft recovery CLF constraint. The actual plant receives
+\begin{equation}
+u_t^{\mathrm{exec}}=u_t^\star+a_t^u.
+\end{equation}
+
+\begin{theorem}[Compositional safety under joint corruption]
+Suppose \eqref{eq:coverage} holds for all $t$, the hard constraints in \eqref{eq:robust-cbf} are feasible, and $x(0)\in\mathcal S$. Then
+\begin{equation}
+x(t)\in\mathcal S,\qquad \forall t\ge0,
+\end{equation}
+for any recovery belief, federated knowledge, deployed policy, or learned proposal generated under poisoning, provided the realized physical corruption remains inside the modeled envelope.
 \end{theorem}
 \begin{proof}
-Feasibility of the robust barrier constraints implies $\dot h_{i,\ell}+\alpha_\ell(h_{i,\ell})\ge0$ for every admissible true state/attack realization. Standard forward-invariance arguments then show that each set $\{h_{i,\ell}\ge0\}$ is forward invariant. Their intersection $\mathcal S_i$ is therefore forward invariant. The proof does not depend on the origin or quality of $u_i^{\mathrm{RL}}$ because the executed action is $u_i^\star$.
+For every admissible state, downstream control corruption, and disturbance, the robust barrier constraint enforces
+$\dot h_\ell+\alpha_\ell(h_\ell)\ge0$.
+Standard forward-invariance arguments therefore preserve every
+$\{h_\ell\ge0\}$ and hence their intersection. The proof is independent of the quality or origin of the learned proposal.
 \end{proof}
 
-\begin{corollary}[Certified recovery-time bound]
-If the recovery constraint is feasible with $\delta_i=0$ while $x_i\in\mathcal S_i\setminus\mathcal R_i$, then
-\begin{equation}
-V_i(t)\le e^{-c_it}V_i(0),
-\end{equation}
-and the first hitting time of $\mathcal R_i$ satisfies
-\begin{equation}
-T_i^{\mathrm{rec}}\le\frac{1}{c_i}\log\frac{V_i(0)}{\varepsilon_i}.
-\end{equation}
-\end{corollary}
-
-\subsection{Conditional Optimization Bound}
-The learning analysis concerns the honest shared-backbone surrogate objective and is separate from the physical safety theorem. Let $F(\theta)=\sum_{i\in\mathcal H}q_iF_i(\theta)$. Assume $L$-smoothness, bounded stochastic gradient variance $\sigma^2$, and bounded honest-client heterogeneity $G_h^2$. Using the explicit Top-$k$ residual and Byzantine aggregation envelope above, a standard descent argument yields
+\subsection{Guarantee Summary and Scope}
+The security guarantees are intentionally separated:
 \begin{align}
-\frac{1}{T}\sum_{t=0}^{T-1}\mathbb E\|\nabla F(\theta_t)\|_2^2
-\le\mathcal O\Big(&\frac{F(\theta_0)-F_\star}{\eta T}+\eta(\sigma^2+G_h^2)\\
-&+\left(1-\frac{k}{d}\right)G^2+\frac{1}{T}\sum_{t=0}^{T-1}\mathbb E\|r_t\|_2^2\Big).
+\text{G1: }&\text{bounded belief distortion},\\
+\text{G2: }&\text{bounded false authorization},\\
+\text{G3: }&\text{finite $\varepsilon$-correction under explicit contraction/rollback},\\
+\text{G4: }&\text{bounded deployed-policy deviation},\\
+\text{G5: }&\text{physical forward invariance}.
 \end{align}
-This statement deliberately avoids a pure $\mathcal O(T^{-1/2})$ claim unless the compression and Byzantine residual terms are controlled. More importantly, the physical safety theorem does not require convergence of this optimization process.
-
-\subsection{Optional Differential-Privacy Extension}
-Data locality and sparsification do not constitute formal privacy. When trajectory-level privacy is required, each honest client may clip per-trajectory contributions to norm $C$, average them locally, add Gaussian noise, and only then apply Top-$k$ as post-processing. If $M_i$ trajectories participate in the local average, the replacement sensitivity is at most $2C/M_i$. A Gaussian mechanism can then be calibrated to a target $(\varepsilon,\delta)$ budget with a standard Rényi-DP accountant. This extension is optional because its noise directly trades recovery utility for privacy; the base trustworthy-recovery claims concern integrity and physical safety rather than formal confidentiality.
+G5 does not require convergence of the federated learner. G1--G4 explain why federated recovery knowledge has bounded authority rather than being made irrelevant by the final shield.
