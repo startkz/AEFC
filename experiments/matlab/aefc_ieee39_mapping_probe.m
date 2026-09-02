@@ -15,20 +15,17 @@ ctrl=pickUnique(disc.control_edges,nAct,'control');
 assert(numel(obs)>=nObs,'AEFC:ObservationMapping','Need at least %d distinct observation edges; found %d.',nObs,numel(obs));
 assert(numel(ctrl)>=nAct,'AEFC:ControlMapping','Need at least %d distinct control edges; found %d.',nAct,numel(ctrl));
 
-original='IEEE39BusSystem';
-try
-    load_system(original);
-catch
-    openExample('simscapeelectrical/IEEE39BusSystemExample');
-    load_system(original);
-end
+[original,~]=aefc_ieee39_load_official;
 probeModel='IEEE39BusSystem_AEFCProbe';
 probePath=fullfile(resDir,[probeModel '.slx']);
 if bdIsLoaded(probeModel), close_system(probeModel,0); end
 if exist(probePath,'file'), delete(probePath); end
+% Save As intentionally creates the editable probe identity. Do not assume
+% the source diagram remains loaded under its old name after this call.
 save_system(original,probePath);
-close_system(original,0);
-load_system(probePath);
+if bdIsLoaded(original), close_system(original,0); end
+if ~bdIsLoaded(probeModel), load_system(probePath); end
+assert(bdIsLoaded(probeModel),'AEFC:ProbeModelLoad','Probe model was not loaded after Save As.');
 set_param(probeModel,'SignalLogging','on');
 try, set_param(probeModel,'SignalLoggingName','logsout'); catch, end
 
@@ -52,6 +49,7 @@ for j=1:nAct
     dst=translatePath(ctrl(j).dst_block,original,probeModel);
     parent=get_param(src,'Parent');
     assert(strcmp(parent,get_param(dst,'Parent')),'AEFC:CrossHierarchy','Control edge crosses hierarchy: %s -> %s',src,dst);
+    makeEditable(parent);
     srcPH=get_param(src,'PortHandles'); dstPH=get_param(dst,'PortHandles');
     sp=srcPH.Outport(ctrl(j).src_port); dp=dstPH.Inport(ctrl(j).dst_port);
     pos=get_param(dst,'Position');
@@ -135,6 +133,14 @@ if startsWith(p,[oldRoot '/'])
     p=[newRoot p(numel(oldRoot)+1:end)];
 elseif strcmp(p,oldRoot)
     p=newRoot;
+end
+end
+
+function makeEditable(block)
+try
+    s=get_param(block,'LinkStatus');
+    if strcmp(s,'resolved'), set_param(block,'LinkStatus','inactive'); end
+catch
 end
 end
 
