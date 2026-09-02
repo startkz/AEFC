@@ -32,28 +32,21 @@ end
 
 methods(Access=protected)
     function setupImpl(obj,~)
-        obj.cfg=jsondecode(fileread(obj.ConfigPath));
-        obj.mapping=jsondecode(fileread(obj.MappingPath));
-        assert(obj.mapping.validated,'AEFC:NativeMapping','Native IEEE39 mapping is not validated.');
-        obj.B=double(obj.mapping.sensitivity_matrix);
-        obj.center=double(obj.mapping.baseline_observation(:));
-        assert(numel(obj.center)==4 && isequal(size(obj.B),[4 4]),'AEFC:NativeDimension','Expected validated 4x4 native mapping.');
-        obj.scale=obj.deriveScale(obj.mapping.observation_edges,obj.center);
-        obj.Bn=diag(1./obj.scale)*obj.B;
-        obj.belief=zeros(4,1);
-        obj.cleanBelief=zeros(4,1);
-        obj.theta=zeros(4,1);
-        obj.stepCount=0;
+        obj.loadRuntimeConfig();
+        obj.resetRuntimeState();
     end
 
     function resetImpl(obj)
-        obj.belief=zeros(4,1);
-        obj.cleanBelief=zeros(4,1);
-        obj.theta=zeros(4,1);
-        obj.stepCount=0;
+        obj.ensureRuntimeState();
+        obj.resetRuntimeState();
     end
 
     function [uShield,uPost,diagOut]=stepImpl(obj,obsPhysical)
+        % MATLAB System objects may be cloned while locked during Fast
+        % Restart. Explicitly rehydrate private runtime data if a clone did
+        % not retain the decoded JSON structures or derived matrices.
+        obj.ensureRuntimeState();
+
         obsPhysical=double(obsPhysical(:));
         if numel(obsPhysical)~=4
             obsPhysical=obsPhysical(1:min(4,numel(obsPhysical)));
@@ -188,9 +181,74 @@ methods(Access=protected)
     function [f1,f2,f3]=isOutputFixedSizeImpl(~)
         f1=true; f2=true; f3=true;
     end
+
+    function s=saveObjectImpl(obj)
+        s=saveObjectImpl@matlab.System(obj);
+        s.cfg=obj.cfg;
+        s.mapping=obj.mapping;
+        s.B=obj.B;
+        s.Bn=obj.Bn;
+        s.center=obj.center;
+        s.scale=obj.scale;
+        s.belief=obj.belief;
+        s.cleanBelief=obj.cleanBelief;
+        s.theta=obj.theta;
+        s.stepCount=obj.stepCount;
+    end
+
+    function loadObjectImpl(obj,s,wasLocked)
+        if isfield(s,'cfg'), obj.cfg=s.cfg; end
+        if isfield(s,'mapping'), obj.mapping=s.mapping; end
+        if isfield(s,'B'), obj.B=s.B; end
+        if isfield(s,'Bn'), obj.Bn=s.Bn; end
+        if isfield(s,'center'), obj.center=s.center; end
+        if isfield(s,'scale'), obj.scale=s.scale; end
+        if isfield(s,'belief'), obj.belief=s.belief; end
+        if isfield(s,'cleanBelief'), obj.cleanBelief=s.cleanBelief; end
+        if isfield(s,'theta'), obj.theta=s.theta; end
+        if isfield(s,'stepCount'), obj.stepCount=s.stepCount; end
+        loadObjectImpl@matlab.System(obj,s,wasLocked);
+        obj.ensureRuntimeState();
+    end
 end
 
 methods(Access=private)
+    function loadRuntimeConfig(obj)
+        obj.cfg=jsondecode(fileread(obj.ConfigPath));
+        obj.mapping=jsondecode(fileread(obj.MappingPath));
+        assert(isstruct(obj.cfg),'AEFC:NativeConfig','Decoded native configuration must be a structure.');
+        assert(isstruct(obj.mapping) && isfield(obj.mapping,'validated') && logical(obj.mapping.validated), ...
+            'AEFC:NativeMapping','Native IEEE39 mapping is not validated.');
+        obj.B=double(obj.mapping.sensitivity_matrix);
+        obj.center=double(obj.mapping.baseline_observation(:));
+        assert(numel(obj.center)==4 && isequal(size(obj.B),[4 4]), ...
+            'AEFC:NativeDimension','Expected validated 4x4 native mapping.');
+        obj.scale=obj.deriveScale(obj.mapping.observation_edges,obj.center);
+        obj.Bn=diag(1./obj.scale)*obj.B;
+    end
+
+    function resetRuntimeState(obj)
+        obj.belief=zeros(4,1);
+        obj.cleanBelief=zeros(4,1);
+        obj.theta=zeros(4,1);
+        obj.stepCount=0;
+    end
+
+    function ensureRuntimeState(obj)
+        cfgOK=isstruct(obj.cfg) && isfield(obj.cfg,'attack_start_step') && isfield(obj.cfg,'patbu');
+        mapOK=isstruct(obj.mapping) && isfield(obj.mapping,'validated');
+        dynOK=isnumeric(obj.Bn) && isequal(size(obj.Bn),[4 4]) && ...
+              isnumeric(obj.center) && numel(obj.center)==4 && ...
+              isnumeric(obj.scale) && numel(obj.scale)==4;
+        if ~(cfgOK && mapOK && dynOK)
+            obj.loadRuntimeConfig();
+        end
+        if ~isnumeric(obj.belief) || numel(obj.belief)~=4, obj.belief=zeros(4,1); end
+        if ~isnumeric(obj.cleanBelief) || numel(obj.cleanBelief)~=4, obj.cleanBelief=zeros(4,1); end
+        if ~isnumeric(obj.theta) || numel(obj.theta)~=4, obj.theta=zeros(4,1); end
+        if ~isnumeric(obj.stepCount) || ~isscalar(obj.stepCount) || ~isfinite(obj.stepCount), obj.stepCount=0; end
+    end
+
     function [physical,knowledge]=scenarioFlags(~,s)
         physical=strcmp(s,'physical') || strcmp(s,'joint');
         knowledge=strcmp(s,'knowledge') || strcmp(s,'joint');
