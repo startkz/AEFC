@@ -2,6 +2,8 @@
   "validated": true,
   "valid_controls": 4,
   "requested_controls": 4,
-  "sensitivity_rank": 2,
+  "sensitivity_rank": 4,
+  "sensitivity_condition": 5.1296380935866646,
+  "selection_policy": "paired-generator-physical-speed-v2",
   "mapping_file": "results/ieee39_r2024b/interface_mapping.json"
 }
