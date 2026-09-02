@@ -1,7 +1,8 @@
 function aefc_ieee39_bootstrap
-% Bootstrap a GitHub-Actions-compatible IEEE 39-bus plant using the
-% MathWorks native Simscape Electrical example introduced in R2024b.
-% The legacy DESL/EPFL ARTEMIS archive remains untouched for provenance.
+% Bootstrap the native MathWorks IEEE39BusSystem on a headless CI runner.
+% GitHub-hosted MATLAB supports running the installed product, but openExample
+% is unavailable in this configuration. Therefore this bootstrap resolves the
+% installed .slx directly and never substitutes a third-party IEEE39 model.
 
 assert(~verLessThan('matlab','24.2'), ...
     'AEFC:ReleaseTooOld', 'R2024b or later is required for IEEE39BusSystem.');
@@ -13,37 +14,56 @@ if ~exist(outDir,'dir'), mkdir(outDir); end
 if ~exist(resDir,'dir'), mkdir(resDir); end
 
 modelName = 'IEEE39BusSystem';
-openedExample = '';
+resolvedModel = '';
+resolutionMethod = '';
 
-try
-    load_system(modelName);
-catch
-    ids = { ...
-        'simscapeelectrical/IEEE39BusSystemExample', ...
-        'simscapeelectrical/IEEE39BusSystem', ...
-        'sps/IEEE39BusSystemExample'};
-    lastErr = [];
-    for k = 1:numel(ids)
-        try
-            openExample(ids{k});
-            openedExample = ids{k};
+% 1) Already on path.
+hit = which([modelName '.slx']);
+if ~isempty(hit)
+    resolvedModel = hit;
+    resolutionMethod = 'which';
+end
+
+% 2) Shell-side asset inventory produced by the workflow.
+assetFile = fullfile(resDir,'install_asset_search.txt');
+if isempty(resolvedModel) && exist(assetFile,'file')==2
+    lines = splitlines(string(fileread(assetFile)));
+    for i=1:numel(lines)
+        p = strtrim(lines(i));
+        if strlength(p)==0, continue; end
+        [~,n,e] = fileparts(char(p));
+        if strcmpi(n,modelName) && strcmpi(e,'.slx') && exist(char(p),'file')==2
+            resolvedModel = char(p);
+            resolutionMethod = 'workflow-file-search';
             break;
-        catch ME
-            lastErr = ME;
-        end
-    end
-    if ~bdIsLoaded(modelName)
-        hit = which([modelName '.slx']);
-        if ~isempty(hit)
-            load_system(hit);
-        elseif ~isempty(lastErr)
-            rethrow(lastErr);
-        else
-            error('AEFC:ModelNotFound','Could not locate IEEE39BusSystem.');
         end
     end
 end
 
+% 3) Direct recursive search under matlabroot. This is slower but makes the
+% bootstrap robust to product-layout changes between runner images.
+if isempty(resolvedModel)
+    matches = dir(fullfile(matlabroot,'**',[modelName '.slx']));
+    if ~isempty(matches)
+        resolvedModel = fullfile(matches(1).folder,matches(1).name);
+        resolutionMethod = 'matlabroot-recursive-search';
+    end
+end
+
+resolution = struct;
+resolution.model = modelName;
+resolution.matlab_release = version('-release');
+resolution.matlabroot = matlabroot;
+resolution.resolved_model = resolvedModel;
+resolution.resolution_method = resolutionMethod;
+resolution.openExample_used = false;
+writejson(fullfile(resDir,'model_resolution.json'),resolution);
+
+assert(~isempty(resolvedModel),'AEFC:ModelNotFound', ...
+    ['IEEE39BusSystem.slx was not found in the installed R2024b product tree. ' ...
+     'Inspect results/ieee39_r2024b/install_asset_search.txt and model_resolution.json.']);
+
+load_system(resolvedModel);
 assert(bdIsLoaded(modelName),'AEFC:ModelNotLoaded','IEEE39BusSystem is not loaded.');
 
 try, set_param(modelName,'SignalLogging','on'); catch, end
@@ -82,8 +102,9 @@ inv.migration_target = 'R2024b';
 inv.matlab_release = version('-release');
 inv.matlab_version = version;
 inv.model = modelName;
+inv.resolved_model = resolvedModel;
+inv.resolution_method = resolutionMethod;
 inv.saved_model = strrep(copyPath,[repo filesep],'');
-inv.opened_example = openedExample;
 inv.legacy_archive = 'Figures/IEEE-39-bus-power.zip';
 inv.legacy_git_blob_sha = '41db586d592851c4a81205a4cc5c7c770b7a0c48';
 inv.total_blocks = numel(blocks);
@@ -136,7 +157,7 @@ end
 function writejson(path,obj)
 fid = fopen(path,'w');
 assert(fid>0,'AEFC:IO','Cannot open %s for writing.',path);
-c = onCleanup(@() fclose(fid));
+c = onCleanup(@() fclose(fid)); %#ok<NASGU>
 fwrite(fid,jsonencode(obj,'PrettyPrint',true),'char');
 fwrite(fid,sprintf('\n'),'char');
 end
