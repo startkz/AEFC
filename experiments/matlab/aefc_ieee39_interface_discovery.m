@@ -1,16 +1,10 @@
 function aefc_ieee39_interface_discovery
 % Discover stable signal-edge candidates in the native MathWorks
-% IEEE39BusSystem example.  The output uses block paths and port numbers,
+% IEEE39BusSystem example. The output uses block paths and port numbers,
 % not transient line handles, so a later probe can validate the exact
 % observation and actuation paths before a closed-loop experiment is run.
 assert(~verLessThan('matlab','24.2'),'AEFC:ReleaseTooOld','R2024b required.');
-model='IEEE39BusSystem';
-try
-    load_system(model);
-catch
-    openExample('simscapeelectrical/IEEE39BusSystemExample');
-    load_system(model);
-end
+[model,~]=aefc_ieee39_load_official;
 repo=pwd;
 resDir=fullfile(repo,'results','ieee39_r2024b');
 if ~exist(resDir,'dir'), mkdir(resDir); end
