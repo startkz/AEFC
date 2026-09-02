@@ -1,1 +1,1 @@
-trigger=2026-09-02-native-joint20-v2
+trigger=2026-09-02-public-license-native-joint20-v3
