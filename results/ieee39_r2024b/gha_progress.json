@@ -1,7 +1,1 @@
-{
-  "stage": "smoke-finished",
-  "success": false,
-  "smoke_outcome": "failure",
-  "run_id": "32346633600",
-  "source_sha": "4c639c9abef23d075414c633d7bf7f8edee7a598"
-}
+{"stage":"runner-started","success":true,"run_id":"33584920030","source_sha":"8d76896863bcea3a8222c1787e9d36d479c478ed"}
