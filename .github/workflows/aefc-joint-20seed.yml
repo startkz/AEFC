@@ -30,10 +30,12 @@ jobs:
           name: aefc-joint20-raw-${{ github.sha }}
           path: results/joint20
           retention-days: 90
-      - name: Persist summaries and generated Results
+      - name: Persist summaries and generated Results on latest branch head
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin experiment/ieee39-r2024b-actions
+          git rebase origin/experiment/ieee39-r2024b-actions
           git add results/joint20/summary.csv results/joint20/manifest.json results/generated
           git commit -m 'Generate 20-seed bounded-authority joint-attack evidence [skip ci]' || true
           git push origin HEAD:experiment/ieee39-r2024b-actions
@@ -54,11 +56,13 @@ jobs:
         uses: matlab-actions/run-command@v3
         with:
           command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_interface_discovery
-      - name: Persist IEEE39 discovery evidence
+      - name: Persist IEEE39 discovery evidence on latest branch head
         if: always()
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin experiment/ieee39-r2024b-actions
+          git rebase origin/experiment/ieee39-r2024b-actions
           git add results/ieee39_r2024b Figures/IEEE39-R2024b || true
           git commit -m 'Persist native IEEE39 interface discovery [skip ci]' || true
           git push origin HEAD:experiment/ieee39-r2024b-actions
