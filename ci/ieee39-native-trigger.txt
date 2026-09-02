@@ -1,1 +1,1 @@
-trigger=2026-09-02-stable-model-identity-v8
+trigger=2026-09-02-explicit-workspace-causal-probe-v9
