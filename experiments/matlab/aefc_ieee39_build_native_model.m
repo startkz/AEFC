@@ -1,8 +1,7 @@
 function aefc_ieee39_build_native_model
-% Build an editable native IEEE39 copy whose real logged observations feed
-% AEFCNativeController. The shield output and post-shield attack leave the
-% controller on separate ports and are added to the validated control edge
-% in that order: original reference + shield correction + post-shield attack.
+% Build an editable native IEEE39 copy whose real observations feed
+% AEFCNativeController. Evidence signals are exported through explicit
+% To Workspace sinks so headless CI does not depend on logsout.
 repo=pwd; resDir=fullfile(repo,'results','ieee39_r2024b');
 mapPath=fullfile(resDir,'interface_mapping.json');
 assert(exist(mapPath,'file')==2,'AEFC:MappingMissing','Validated mapping file is missing.');
@@ -10,19 +9,21 @@ m=jsondecode(fileread(mapPath));
 assert(m.validated,'AEFC:MappingInvalid','interface_mapping.json is not validated.');
 assert(numel(m.observation_edges)==4 && numel(m.control_edges)==4,'AEFC:MappingDimension','Expected 4 observation and 4 control edges.');
 
-[original,~]=aefc_ieee39_load_official;
+[original,sourcePath]=aefc_ieee39_load_official;
 nativeModel='IEEE39BusSystem_AEFCNative';
 nativePath=fullfile(resDir,[nativeModel '.slx']);
-if bdIsLoaded(nativeModel), close_system(nativeModel,0); end
-if exist(nativePath,'file'), delete(nativePath); end
-save_system(original,nativePath);
 if bdIsLoaded(original), close_system(original,0); end
-if ~bdIsLoaded(nativeModel), load_system(nativePath); end
-assert(bdIsLoaded(nativeModel),'AEFC:NativeModelLoad','Native AEFC model was not loaded after Save As.');
-set_param(nativeModel,'SignalLogging','on');
-try, set_param(nativeModel,'SignalLoggingName','logsout'); catch, end
+if bdIsLoaded(nativeModel), close_system(nativeModel,0); end
+if exist(nativePath,'file')==2, delete(nativePath); end
+[okCopy,msg]=copyfile(sourcePath,nativePath,'f');
+assert(okCopy,'AEFC:NativeCopy','Could not copy official IEEE39 model: %s',msg);
+load_system(nativePath);
+assert(bdIsLoaded(nativeModel),'AEFC:NativeModelLoad','Native AEFC model was not loaded.');
+try, set_param(nativeModel,'ReturnWorkspaceOutputs','on'); catch, end
+try, set_param(nativeModel,'SignalLogging','off'); catch, end
 
-% Top-level observation fan-in.
+% Top-level observation fan-in. Native signals are branched through global
+% Goto/From pairs; each top-level From is also exported as a workspace trace.
 mux=[nativeModel '/AEFC_OBS_MUX'];
 add_block('simulink/Signal Routing/Mux',mux,'Inputs','4','Position',[120 80 125 210]);
 muxPH=get_param(mux,'PortHandles');
@@ -30,21 +31,15 @@ for i=1:4
     e=m.observation_edges(i);
     src=translatePath(e.src_block,original,nativeModel); parent=get_param(src,'Parent'); makeEditable(parent);
     srcPH=get_param(src,'PortHandles'); sp=srcPH.Outport(e.src_port);
-    lh=get_param(sp,'Line');
-    sig=sprintf('AEFC_NATIVE_OBS_%02d',i);
-    if lh~=-1
-        try, set_param(lh,'Name',sig); catch, end
-        try, set_param(lh,'DataLogging','on'); catch, end
-        try, set_param(lh,'DataLoggingNameMode','Custom'); catch, end
-        try, set_param(lh,'DataLoggingName',sig); catch, end
-    end
     tag=sprintf('AEFC_OBS_TAG_%02d',i);
     g=[parent sprintf('/AEFC_OBS_GOTO_%02d',i)];
     add_block('simulink/Signal Routing/Goto',g,'GotoTag',tag,'TagVisibility','global','Position',[40 40+35*i 115 60+35*i]);
     gPH=get_param(g,'PortHandles'); add_line(parent,sp,gPH.Inport,'autorouting','on');
     f=[nativeModel sprintf('/AEFC_OBS_FROM_%02d',i)];
     add_block('simulink/Signal Routing/From',f,'GotoTag',tag,'Position',[20 80+30*i 90 100+30*i]);
-    fPH=get_param(f,'PortHandles'); add_line(nativeModel,fPH.Outport,muxPH.Inport(i),'autorouting','on');
+    fPH=get_param(f,'PortHandles');
+    add_line(nativeModel,fPH.Outport,muxPH.Inport(i),'autorouting','on');
+    addWorkspaceSink(nativeModel,fPH.Outport,sprintf('AEFC_NATIVE_OBS_%02d',i),[20 280+45*i 125 310+45*i]);
 end
 
 ctrl=[nativeModel '/AEFC_NATIVE_CONTROLLER'];
@@ -60,15 +55,17 @@ shieldDemux=[nativeModel '/AEFC_SHIELD_DEMUX']; attackDemux=[nativeModel '/AEFC_
 add_block('simulink/Signal Routing/Demux',shieldDemux,'Outputs','4','Position',[455 70 460 155]);
 add_block('simulink/Signal Routing/Demux',attackDemux,'Outputs','4','Position',[455 175 460 260]);
 sdPH=get_param(shieldDemux,'PortHandles'); adPH=get_param(attackDemux,'PortHandles');
-lineShield=add_line(nativeModel,ctrlPH.Outport(1),sdPH.Inport,'autorouting','on');
-lineAttack=add_line(nativeModel,ctrlPH.Outport(2),adPH.Inport,'autorouting','on');
-try, set_param(lineShield,'Name','AEFC_SHIELD_VECTOR','DataLogging','on'); catch, end
-try, set_param(lineAttack,'Name','AEFC_POST_ATTACK_VECTOR','DataLogging','on'); catch, end
+add_line(nativeModel,ctrlPH.Outport(1),sdPH.Inport,'autorouting','on');
+add_line(nativeModel,ctrlPH.Outport(2),adPH.Inport,'autorouting','on');
+addWorkspaceSink(nativeModel,ctrlPH.Outport(1),'AEFC_SHIELD_VECTOR',[500 300 625 330]);
+addWorkspaceSink(nativeModel,ctrlPH.Outport(2),'AEFC_POST_ATTACK_VECTOR',[500 345 625 375]);
+addWorkspaceSink(nativeModel,ctrlPH.Outport(3),'AEFC_DIAG',[500 390 625 420]);
+term=[nativeModel '/AEFC_DIAG_TERMINATOR'];
+add_block('simulink/Sinks/Terminator',term,'Position',[650 395 670 415]);
+termPH=get_param(term,'PortHandles'); add_line(nativeModel,ctrlPH.Outport(3),termPH.Inport,'autorouting','on');
 
-diagLine=add_line(nativeModel,ctrlPH.Outport(3),addDiagSink(nativeModel),'autorouting','on');
-try, set_param(diagLine,'Name','AEFC_DIAG','DataLogging','on','DataLoggingNameMode','Custom','DataLoggingName','AEFC_DIAG'); catch, end
-
-% Distribute shield and post-shield signals to the validated actuator edges.
+% Plant receives original validated reference + shield correction + attack.
+% The attack is therefore downstream of the shield, matching the threat model.
 for i=1:4
     stag=sprintf('AEFC_USHIELD_TAG_%02d',i); atag=sprintf('AEFC_UATTACK_TAG_%02d',i);
     sg=[nativeModel sprintf('/AEFC_USHIELD_GOTO_%02d',i)]; ag=[nativeModel sprintf('/AEFC_UATTACK_GOTO_%02d',i)];
@@ -96,19 +93,21 @@ for i=1:4
     add_line(parent,sumPH.Outport,dp,'autorouting','on');
 end
 
-save_system(nativeModel,nativePath);
+save_system(nativeModel);
 build=struct('model',nativeModel,'model_file',strrep(nativePath,[repo filesep],''), ...
     'mapping_file','results/ieee39_r2024b/interface_mapping.json', ...
     'controller','AEFCNativeController','observation_channels',4,'actuation_channels',4, ...
+    'evidence_capture','explicit To Workspace with ReturnWorkspaceOutputs', ...
     'authority_order','native observation -> PATBU -> risk gate -> trust-gated adaptation -> robust shield -> post-shield attack -> validated native control edge');
 writejson(fullfile(resDir,'native_model_build.json'),build);
 close_system(nativeModel,0);
 end
 
-function sinkPH=addDiagSink(model)
-p=[model '/AEFC_DIAG_TERMINATOR'];
-add_block('simulink/Sinks/Terminator',p,'Position',[455 285 475 305]);
-ph=get_param(p,'PortHandles'); sinkPH=ph.Inport;
+function addWorkspaceSink(model,sourcePH,varName,pos)
+blk=[model '/' varName '_TOWS'];
+add_block('simulink/Sinks/To Workspace',blk,'VariableName',varName,'SaveFormat','Timeseries','Position',pos);
+ph=get_param(blk,'PortHandles');
+add_line(model,sourcePH,ph.Inport,'autorouting','on');
 end
 
 function makeEditable(block)
