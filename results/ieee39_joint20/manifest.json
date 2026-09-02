@@ -1,6 +1,6 @@
 {
   "backend": "mathworks_ieee39_r2024b_native",
-  "commit_sha": "ff993f97a7b14888cd368b4a441bbe6726f5f32c",
+  "commit_sha": "cc315ff522c90ce6adc09df3020472dd9ad820ea",
   "config_path": "configs/ieee39_joint20.json",
   "config_id": "b92935e599729aa3",
   "mapping_path": "results/ieee39_r2024b/interface_mapping.json",
@@ -26,5 +26,5 @@
   "native_mapping_validated": true,
   "sample_time_s": 0.016666666666666666,
   "fast_restart_scope": "single compile across full 7x4x20 matrix using numeric tunable selectors",
-  "evidence_capture": "explicit To Workspace via SimulationOutput"
+  "evidence_capture": "explicit To Workspace via orientation-safe SimulationOutput extraction with per-episode semantic guards"
 }
