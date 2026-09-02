@@ -48,9 +48,7 @@ jobs:
           echo "$MATROOT" > results/ieee39_r2024b/matlabroot_path.txt
           echo "MATROOT=$MATROOT"
           find "$MATROOT" -type f \( -iname 'IEEE39BusSystem.slx' -o -iname '*IEEE39*' -o -iname '*39BusSystem*' \) -print 2>/dev/null | sort -u | tee results/ieee39_r2024b/install_asset_search.txt
-          echo '--- files containing openExample unsupported message ---'
           grep -RIl -I -m 1 'openExample is not supported in this configuration' "$MATROOT" 2>/dev/null | head -n 50 | tee results/ieee39_r2024b/openexample_unsupported_files.txt || true
-          echo '--- openExample implementation files ---'
           find "$MATROOT" -type f \( -name 'openExample.m' -o -name 'openExample.p' \) -print 2>/dev/null | sort -u | tee results/ieee39_r2024b/openexample_files.txt
           : > results/ieee39_r2024b/openexample_source.txt
           while IFS= read -r f; do
@@ -61,25 +59,11 @@ jobs:
               *) echo '[p-coded implementation]' >> results/ieee39_r2024b/openexample_source.txt ;;
             esac
           done < results/ieee39_r2024b/openexample_files.txt
-          echo '--- metadata files mentioning IEEE39BusSystem / IEEE 39-Bus System ---'
-          : > results/ieee39_r2024b/ieee39_metadata_files.txt
-          for root in "$MATROOT/toolbox" "$MATROOT/help" "$MATROOT/examples"; do
-            [ -d "$root" ] || continue
-            grep -RIl -I -m 1 -e 'IEEE39BusSystem' -e 'IEEE 39-Bus System' "$root" 2>/dev/null | head -n 200 >> results/ieee39_r2024b/ieee39_metadata_files.txt || true
-          done
-          sort -u -o results/ieee39_r2024b/ieee39_metadata_files.txt results/ieee39_r2024b/ieee39_metadata_files.txt
-          cat results/ieee39_r2024b/ieee39_metadata_files.txt
-          : > results/ieee39_r2024b/ieee39_metadata_excerpt.txt
-          while IFS= read -r f; do
-            [ -f "$f" ] || continue
-            echo "===== $f =====" >> results/ieee39_r2024b/ieee39_metadata_excerpt.txt
-            grep -a -n -C 8 -e 'IEEE39BusSystem' -e 'IEEE 39-Bus System' "$f" 2>/dev/null | head -n 240 >> results/ieee39_r2024b/ieee39_metadata_excerpt.txt || true
-          done < results/ieee39_r2024b/ieee39_metadata_files.txt
 
-      - name: Bootstrap, discover topology, causally validate mapping, and build native AEFC model
+      - name: Bootstrap, validate or reuse mapping, and build native AEFC model
         uses: matlab-actions/run-command@v3
         with:
-          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_interface_discovery; aefc_ieee39_mapping_probe; aefc_ieee39_build_native_model
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mp=fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'); needMap=true; if exist(mp,'file')==2, try, mm=jsondecode(fileread(mp)); needMap=~isfield(mm,'validated') || ~logical(mm.validated); catch, needMap=true; end, end; if needMap, aefc_ieee39_interface_discovery; aefc_ieee39_mapping_probe; else, disp('Reusing committed validated IEEE39 causal mapping.'); end; aefc_ieee39_build_native_model
 
       - name: Execute native IEEE39 20-seed joint matrix
         uses: matlab-actions/run-command@v3
@@ -89,19 +73,20 @@ jobs:
       - name: Generate native IEEE39 Results and statistics
         run: python analysis/make_ieee39_results.py
 
+      - name: Compress immutable raw traces for repository provenance
+        if: success()
+        shell: bash
+        run: |
+          tar -czf "results/ieee39_joint20/raw-traces-${GITHUB_SHA}.tar.gz" \
+            --exclude='raw-traces-*.tar.gz' results/ieee39_joint20/*/*/*.jsonl results/ieee39_joint20/*/*/*.summary.json
+          sha256sum "results/ieee39_joint20/raw-traces-${GITHUB_SHA}.tar.gz" > results/ieee39_joint20/raw-traces.sha256
+
       - name: Upload immutable native IEEE39 raw evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ieee39-native-joint20-${{ github.sha }}
           path: |
-            results/ieee39_r2024b/matlabroot_path.txt
-            results/ieee39_r2024b/install_asset_search.txt
-            results/ieee39_r2024b/openexample_unsupported_files.txt
-            results/ieee39_r2024b/openexample_files.txt
-            results/ieee39_r2024b/openexample_source.txt
-            results/ieee39_r2024b/ieee39_metadata_files.txt
-            results/ieee39_r2024b/ieee39_metadata_excerpt.txt
             results/ieee39_r2024b/model_resolution.json
             results/ieee39_r2024b/interface_discovery.json
             results/ieee39_r2024b/interface_mapping.json
@@ -114,15 +99,15 @@ jobs:
           if-no-files-found: warn
           retention-days: 90
 
-      - name: Persist native mapping, diagnostics, summaries, and generated Results on branch
+      - name: Persist native mapping, summaries, raw archive, and generated Results on branch
         if: always()
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add results/ieee39_r2024b/*.json results/ieee39_r2024b/*.txt || true
-          git add results/ieee39_joint20/summary.csv results/ieee39_joint20/manifest.json results/ieee39_generated || true
-          git commit -m 'Persist native IEEE39 diagnostics and evidence [skip ci]' || true
+          git add results/ieee39_joint20/summary.csv results/ieee39_joint20/manifest.json results/ieee39_joint20/raw-traces-*.tar.gz results/ieee39_joint20/raw-traces.sha256 results/ieee39_generated || true
+          git commit -m 'Generate native IEEE39 causal evidence and manuscript results [skip ci]' || true
           git fetch origin experiment/ieee39-r2024b-actions
           git rebase -X theirs origin/experiment/ieee39-r2024b-actions
           git push origin HEAD:experiment/ieee39-r2024b-actions
