@@ -74,10 +74,23 @@ def fmt(xs,binary=False,bounded=False):
         if bounded: lo=max(0,lo); hi=min(1,hi)
     return m,lo,hi,f'{m:.3f} [{lo:.3f}, {hi:.3f}]'
 
+def paired_wilcoxon_p(x,y):
+    x=np.asarray(x,float); y=np.asarray(y,float); d=x-y
+    if np.allclose(d,0.0,rtol=0.0,atol=1e-15):
+        return 1.0
+    try:
+        p=float(wilcoxon(x,y,zero_method='wilcox').pvalue)
+    except ValueError:
+        p=1.0
+    return p if math.isfinite(p) else 1.0
+
 def holm(ps):
-    ps=np.asarray(ps,float); m=len(ps); order=np.argsort(ps); adj=np.empty(m); running=0
+    ps=np.asarray(ps,float)
+    if not np.all(np.isfinite(ps)):
+        raise SystemExit('Non-finite p-value reached Holm correction; generation refused.')
+    m=len(ps); order=np.argsort(ps,kind='stable'); adj=np.ones(m); running=0.0
     for rank,idx in enumerate(order):
-        running=max(running,(m-rank)*ps[idx]); adj[idx]=min(1,running)
+        running=max(running,(m-rank)*ps[idx]); adj[idx]=min(1.0,running)
     return adj
 
 joint={m:g[('joint',m)] for m in methods}
@@ -93,8 +106,7 @@ for metric in stat_metrics:
     x=np.asarray([r[metric] for r in full]); ps=[]; tmp=[]
     for m in methods[:-1]:
         y=np.asarray([r[metric] for r in joint[m]])
-        try: p=float(wilcoxon(x,y,zero_method='wilcox').pvalue)
-        except ValueError: p=1.0
+        p=paired_wilcoxon_p(x,y)
         ps.append(p); tmp.append((m,float(np.median(x-y)),p))
     for (m,med,p),pa in zip(tmp,holm(ps)): stat.append([metric,m,med,p,float(pa)])
 with (GEN/'ieee39_joint_statistics.csv').open('w',newline='') as f:
@@ -114,7 +126,7 @@ lines=[r'\subsection{Native IEEE 39-Bus 20-Seed Joint-Corruption Results}',
 for key,label,binary in [('safety_violation','episode safety-violation rate',True),('false_authorization_rate','false-authorization rate','bounded'),('max_belief_distortion','maximum belief distortion',False),('max_policy_drift','maximum deployed-policy drift',False),('recovery_success','recovery success rate',True),('recovery_time','post-attack recovery time',False)]:
     mf,lf,hf,_=fmt([r[key] for r in full],binary is True,binary=='bounded'); base=joint['FedRL']; mb,lb,hb,_=fmt([r[key] for r in base],binary is True,binary=='bounded')
     lines.append(f'Under joint corruption, AEFC-Full yields {label} {mf:.4f} (95\\% CI [{lf:.4f}, {hf:.4f}]), versus {mb:.4f} ([{lb:.4f}, {hb:.4f}]) for FedRL.')
-lines.append(r'Continuous integrity, safety-margin, and recovery metrics use paired Wilcoxon tests across matched seeds with Holm correction across the six alternative methods; machine-readable values are released in \texttt{results/ieee39\_generated/ieee39\_joint\_statistics.csv}.')
+lines.append(r'Continuous integrity, safety-margin, and recovery metrics use paired Wilcoxon tests across matched seeds with Holm correction across the six alternative methods; exact zero paired differences are assigned $p=1$ before Holm correction. Machine-readable values are released in \texttt{results/ieee39\_generated/ieee39\_joint\_statistics.csv}.')
 (GEN/'IEEE39-Results-Auto.tex').write_text('\n\n'.join(lines)+'\n')
 
 fig,ax=plt.subplots(figsize=(7.2,3.6)); means=[]; los=[]; his=[]
@@ -122,4 +134,4 @@ for m in methods:
     x=np.asarray([r['safety_violation'] for r in joint[m]]); mean,lo,hi=wilson(int(round(x.sum())),len(x)); means.append(mean); los.append(mean-lo); his.append(hi-mean)
 ax.bar(np.arange(len(methods)),means); ax.errorbar(np.arange(len(methods)),means,yerr=np.vstack([los,his]),fmt='none',capsize=3)
 ax.set_xticks(np.arange(len(methods)),methods,rotation=35,ha='right'); ax.set_ylabel('Native IEEE39 safety-violation rate'); ax.set_ylim(0,1.05); fig.tight_layout(); fig.savefig(GEN/'ieee39_joint_safety.pdf'); plt.close(fig)
-manifest['generated_from']='results/ieee39_joint20/summary.csv'; manifest['statistics']='paired Wilcoxon + Holm; Wilson CI for binary rates'; manifest['generation_checks']='560 rows, 20 matched seeds per cell, single commit/config, paired-generator-physical-speed-v2 mapping'; (GEN/'generation_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+manifest['generated_from']='results/ieee39_joint20/summary.csv'; manifest['statistics']='paired Wilcoxon + Holm; exact zero paired differences use p=1; Wilson CI for binary rates'; manifest['generation_checks']='560 rows, 20 matched seeds per cell, single commit/config, paired-generator-physical-speed-v2 mapping, finite statistics'; (GEN/'generation_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
