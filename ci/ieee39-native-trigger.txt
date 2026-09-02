@@ -1,1 +1,1 @@
-trigger=2026-09-02-paired-generator-physical-speed-v10
+trigger=2026-09-02-authoritative-native-clock-v11
