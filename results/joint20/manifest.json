@@ -1,6 +1,6 @@
 {
   "backend": "reduced_order_mechanism_test",
-  "commit_sha": "b3edda1b647fa19489e9be945d39dcd067053087",
+  "commit_sha": "dd0062adcc138903181506cde82bfedbe26594dc",
   "config_path": "configs/joint20.json",
   "config_id": "89363b2581483cbf",
   "seeds": 20,
