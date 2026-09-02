@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import csv, json, math
+import csv, json, math, os
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
@@ -7,15 +7,55 @@ import matplotlib.pyplot as plt
 from scipy.stats import wilcoxon
 
 ROOT=Path('results/ieee39_joint20'); GEN=Path('results/ieee39_generated'); GEN.mkdir(parents=True,exist_ok=True)
-rows=list(csv.DictReader((ROOT/'summary.csv').open()))
+methods=['FedRL','RobustAgg','AEFC-no-PATBU','AEFC-no-Gate','AEFC-no-TGOPA','AEFC-no-Shield','AEFC-Full']
+scenarios=['clean','knowledge','physical','joint']
+expected_seeds=list(range(20))
+required_policy='paired-generator-physical-speed-v2'
+
+summary_path=ROOT/'summary.csv'; manifest_path=ROOT/'manifest.json'
+if not summary_path.exists() or not manifest_path.exists():
+    raise SystemExit('Native IEEE39 summary/manifest missing; manuscript generation refused.')
+rows=list(csv.DictReader(summary_path.open()))
+manifest=json.loads(manifest_path.read_text())
+if len(rows)!=len(methods)*len(scenarios)*len(expected_seeds):
+    raise SystemExit(f'Expected 560 native rows, found {len(rows)}; manuscript generation refused.')
+if manifest.get('rows')!=560 or manifest.get('mapping_policy')!=required_policy or not manifest.get('native_mapping_validated'):
+    raise SystemExit('Manifest does not identify a validated paired-generator physical mapping; generation refused.')
+
 num=['safety_violation','min_native_margin','false_authorization_rate','max_belief_distortion','max_policy_drift','recovery_success','recovery_time','shield_intervention_ratio']
 for r in rows:
     r['seed']=int(float(r['seed']))
-    for k in num: r[k]=float(r[k])
+    for k in num:
+        r[k]=float(r[k])
+        if not math.isfinite(r[k]): raise SystemExit(f'Non-finite {k} in native summary; generation refused.')
+    if r.get('mapping_policy')!=required_policy:
+        raise SystemExit('Summary contains stale/non-authoritative mapping policy; generation refused.')
+
+commits={r['commit_sha'] for r in rows}; configs={r['config_id'] for r in rows}
+if len(commits)!=1 or len(configs)!=1:
+    raise SystemExit('Native summary mixes commits or configurations; generation refused.')
+if manifest.get('commit_sha') not in commits or manifest.get('config_id') not in configs:
+    raise SystemExit('Manifest/summary provenance mismatch; generation refused.')
+
 g=defaultdict(list)
 for r in rows: g[(r['scenario'],r['method'])].append(r)
-for key in g: g[key]=sorted(g[key],key=lambda x:x['seed'])
-methods=['FedRL','RobustAgg','AEFC-no-PATBU','AEFC-no-Gate','AEFC-no-TGOPA','AEFC-no-Shield','AEFC-Full']
+for scenario in scenarios:
+    for method in methods:
+        rr=sorted(g[(scenario,method)],key=lambda x:x['seed'])
+        seeds=[r['seed'] for r in rr]
+        if seeds!=expected_seeds:
+            raise SystemExit(f'Incomplete matched seeds for {scenario}/{method}: {seeds}')
+        g[(scenario,method)]=rr
+
+# Sanity check: the raw-native experiment must not collapse all seven methods
+# to identical joint-condition metrics. This is not a performance criterion;
+# it only detects wiring/configuration failures before paper generation.
+sig=[]
+for method in methods:
+    rr=g[('joint',method)]
+    sig.append(tuple(round(np.mean([r[k] for r in rr]),12) for k in ['min_native_margin','false_authorization_rate','max_belief_distortion','max_policy_drift','recovery_time']))
+if len(set(sig))<2:
+    raise SystemExit('All methods are numerically identical under joint corruption; likely wiring failure.')
 
 def mean_ci(xs):
     x=np.asarray(xs,float); m=x.mean(); se=x.std(ddof=1)/math.sqrt(len(x)) if len(x)>1 else 0.0
@@ -69,7 +109,7 @@ tex += [r'\bottomrule',r'\end{tabular}',r'\end{table*}']
 (GEN/'IEEE39-Joint-Table-Auto.tex').write_text('\n'.join(tex)+'\n')
 
 lines=[r'\subsection{Native IEEE 39-Bus 20-Seed Joint-Corruption Results}',
-       r'The native experiment uses the MathWorks R2024b \texttt{IEEE39BusSystem} plant. Observation and actuation edges are selected only after topology discovery and finite-difference causal validation. The same seven methods, four corruption cells, and 20 matched seeds used in the mechanism-level experiment are then executed with post-shield control corruption applied on the validated native control edge.',
+       r'The native experiment uses the MathWorks R2024b \texttt{IEEE39BusSystem} plant. Four distinct generator-local \texttt{Pref} actuation edges are paired with physical rotor-speed observations from the same generators and accepted only after a full-rank finite-difference causal probe. The same seven methods, four corruption cells, and 20 matched seeds are then executed with control corruption injected downstream of the shield and upstream of the validated native actuator edges.',
        r'\input{results/ieee39_generated/IEEE39-Joint-Table-Auto.tex}']
 for key,label,binary in [('safety_violation','episode safety-violation rate',True),('false_authorization_rate','false-authorization rate','bounded'),('max_belief_distortion','maximum belief distortion',False),('max_policy_drift','maximum deployed-policy drift',False),('recovery_success','recovery success rate',True),('recovery_time','post-attack recovery time',False)]:
     mf,lf,hf,_=fmt([r[key] for r in full],binary is True,binary=='bounded'); base=joint['FedRL']; mb,lb,hb,_=fmt([r[key] for r in base],binary is True,binary=='bounded')
@@ -82,4 +122,4 @@ for m in methods:
     x=np.asarray([r['safety_violation'] for r in joint[m]]); mean,lo,hi=wilson(int(round(x.sum())),len(x)); means.append(mean); los.append(mean-lo); his.append(hi-mean)
 ax.bar(np.arange(len(methods)),means); ax.errorbar(np.arange(len(methods)),means,yerr=np.vstack([los,his]),fmt='none',capsize=3)
 ax.set_xticks(np.arange(len(methods)),methods,rotation=35,ha='right'); ax.set_ylabel('Native IEEE39 safety-violation rate'); ax.set_ylim(0,1.05); fig.tight_layout(); fig.savefig(GEN/'ieee39_joint_safety.pdf'); plt.close(fig)
-manifest=json.loads((ROOT/'manifest.json').read_text()); manifest['generated_from']='results/ieee39_joint20/summary.csv'; manifest['statistics']='paired Wilcoxon + Holm; Wilson CI for binary rates'; (GEN/'generation_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+manifest['generated_from']='results/ieee39_joint20/summary.csv'; manifest['statistics']='paired Wilcoxon + Holm; Wilson CI for binary rates'; manifest['generation_checks']='560 rows, 20 matched seeds per cell, single commit/config, paired-generator-physical-speed-v2 mapping'; (GEN/'generation_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
