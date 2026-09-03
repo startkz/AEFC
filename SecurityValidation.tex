@@ -1,0 +1,45 @@
+\section{SECURITY VALIDATION AND LIMITATIONS}
+
+\subsection{Mechanism-to-Claim Validation}
+Each formal claim is paired with an operational test.
+
+\textbf{G1: bounded belief distortion.}
+Under bounded observation and knowledge corruption, log
+$\|b_t-b_t^\circ\|$ and compare it with the analytical envelope in
+\eqref{eq:belief-bound}. Attack-stop experiments should verify the predicted contraction rate or reveal where the assumed $\lambda_b$ is invalid.
+
+\textbf{G2: bounded false authorization.}
+Estimate the false-authorization rate using an offline oracle or conservative ground-truth risk computation. The risk gate should be tested under observation replay, stale federated knowledge, metadata spoofing, and model replacement.
+
+\textbf{G3--G4: bounded adaptation and correction.}
+Record every candidate and deployed-policy hash, the accepted update norm, and the number of accepted poisoned rounds. If rollback is implemented, report detection delay and the checkpoint used. If rollback is not implemented, the paper must rely only on the stated post-attack contraction condition and must not claim finite exact recovery of policy parameters.
+
+\textbf{G5: physical forward invariance.}
+For each episode, record the minimum robust CBF margin and safety-QP feasibility. The policy-independent test replaces the learned proposal with intentionally unsafe actions and separately injects a poisoned policy. Shielded and unshielded controllers start from identical initial conditions.
+
+\subsection{Adaptive Byzantine and Sparse-Support Validation}
+The attacker may fabricate update values, sparse indices, advantages, prototypes, confidence values, and stale metadata. Consequently, self-reported quantities cannot be used as authentication signals. If a common support mask is used, the experiment should verify that all clients report the same requested coordinate set. If client-specific Top-$k$ remains in the implementation, the manuscript must replace the simple coordinate-wise trimmed-mean theorem with a support-aware robust-aggregation result.
+
+For every federation round, record
+\begin{equation}
+\|\widehat g_t-\mu_t^H\|_2
+\end{equation}
+and compare it with the assumed aggregation envelope.
+
+\subsection{Compression Audit}
+For each honest client and round, verify
+\begin{equation}
+\frac{\|z_i^t-C_k(z_i^t)\|_2^2}{\|z_i^t\|_2^2}
+\le1-\frac{k}{d}.
+\end{equation}
+This diagnostic checks the deterministic Top-$k$ statement directly. Top-$k$ is not used as evidence of privacy or Byzantine authentication.
+
+\subsection{Privacy Scope}
+The base AEFC security claim concerns integrity and physical safety, not formal confidentiality. Data locality and sparse updates do not provide a differential-privacy guarantee. If a Gaussian mechanism is enabled, the released evaluation must specify the privacy unit, clipping norm, sampling rate, number of compositions, accountant, and final $(\varepsilon,\delta)$ budget. Membership-inference AUC, if retained, is only an empirical secondary metric.
+
+\subsection{Implementation and Reproducibility Limitations}
+Several implementation conditions remain visible in the final submission. First, provenance authenticity requires a concrete cryptographic or attestation mechanism; a client-provided source identifier alone is not authenticated provenance. Second, the reduced-order 20-seed experiment remains a mechanism-integration test and is not used as an IEEE 39-bus substitute. Third, the native IEEE 39-bus claims in this revision are tied specifically to the successful MathWorks R2024b workflow at commit \texttt{cc315ff522c90ce6adc09df3020472dd9ad820ea}: the workflow validates a full-rank four-channel generator-local rotor-speed/\texttt{Pref} mapping, executes 560 native episodes at $1/60$~s, applies orientation-safe \texttt{SimulationOutput} extraction with per-episode semantic guards, and releases immutable per-seed traces. Fourth, IEEE 33-bus and 8500-node results are outside the current artifact unless adapters and raw traces are added. Fifth, the physical safety theorem remains conditional on uncertainty-set coverage and robust-shield feasibility. Finally, an attacker that can impose arbitrary unbounded actuation after the shield is outside the guarantee.
+
+The native experiment is also deliberately interpreted within its observed resolution. Under joint corruption, all seven compared methods exhibit zero episode-level safety violations and 100\% recovery success across 20 matched seeds, so the native evidence does not support a claim that AEFC uniquely improves these binary outcomes in this operating envelope. Its measured advantage is instead concentrated in knowledge-integrity and continuous safety-margin quantities: relative to FedRL, AEFC-Full reduces maximum belief distortion and deployed-policy drift and increases the minimum native margin, with the corresponding paired comparisons remaining significant after Holm correction. Exact zero paired differences are assigned $p=1$ before multiplicity correction, preventing no-effect comparisons from being reported as statistically significant.
+
+These limitations are part of the security model rather than implementation footnotes. Stating them explicitly prevents the experimental section from overstating what the present code establishes.

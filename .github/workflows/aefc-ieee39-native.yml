@@ -1,0 +1,100 @@
+name: AEFC native IEEE39 mapping and 20-seed matrix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/ieee39-r2024b-actions]
+    paths:
+      - 'ci/ieee39-native-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  native-ieee39:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Public-repository licensing mode
+        run: |
+          echo 'Repository is public: use MathWorks public-project licensing on the GitHub-hosted runner.'
+          echo 'No MATLAB batch licensing token is required for MATLAB/Simulink/Simscape products in this workflow.'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Results dependencies
+        run: python -m pip install --upgrade pip numpy matplotlib scipy
+
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+
+      - name: Inspect installed IEEE39 example metadata and openExample implementation
+        shell: bash
+        run: |
+          mkdir -p results/ieee39_r2024b
+          MATROOT="$(printf '%s\n' /opt/hostedtoolcache/MATLAB/*/x64 | head -n 1)"
+          if [ ! -d "$MATROOT" ]; then
+            echo "Could not resolve MATLAB root under /opt/hostedtoolcache/MATLAB" >&2
+            exit 1
+          fi
+          echo "$MATROOT" > results/ieee39_r2024b/matlabroot_path.txt
+          find "$MATROOT" -type f \( -name 'openExample.m' -o -name 'openExample.p' \) -print 2>/dev/null | sort -u > results/ieee39_r2024b/openexample_files.txt
+
+      - name: Bootstrap, validate or reuse mapping, and build native AEFC model
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mp=fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'); needMap=true; if exist(mp,'file')==2, try, mm=jsondecode(fileread(mp)); needMap=~isfield(mm,'validated') || ~logical(mm.validated) || ~isfield(mm,'selection_policy') || ~strcmp(mm.selection_policy,'paired-generator-physical-speed-v2'); catch, needMap=true; end, end; if needMap, aefc_ieee39_interface_discovery; aefc_ieee39_mapping_probe; else, disp('Reusing committed validated paired-generator IEEE39 causal mapping.'); end; aefc_ieee39_build_native_model
+
+      - name: Execute native IEEE39 20-seed joint matrix
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_native_joint20
+
+      - name: Generate native IEEE39 Results and statistics
+        run: python analysis/make_ieee39_results.py
+
+      - name: Compress immutable raw traces for repository provenance
+        if: success()
+        shell: bash
+        run: |
+          tar -czf "results/ieee39_joint20/raw-traces-${GITHUB_SHA}.tar.gz" \
+            --exclude='raw-traces-*.tar.gz' results/ieee39_joint20/*/*/*.jsonl results/ieee39_joint20/*/*/*.summary.json
+          sha256sum "results/ieee39_joint20/raw-traces-${GITHUB_SHA}.tar.gz" > results/ieee39_joint20/raw-traces.sha256
+
+      - name: Upload immutable native IEEE39 raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ieee39-native-joint20-${{ github.sha }}
+          path: |
+            results/ieee39_r2024b/model_resolution.json
+            results/ieee39_r2024b/interface_discovery.json
+            results/ieee39_r2024b/interface_mapping.json
+            results/ieee39_r2024b/mapping_status.json
+            results/ieee39_r2024b/native_model_build.json
+            results/ieee39_r2024b/bootstrap_inventory.json
+            results/ieee39_r2024b/smoke_summary.json
+            results/ieee39_joint20
+            results/ieee39_generated
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Persist native mapping, summaries, raw archive, and generated Results on branch
+        if: always()
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/ieee39_r2024b/*.json results/ieee39_r2024b/*.txt || true
+          git add results/ieee39_joint20/summary.csv results/ieee39_joint20/manifest.json results/ieee39_joint20/raw-traces-*.tar.gz results/ieee39_joint20/raw-traces.sha256 results/ieee39_generated || true
+          git commit -m 'Generate native IEEE39 causal evidence and manuscript results [skip ci]' || true
+          git fetch origin experiment/ieee39-r2024b-actions
+          git rebase -X theirs origin/experiment/ieee39-r2024b-actions
+          git push origin HEAD:experiment/ieee39-r2024b-actions

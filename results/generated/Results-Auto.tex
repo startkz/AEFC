@@ -1,0 +1,23 @@
+\subsection{Mechanism-Level 20-Seed Joint-Corruption Results}
+
+The executable bounded-authority pipeline was evaluated under the joint physical/knowledge attack on the released reduced-order CPS integration backend. This backend exercises PATBU, the risk gate, trust-gated adaptation, Byzantine-resilient coordination, the robust execution shield, and post-shield control corruption. It is used to validate mechanism composition and is not presented as an IEEE 39-bus result. All values below are generated from 20 matched seeds and immutable raw JSONL traces tied to one commit and configuration.
+
+\input{results/generated/Joint-Table-Auto.tex}
+
+For the joint attack, AEFC-Full yields episode safety-violation rate 0.0000 (95\% CI [0.0000, 0.1611]), versus 1.0000 ([0.8389, 1.0000]) for FedRL.
+
+For the joint attack, AEFC-Full yields false-authorization rate 0.0000 (95\% CI [0.0000, 0.0000]), versus 1.0000 ([1.0000, 1.0000]) for FedRL.
+
+For the joint attack, AEFC-Full yields maximum belief distortion 0.4813 (95\% CI [0.4788, 0.4838]), versus 1.2896 ([1.2029, 1.3762]) for FedRL.
+
+For the joint attack, AEFC-Full yields maximum deployed-policy drift 0.0360 (95\% CI [0.0337, 0.0384]), versus 3.4224 ([3.0594, 3.7855]) for FedRL.
+
+For the joint attack, AEFC-Full yields recovery success rate 1.0000 (95\% CI [0.8389, 1.0000]), versus 0.9500 ([0.7639, 0.9911]) for FedRL.
+
+For the joint attack, AEFC-Full yields post-attack recovery time 4.3000 (95\% CI [3.8481, 4.7519]), versus 40.9000 ([38.6839, 43.1161]) for FedRL.
+
+The ablations expose the intended layer separation. Removing the shield causes physical safety violations despite small policy drift, whereas removing trust-gated adaptation sharply increases false authorization and policy drift while the shield can still preserve the physical invariant. Removing PATBU increases belief distortion. These observations are mechanism-level evidence for the compositional design, not a substitute for native IEEE 39-bus validation.
+
+Paired Wilcoxon tests for the continuous integrity and recovery metrics are computed per seed and corrected across the six alternative methods with Holm's procedure; the machine-readable statistics are released in \texttt{results/generated/joint\_statistics.csv}.
+
+Native IEEE 39-bus Results remain pending until the licensed R2024b workflow successfully executes the model and validates the observation/actuation injection points.

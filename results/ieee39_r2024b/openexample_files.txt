@@ -1,0 +1,2 @@
+/opt/hostedtoolcache/MATLAB/2024.2.999/x64/toolbox/matlab/helptools/+matlab/+internal/+examples/openExample.m
+/opt/hostedtoolcache/MATLAB/2024.2.999/x64/toolbox/matlab/helptools/openExample.m

@@ -1,0 +1,23 @@
+\subsection{Native IEEE 39-Bus 20-Seed Joint-Corruption Results}
+
+The native experiment uses the MathWorks R2024b \texttt{IEEE39BusSystem} plant. Four distinct generator-local \texttt{Pref} actuation edges are paired with physical rotor-speed observations from the same generators and accepted only after a full-rank finite-difference causal probe. The same seven methods, four corruption cells, and 20 matched seeds are then executed with control corruption injected downstream of the shield and upstream of the validated native actuator edges.
+
+\input{results/ieee39_generated/IEEE39-Joint-Table-Auto.tex}
+
+Under joint corruption, AEFC-Full yields episode safety-violation rate 0.0000 (95\% CI [0.0000, 0.1611]), versus 0.0000 ([0.0000, 0.1611]) for FedRL.
+
+Under joint corruption, AEFC-Full yields minimum native safety margin 0.9857 (95\% CI [0.9837, 0.9878]), versus 0.9750 ([0.9716, 0.9783]) for FedRL.
+
+Under joint corruption, AEFC-Full yields false-authorization rate 0.0000 (95\% CI [0.0000, 0.0000]), versus 0.0000 ([0.0000, 0.0000]) for FedRL.
+
+Under joint corruption, AEFC-Full yields maximum belief distortion 0.0873 (95\% CI [0.0834, 0.0913]), versus 0.4978 ([0.4918, 0.5038]) for FedRL.
+
+Under joint corruption, AEFC-Full yields maximum deployed-policy drift 0.0230 (95\% CI [0.0211, 0.0250]), versus 0.1407 ([0.1315, 0.1499]) for FedRL.
+
+Under joint corruption, AEFC-Full yields recovery success rate 1.0000 (95\% CI [0.8389, 1.0000]), versus 1.0000 ([0.8389, 1.0000]) for FedRL.
+
+Under joint corruption, AEFC-Full yields post-attack recovery time 0.0167 (95\% CI [0.0167, 0.0167]), versus 0.0167 ([0.0167, 0.0167]) for FedRL.
+
+For AEFC-Full versus FedRL, the paired median differences are -0.4095 for maximum belief distortion, -0.1140 for maximum deployed-policy drift, and 0.0102 for minimum native safety margin; all three comparisons remain significant after Holm correction ($p_{\mathrm{adj}}=1.14\times10^{-5}$, $1.14\times10^{-5}$, and $1.14\times10^{-5}$, respectively).
+
+Continuous integrity, safety-margin, and recovery metrics use paired Wilcoxon tests across matched seeds with Holm correction across the six alternative methods; exact zero paired differences are assigned $p=1$ before Holm correction. Machine-readable values are released in \texttt{results/ieee39\_generated/ieee39\_joint\_statistics.csv}.

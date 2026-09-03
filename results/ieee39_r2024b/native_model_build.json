@@ -1,0 +1,10 @@
+{
+  "model": "IEEE39BusSystem_AEFCNative",
+  "model_file": "results/ieee39_r2024b/IEEE39BusSystem_AEFCNative.slx",
+  "mapping_file": "results/ieee39_r2024b/interface_mapping.json",
+  "controller": "AEFCNativeController",
+  "observation_channels": 4,
+  "actuation_channels": 4,
+  "evidence_capture": "explicit To Workspace with ReturnWorkspaceOutputs",
+  "authority_order": "native observation -> PATBU -> risk gate -> trust-gated adaptation -> robust shield -> post-shield attack -> validated native control edge"
+}

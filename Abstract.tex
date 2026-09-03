@@ -1,4 +1,4 @@
-\title{Security-Aware Heterogeneous Federated Reinforcement Learning for Resilient Recovery of Cyber-Physical Systems\\}
+\title{Bounded-Authority Federated Recovery of Cyber--Physical Systems under Joint Physical-Channel Corruption and Recovery-Knowledge Poisoning}
 
 \author{
         Kai~Zhong,
@@ -17,18 +17,18 @@
 \thanks{Manuscript received ****, 2026; revised ****, 2026.}
 }
 
-\markboth{IEEE TRANSACTIONS ON ***,~Vol.~*, No.~*, *~2026}%
-{Zhong \MakeLowercase{\textit{et al.}}: Security-Aware Heterogeneous Federated Reinforcement Learning for Resilient Recovery of Cyber-Physical Systems}
+\markboth{IEEE TRANSACTIONS ON DEPENDABLE AND SECURE COMPUTING,~2026}%
+{Zhong \MakeLowercase{\textit{et al.}}: Bounded-Authority Federated Recovery of CPS}
 
 \IEEEtitleabstractindextext{
 \begin{abstract}
 \justifying{
-Cross-layer attacks against cyber-physical systems (CPS) can corrupt sensing, communication, and control channels at the same time, forcing recovery controllers to restore safe operation with partial observations and untrusted participants. Existing reinforcement learning (RL) recovery methods are still largely centralized, which exposes operational trajectories and scales poorly when subsystems are geographically distributed. This paper proposes a security-aware heterogeneous federated reinforcement learning (FRL) framework for collaborative resilient recovery under cross-layer attacks. The framework decomposes a CPS into subsystem-level agents, trains local recovery policies with prioritized multi-agent RL, and exchanges model updates without sharing raw trajectories. Its core mechanism, Advantage Execution--Federated Critic (AEFC), combines local safety adapters, recovery-state prototype alignment, high-advantage sparse update transmission, and shift-aware credibility aggregation. Local adapters keep subsystem-specific sensing and actuation private, prototype alignment stabilizes the shared recovery representation, sparse transmission limits communication to recovery-informative updates, and credibility aggregation reduces the impact of stale, noisy, or adversarial contributions. AEFC is positioned as a communication-efficient and empirically privacy-enhancing recovery mechanism, not as a formal differential-privacy or secure-aggregation protocol. The framework is evaluated on IEEE 39-bus and IEEE 118-bus power-grid CPS benchmarks implemented through Simulink--Python co-simulation. In these benchmarks, AEFC-FRL improves recovery accuracy by up to 15.3 percentage points over centralized MADDPG and reduces communication overhead by 45.8\% compared with standard FedRL, while maintaining stronger resilience under malicious updates.
+Federated recovery introduces an integrity dependency that is largely absent from conventional cyber--physical system (CPS) recovery formulations: a controller may need to restore a plant while its observations and control channel are corrupted, yet the distributed recovery knowledge used to adapt the controller may itself be stale, inconsistent, or adversarially poisoned. We formulate this problem as \emph{bounded-authority federated recovery}. Instead of treating federated knowledge as trusted state, AEFC treats it as untrusted evidence whose influence is explicitly bounded along three security-critical transitions: evidence-to-belief, belief-to-action authority, and accepted evidence-to-deployed-policy adaptation. AEFC combines a provenance-aware temporal belief update, a risk-aware recovery gate, trust-gated online policy adaptation, Byzantine-resilient federated coordination, and a robust physical execution shield. Under bounded physical corruption, bounded robust-aggregation error, contractive belief dynamics, bounded adaptation steps, uncertainty-set coverage, and shield feasibility, we establish bounded belief distortion, bounded false authorization, bounded deployed-policy deviation, finite $\varepsilon$-correction after poisoning under an explicit recovery condition, and policy-independent forward invariance of the physical safe set. Heterogeneous local adapters and deterministic Top-$k$ communication are retained as implementation mechanisms rather than security roots. In an orientation-safe native MathWorks R2024b IEEE 39-bus evaluation with seven methods, four corruption cells, and 20 matched seeds per cell, all methods remain free of episode-level safety violations under joint corruption, while AEFC reduces maximum belief distortion from 0.4978 to 0.0873 and maximum deployed-policy drift from 0.1407 to 0.0230 relative to FedRL; both paired comparisons remain significant after Holm correction ($p_{\mathrm{adj}}=1.14\times10^{-5}$). All numerical claims are generated from committed configurations and immutable per-seed traces.
 }
 \end{abstract}
 
 \begin{IEEEkeywords}
-Cyber-physical systems, cross-layer attacks, resilient recovery, security-aware federated reinforcement learning, multi-agent reinforcement learning.
+Cyber-physical systems, resilient recovery, federated reinforcement learning, Byzantine robustness, recovery integrity, control barrier function, trustworthy learning.
 \end{IEEEkeywords}}
 \maketitle
 \IEEEdisplaynontitleabstractindextext

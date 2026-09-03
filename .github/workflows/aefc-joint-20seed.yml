@@ -1,0 +1,69 @@
+name: AEFC bounded-authority joint 20-seed
+on:
+  push:
+    branches: [experiment/ieee39-r2024b-actions]
+    paths:
+      - 'aefc/**'
+      - 'experiments/**'
+      - 'analysis/**'
+      - 'configs/**'
+      - '.github/workflows/aefc-joint-20seed.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  mechanism-20seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install --upgrade pip numpy matplotlib scipy
+      - name: Execute 20 matched seeds for all four corruption cells and ablations
+        run: |
+          AEFC_COMMIT_SHA=${{ github.sha }} PYTHONPATH=. python experiments/run_joint.py --output results/joint20 --config configs/joint20.json
+          PYTHONPATH=. python analysis/make_results.py
+      - name: Upload immutable raw-trace artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aefc-joint20-raw-${{ github.sha }}
+          path: results/joint20
+          retention-days: 90
+      - name: Persist summaries and generated Results on latest branch head
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/joint20/summary.csv results/joint20/manifest.json results/generated
+          git commit -m 'Generate 20-seed bounded-authority joint-attack evidence [skip ci]' || true
+          git fetch origin experiment/ieee39-r2024b-actions
+          git rebase -X theirs origin/experiment/ieee39-r2024b-actions
+          git push origin HEAD:experiment/ieee39-r2024b-actions
+
+  ieee39-native-discovery:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      MLM_LICENSE_TOKEN: ${{ secrets.MATLAB_BATCH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Bootstrap and discover native IEEE39 interfaces
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_interface_discovery
+      - name: Persist IEEE39 discovery evidence on latest branch head
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/ieee39_r2024b Figures/IEEE39-R2024b || true
+          git commit -m 'Persist native IEEE39 interface discovery [skip ci]' || true
+          git fetch origin experiment/ieee39-r2024b-actions
+          git rebase -X theirs origin/experiment/ieee39-r2024b-actions
+          git push origin HEAD:experiment/ieee39-r2024b-actions

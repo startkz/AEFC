@@ -1,319 +1,324 @@
 \section{METHODOLOGY}
-The proposed heterogeneous federated reinforcement learning (FRL) framework consists of a recovery model, a local MARL learner, a federated training procedure, and the AEFC update mechanism. The convergence analysis is stated under explicit assumptions to avoid treating non-stationary MARL training as standard convex optimization.
 
-\subsection{System Model}
-We model the CPS as a continuous-time nonlinear system. Let $x(t) \in \mathbb{R}^n$ denote the physical state at time $t$, and let $u(t) \in \mathbb{R}^m$ denote the control input. In nominal operation, the dynamics are given by $\dot{x}(t)=f(x(t),u(t))$, where $f(\cdot)$ describes the underlying physical process. To represent cross-layer disruptions, we introduce an attack vector $a(t)$ with components $a_p(t)$, $a_n(t)$, and $a_c(t)$ acting on the physical, network/sensing, and control layers, respectively. The attacked dynamics and observation model are
+\subsection{System Model and Recovery Objective}
+We consider a CPS partitioned into $N$ interacting subsystems. Subsystem $i$ has state $x_i\in\mathbb R^{n_i}$ and control input $u_i\in\mathbb R^{m_i}$. Its attacked dynamics are
 \begin{equation}
-\label{eq1}
-\left\{
-\begin{aligned}
-\dot{x}(t) &= f\big(x(t),u(t)+\Delta u(t)\big)+\Delta x(t),\\
-y(t) &= h(x(t))+\Delta y(t),
-\end{aligned}
-\right.
+\dot x_i=f_i(x_i,x_{-i})+g_i(x_i)(u_i+a_i^u)+w_i,
+\label{eq:dynamics}
 \end{equation}
-where $h(\cdot)$ is the observation function. The perturbations are defined as $\Delta x(t)=D_p(a_p(t))$, $\Delta u(t)=D_c(a_c(t))$, and $\Delta y(t)=D_s(a_n(t))$. The functions $D_p(\cdot)$, $D_c(\cdot)$, and $D_s(\cdot)$ specify how attack signals are injected into the physical dynamics, control channel, and sensing/communication channel. This representation covers both single-layer disturbances and coordinated cross-layer attacks.
-
-The recovery goal is to return the system to a safe operating region after an attack while limiting recovery time, state deviation, and control effort. Let $\mathcal{X}_{\mathrm{safe}}$ denote the safe region and let $\phi(x_t,\mathcal{X}_{\mathrm{safe}})$ measure the distance or violation degree of the current state relative to that region. We use an RL formulation and define a reward that penalizes unsafe deviation and excessive control. A representative form is
+and the received observation is
 \begin{equation}
-r(s_t,a_t)=-\phi(x_t,\mathcal{X}_{\mathrm{safe}})-\lambda \|a_t\|_2^2,
+y_i=h_i(x_i)+a_i^y,
+\label{eq:obs}
 \end{equation}
-where $\lambda>0$ controls the action penalty. The objective is to maximize the discounted return
-\begin{equation}
-\label{eq2}
-J(\pi)=\mathbb{E}_{\pi}\left[\sum_{t=0}^{\infty}\gamma^t r(s_t,a_t)\right],
-\end{equation}
-where $\gamma \in [0,1)$ is the discount factor, $s_t$ is the global CPS state, $a_t=(a_{1,t},\ldots,a_{N,t})$ is the joint action, and $\pi$ is the joint recovery policy. Under the above reward, maximizing $J(\pi)$ corresponds to reducing accumulated state deviation and action cost during recovery. Eq.~\ref{eq1} and Eq.~\ref{eq2} define the continuous-state, continuous-action recovery problem considered in this paper.
-
-\subsection{Adversary Model}
-We consider a recovery-oriented threat model in which the CPS may face coordinated cross-layer attacks and the federated learning process may include unreliable or malicious clients. At the physical and control layers, the adversary can perturb state evolution, sensor measurements, communication timing, or actuation commands through the attack vector in Eq.~\ref{eq1}. At the federated layer, the coordinating server is assumed to be honest-but-curious: it follows the prescribed aggregation protocol but may inspect uploaded sparse updates, public model snapshots, and aggregate statistics. The server does not receive raw local trajectories or local observation/action adapters.
-
-Among the participating clients, up to 30\% may be Byzantine, consistent with the robustness experiments in Section~IV. Byzantine clients may submit random, scaled, stale, or sign-flipped updates to slow down convergence or bias the recovery policy. They cannot access other clients' raw trajectories, private adapters, replay buffers, or the server-side aggregation logic. We also consider inference adversaries that use uploaded index-value pairs, sparse gradients, and public model snapshots to perform membership inference or gradient reconstruction. We do not consider attacks that fully compromise the global server, break cryptographic primitives, or bypass certified local protection logic. Under this model, AEFC-FRL targets resilient recovery and empirical privacy-risk reduction; it does not claim formal privacy guarantees without additional mechanisms such as secure aggregation or differential privacy.
-
-\subsection{MARL Training Algorithm}
-We decompose the CPS into $N$ subsystem agents. Agent $i$ observes a local state $o_i(t)$, selects a local recovery action $a_i(t) \in \mathcal{A}_i$, and receives the global resilience reward $r(t)$. The joint state is denoted by $s(t)$, and the joint action is $a(t)=(a_1(t),\ldots,a_N(t))$. We adopt centralized training with decentralized execution: during training, each critic can use the joint state and joint action to stabilize learning; during execution, each actor uses only its own local observation.
-
-The local learner is based on MADDPG \cite{lowe2017multi}. Each agent maintains an actor $\pi_{\theta_i}:o_i \mapsto a_i$ and a critic $Q_{\omega_i}(s,a_1,\ldots,a_N)$. The replay buffer of agent $i$ is denoted by $\mathcal{D}_i$ and stores transitions $(s,a,r,s')$. To improve sample efficiency on rare but important recovery events, we use prioritized experience replay (PER). For transition $j$, the priority is
-\begin{equation}
-p_j=(|\delta_i^j|+\epsilon)^\alpha,
-\end{equation}
-where $\delta_i^j$ is the TD error, $\epsilon>0$ avoids zero priority, and $\alpha$ controls the strength of prioritization. The sampling probability is $P(j)=p_j/\sum_k p_k$, and the importance-sampling weight is $w_j=(|\mathcal{D}_i|P(j))^{-\beta}$, where $\beta$ is annealed toward 1.
-
-At each update, agent $i$ samples a minibatch
-$\mathcal{B}_i=\{(s^j,a^j,r^j,s'^{j})\}_{j=1}^{B}$ from $\mathcal{D}_i$. The critic loss is
-\begin{equation}
-\label{eq3}
-L_{Q_i}(\omega_i)=\frac{1}{B}\sum_{j=1}^{B} w_j
-\left[Q_{\omega_i}(s^j,a_1^j,\ldots,a_N^j)-y_i^j\right]^2,
-\end{equation}
-with target
-\begin{equation}
-\label{eq4}
-y_i^j=r^j+\gamma Q_{\omega_i^-}(s'^{j},a_1'^{j},\ldots,a_N'^{j}),
-\end{equation}
-where $a_k'^{j}=\pi_{\theta_k^-}(o_k'^{j})$ is computed by the target actor of agent $k$, and $Q_{\omega_i^-}$ is the target critic. The actor is updated by minimizing
-\begin{equation}
-\label{eq5}
-L_{\pi_i}(\theta_i)=-\frac{1}{B}\sum_{j=1}^{B} w_j
-Q_{\omega_i}\big(s^j,a_1^j,\ldots,\pi_{\theta_i}(o_i^j),\ldots,a_N^j\big).
-\end{equation}
-
-Fig.~\ref{f2} illustrates the local PER-MADDPG learner used by each subsystem before federated coordination.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig2.eps}
-	\caption{The detailed diagram of PER-MADDPG.}
-	\label{f2}
-\end{figure}
-
-The PER-MADDPG procedure is summarized in Algorithm~\ref{alg:maddpg-per}. Target networks are updated by soft replacement with rate $\tau$. This local learner provides the optimization backbone for each client in the federated framework.
-
-\begin{algorithm}[t]
-	\caption{MADDPG with Prioritized Replay (PER-MADDPG)}
-	\label{alg:maddpg-per}
-	\KwIn{Number of agents $N$, discount factor $\gamma$, learning rates $\alpha_\theta,\alpha_\omega$, replay buffer size, batch size $B$, prioritization parameters $(\alpha,\beta)$}
-	\KwOut{Trained actor policies $\{\pi_{\theta_i}\}_{i=1}^N$}
-	\BlankLine
-	\textbf{Initialize} for each agent $i$: actor $\pi_{\theta_i}$, critic $Q_{\omega_i}$, target networks $\pi_{\theta_i^-}$, $Q_{\omega_i^-}$ with $\theta_i^- \leftarrow \theta_i$, $\omega_i^- \leftarrow \omega_i$, and replay buffer $\mathcal{D}_i$\;
-	\For{$\text{episode}=1$ \KwTo $M$}{
-		Reset the environment to $s_0$; each agent observes $o_i$\;
-		\For{$t=0$ \KwTo $T$}{
-			\For{$i=1$ \KwTo $N$}{
-				$a_i \gets \pi_{\theta_i}(o_i)+\mathcal{N}_i$\;
-			}
-			Execute $a=(a_1,\ldots,a_N)$ and observe $r$, $s'$, and local observations $\{o_i'\}_{i=1}^N$\;
-			Store $(s,a,r,s')$ in each $\mathcal{D}_i$\;
-			\For{$i=1$ \KwTo $N$}{
-				Sample $\mathcal{B}_i$ from $\mathcal{D}_i$ with probability $P(j)\propto (|\delta_i^j|+\epsilon)^\alpha$\;
-				Compute $y_i^j$ by Eq.~\ref{eq4} and update $Q_{\omega_i}$ by Eq.~\ref{eq3}\;
-				Update $\pi_{\theta_i}$ using the policy gradient implied by Eq.~\ref{eq5}\;
-				Update priorities $p_j \gets (|\delta_i^j|+\epsilon)^\alpha$\;
-				Soft-update target networks: $\theta_i^- \gets \tau\theta_i+(1-\tau)\theta_i^-$, $\omega_i^- \gets \tau\omega_i+(1-\tau)\omega_i^-$\;
-			}
-			$s \gets s'$\;
-		}
-	}
-\end{algorithm}
-
-\subsection{FRL Training Algorithm}
-The federated component coordinates the subsystem agents without exchanging raw trajectories. Each agent is treated as a client. To support heterogeneous local observations and actions, the policy of agent $i$ is decomposed as
-\begin{equation}
-\label{eq:adapter-policy}
-\pi_i(o_i)=g_{\xi_i}\big(b_{\theta}(e_{\psi_i}(o_i))\big),
-\end{equation}
-where $e_{\psi_i}$ is a local observation adapter, $b_{\theta}$ is the shared recovery backbone, and $g_{\xi_i}$ is a local action and safety adapter. Only the backbone parameter $\theta$ is synchronized by the server. The adapter parameters $\psi_i$ and $\xi_i$ remain local because they encode subsystem-specific measurement channels, actuator dimensions, protection limits, and engineering constraints. When all agents share the same observation and action dimensions, these adapters reduce to identity or shallow linear maps, and the method becomes the standard shared-parameter AEFC-FRL used in the homogeneous case.
-
-In each federation round, the server broadcasts the global backbone parameter vector $\theta^G$ and the latest clipped recovery prototypes defined below. Each client trains locally with PER-MADDPG, updates its local adapters and backbone copy, and uploads a sparse backbone update rather than raw trajectories or dense local policies. Fig.~\ref{f3} shows this heterogeneous FRL architecture.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig3_heterogeneous.png}
-	\caption{The heterogeneous FRL architecture.}
-	\label{f3}
-\end{figure}
-
-The setting is heterogeneous because agents may observe different local state variables and encounter different attack patterns. It is not vertical federated learning in the strict feature-partitioned sense. Instead, the framework assumes that local adapters map subsystem observations into a common latent recovery space. The shared backbone then learns recovery-control semantics that are common across agents, while input and output adapters absorb subsystem-specific dimensions. This decomposition avoids direct averaging of incompatible parameters and gives a concrete interface for extending the method to other CPS domains.
-
-To further stabilize cross-client sharing, each client maintains a small set of recovery-state prototypes in the shared latent space. Let $z_i=e_{\psi_i}(o_i)$ and let $\mathcal{C}=\{\mathrm{unsafe},\mathrm{recovering},\mathrm{stable}\}$ denote coarse recovery states determined from the safety violation $\phi(x_t,\mathcal{X}_{\mathrm{safe}})$ and its one-step change. For category $m\in\mathcal{C}$, client $i$ computes
-\begin{equation}
-\label{eq:prototype}
-p_{i,m}=\frac{1}{|\mathcal{B}_{i,m}|}\sum_{(o_i,s)\in\mathcal{B}_{i,m}} e_{\psi_i}(o_i),
-\end{equation}
-where $\mathcal{B}_{i,m}$ is the recent local minibatch assigned to recovery state $m$. The server aggregates clipped prototypes by credibility-weighted averaging,
-\begin{equation}
-\label{eq:global-prototype}
-\bar{p}_{m}^{t}=\sum_{i=1}^{N} w_i^t \mathrm{clip}(p_{i,m},C_p).
-\end{equation}
-These prototypes are not used as raw data surrogates; they provide a low-dimensional alignment signal for detecting domain or attack-context drift. During local training, the backbone is regularized by
-\begin{equation}
-\label{eq:align-loss}
-L_{\mathrm{align}}^{i}=\sum_{m\in\mathcal{C}}
-\frac{1}{|\mathcal{B}_{i,m}|}\sum_{(o_i,s)\in\mathcal{B}_{i,m}}
-\left\|e_{\psi_i}(o_i)-\bar{p}_{m}^{t-1}\right\|_2^2,
-\end{equation}
-with the regularization weight chosen small enough that the safety reward remains the dominant learning signal. In local actor-backbone updates, Eq.~\ref{eq5} is therefore augmented as
-\begin{equation}
-\label{eq:local-total-loss}
-L_{\pi_i}^{\mathrm{total}}=L_{\pi_i}+\lambda_a L_{\mathrm{align}}^{i},
-\end{equation}
-where $\lambda_a\ge 0$ controls the strength of recovery-state alignment. This term discourages representation drift across heterogeneous agents while preserving local personalization through the adapters.
-
-For a basic federated round, client $i$ computes an update
-$\Delta\theta_i=\theta_i^{(t)}-\theta^G_t$ after local training. A standard weighted aggregation can be written as
-\begin{equation}
-\label{eq6}
-\theta^G_{t+1}=\theta^G_t+\eta_g\sum_{i=1}^{N} q_i \Delta\theta_i,
-\end{equation}
-where $q_i\ge 0$, $\sum_i q_i=1$, and $\eta_g$ is the server learning rate. A common choice is $q_i=n_i/\sum_j n_j$, where $n_i$ is the number of local training transitions used by agent $i$ in the round. This baseline preserves data locality, but it can be communication-intensive and vulnerable to noisy or malicious updates. AEFC is designed to address these two weaknesses.
-
-\subsection{AEFC Optimization Mechanism}
-AEFC has three coupled components. The \emph{Advantage Execution} component runs on each client and transmits only a sparse, high-utility backbone update. The \emph{Recovery Alignment} component keeps local adapters personalized while aligning the shared latent recovery space through clipped prototypes. The \emph{Federated Critic} component runs on the server and weights client updates according to a credibility score that combines recovery advantage, update scale, and shift consistency.
-
-AEFC should be read as a recovery-aware composition rather than as a claim that sparsification, prototype alignment, or credibility weighting is new in isolation. Top-$\kappa$ transmission is a standard way to reduce uplink cost, and trust weighting is common in robust aggregation. AEFC ties these operations to the semantics of resilient recovery: the client selects updates from high-advantage transitions that improve post-attack restoration, the shared backbone is aligned through recovery-state prototypes, and the server down-weights updates whose advantage signal is weak or whose representation drift is inconsistent with the global recovery state. This coupling is important in CPS because a large gradient is not necessarily a useful recovery signal under cross-layer attacks.
-
-For client $i$, the advantage of a transition is estimated as
-\begin{equation}
-A_i(s,a)=Q_{\omega_i}(s,a)-V_i(s),
-\end{equation}
-where $V_i(s)$ is the critic value under the current deterministic recovery actors,
-\[
-V_i(s)=Q_{\omega_i}\big(s,\pi_{\theta_1}(o_1),\ldots,\pi_{\theta_N}(o_N)\big).
-\]
-Transitions with larger positive advantage indicate recovery decisions that outperform the current local policy baseline and are therefore more useful for inter-client knowledge transfer.
+where $a_i^y$ models observation/communication corruption, $a_i^u$ models corruption between the shield output and the plant input, and $w_i$ represents bounded modeling disturbance.
 
 Let
 \begin{equation}
-\mathcal{D}_i^{\mathrm{high}}=\{(s,a,r,s')\in\mathcal{D}_i: A_i(s,a)>\zeta\}
+\mathcal S_i=\{x_i:h_{i,\ell}(x_i)\ge0,\ \ell=1,\ldots,M_i\}
 \end{equation}
-be the high-advantage subset, where $\zeta$ is an advantage threshold. The local high-advantage loss is
+denote the physical safe set and
 \begin{equation}
-\label{eq7}
-\begin{aligned}
-L_i^{\mathrm{high}}(\theta_i)
-&=-\frac{1}{|\mathcal{D}_i^{\mathrm{high}}|}
-\sum_{(s,a,r,s')\in\mathcal{D}_i^{\mathrm{high}}} A_i(s,a)\\
-&\quad \times
-Q_{\omega_i}\big(s,a_1,\ldots,\pi_{\theta_i}(o_i),\ldots,a_N\big),
-\end{aligned}
+\mathcal R_i=\{x_i:V_i(x_i)\le\varepsilon_i\}
 \end{equation}
-which is minimized as an advantage-weighted deterministic actor loss. The gradient of Eq.~\ref{eq7} uses the same deterministic policy-gradient form as Eq.~\ref{eq5}, but it is computed only on the high-advantage subset. If a stochastic actor is used instead, the analogous surrogate can replace the critic term with $A_i(s,a)\log\pi_{\theta_i}(a_i|o_i)$. The implementation in this paper follows the deterministic MADDPG form.
+a recovery set defined by a Lyapunov candidate $V_i$. Each subsystem maintains a state uncertainty set $\widehat{\mathcal X}_i(t)$ and admissible attack/disturbance sets $\mathcal A_i^u(t)$ and $\mathcal W_i(t)$. The physical guarantees below are conditional on
+\begin{equation}
+x_i(t)\in\widehat{\mathcal X}_i(t),\quad
+a_i^u(t)\in\mathcal A_i^u(t),\quad
+w_i(t)\in\mathcal W_i(t).
+\label{eq:coverage}
+\end{equation}
 
-After local training, client $i$ forms a backbone update $\Delta\theta_i$ and applies Top-$\kappa$ sparsification. Let $C_\kappa(\cdot)$ retain the largest $\lceil \kappa d\rceil$ entries in magnitude from a $d$-dimensional update and set all other entries to zero. The uploaded sparse update is
-\begin{equation}
-\label{eq8}
-U_i=C_\kappa(\Delta\theta_i)=\{(j,\Delta\theta_{i,j}):j\in\mathcal{I}_{i,\kappa}\},
-\end{equation}
-where $\mathcal{I}_{i,\kappa}$ is the selected index set. The client uploads only the index-value pairs, a scalar confidence statistic, and clipped recovery prototypes. Low-advantage or low-magnitude backbone changes remain local and are not communicated in that round. Adapter parameters are never uploaded.
+\subsection{Threat Model and Trust Boundary}
+The adversary may act at two layers.
 
-The server computes a credibility score from the average selected advantage, a norm-control term, and a prototype-drift penalty. The drift of client $i$ in round $t$ is
+\textbf{Physical-channel adversary.}
+The attacker can bias, replay, delay, or partially suppress observations and can perturb the command after it leaves the controller, subject to the modeled attack envelope. An attacker that can impose an unbounded arbitrary actuator command is outside the guarantee.
+
+\textbf{Federated recovery-knowledge adversary.}
+At most $f$ of $N$ participating clients are Byzantine. Byzantine clients may collude and submit arbitrary update values, sparse supports, timestamps, prototypes, advantages, confidence values, or other self-reported metadata. They may also replay stale but syntactically valid recovery knowledge. The server follows the coordination protocol.
+
+Authenticated provenance fields and client self-reported semantic fields are conceptually distinct. When cryptographic source authentication, secure time, or remote attestation is unavailable, the corresponding provenance property must be treated as an implementation assumption rather than inferred from a client-provided identifier.
+
+The central security requirement is:
+\begin{quote}
+Corrupted federated knowledge may affect recovery utility, but its influence on belief, authorization, deployed-policy adaptation, and physical actuation must remain bounded by explicit mechanisms and assumptions.
+\end{quote}
+
+\subsection{Heterogeneous Local Recovery Learner}
+Client $i$ uses
 \begin{equation}
-\label{eq:drift}
-d_i^t=\frac{1}{|\mathcal{C}|}\sum_{m\in\mathcal{C}}
-\left(1-\frac{\langle p_{i,m}^{t},\bar{p}_{m}^{t-1}\rangle}
-{\|p_{i,m}^{t}\|_2\|\bar{p}_{m}^{t-1}\|_2+\epsilon_p}\right),
+\pi_i(o_i)=g_{\xi_i}\!\left(b_{\theta}(e_{\psi_i}(o_i))\right),
 \end{equation}
-where $\epsilon_p>0$ avoids division by zero. Large $d_i^t$ indicates that the client's latent recovery states have moved away from the previous global recovery semantics, which may reflect benign domain shift, stale training, or adversarial behavior. The credibility score is
+where $e_{\psi_i}$ is a local observation adapter, $b_{\theta}$ is the shared recovery backbone, and $g_{\xi_i}$ is a local action adapter. Only $\theta$ is federated. This design prevents direct averaging of incompatible subsystem input/output layers.
+
+Let $Q_i(s,a)$ be the local recovery critic. The recovery advantage
+\begin{equation}
+A_i(s,a)=Q_i(s,a)-Q_i(s,\pi(s))
+\end{equation}
+is used only as a utility signal and never as a security credential.
+
+\subsection{Provenance-Aware Temporal Belief Update}
+Let evidence from source $j$ at time $t$ be
+\begin{equation}
+e_{j,t}=(z_{j,t},p_{j,t}),
+\end{equation}
+where $z_{j,t}$ is the recovery evidence and
+\begin{equation}
+p_{j,t}=(\mathrm{src}_j,\tau_{j,t},v_{j,t}^{\mathrm{model}},\ell_{j,t})
+\end{equation}
+contains provenance attributes such as source, timestamp, model version, and lineage.
+
+Let $\chi_{j,t}\in\{0,1\}$ denote provenance validity under the deployed authenticity mechanism, $\Delta_{j,t}=t-\tau_{j,t}$ the evidence age, and
+\begin{equation}
+r_{j,t}=d\!\left(z_{j,t},\mathcal C(b_{t-1},\widehat{\mathcal X}_t)\right)
+\end{equation}
+a physics/temporal consistency residual. We define a bounded influence weight
+\begin{equation}
+\omega_{j,t}=\chi_{j,t}e^{-\beta\Delta_{j,t}}\psi_c(r_{j,t}),
+\qquad 0\le\psi_c(\cdot)\le1.
+\end{equation}
+A robust recovery-knowledge summary is
+\begin{equation}
+\bar k_t=\mathcal R_f(\{\omega_{j,t}z_{j,t}\}_{j=1}^{N}),
+\end{equation}
+and the recovery belief is updated by
+\begin{equation}
+b_{t+1}=\Pi_{\mathcal B}T(b_t,\widehat y_t,\bar k_t).
+\label{eq:belief}
+\end{equation}
+
+\begin{assumption}[Contractive recovery-belief dynamics]
+There exist $0\le\lambda_b<1$, $L_y\ge0$, and $L_k\ge0$ such that
 \begin{align}
-c_i&=\frac{1}{|\mathcal{D}_i^{\mathrm{high}}|}
-\sum_{(s,a)\in\mathcal{D}_i^{\mathrm{high}}} A_i(s,a), \nonumber\\
-\rho_i&=\frac{\max(c_i,0)}{\|U_i\|_2+\epsilon_c}\exp(-\lambda_s d_i^t),
+\|T(b,y,k)-T(b',y',k')\|
+\le&\ \lambda_b\|b-b'\| \nonumber\\
+&+L_y\|y-y'\|+L_k\|k-k'\|.
 \end{align}
-where $\epsilon_c>0$ avoids division by zero, $\lambda_s\ge 0$ controls shift sensitivity, and the exponential term suppresses updates whose latent recovery state is inconsistent with the global prototype memory. The aggregation weight is
-\begin{equation}
-\label{eq9}
-w_i=\frac{\rho_i}{\sum_{j=1}^{N}\rho_j+\epsilon_c}.
-\end{equation}
-The global update is then
-\begin{equation}
-\label{eq10}
-\Delta\theta^G_t=\sum_{i=1}^{N} w_i U_i,\qquad
-\theta^G_{t+1}=\theta^G_t+\eta_g\Delta\theta^G_t.
-\end{equation}
-In practice, the server also clips $\|U_i\|_2$ to a preset bound before aggregation. This prevents any single update from dominating the global model and improves robustness under poisoned or sign-flipped uploads.
-
-\begin{algorithm}[t]
-	\caption{FRL with Advantage Execution--Federated Critic (AEFC-FRL)}
-	\label{alg:ae-fc}
-	\KwIn{Initial global backbone $\theta^G_0$, number of agents $N$, total rounds $R$, local epochs $E$, sparsity ratio $\kappa$, prototype set $\mathcal{C}$}
-	\KwOut{Final global backbone $\theta^G$ and local adapters $\{(\psi_i,\xi_i)\}_{i=1}^{N}$}
-	\BlankLine
-	\textbf{Initialize} $\theta^G\gets\theta^G_0$ and broadcast $\theta^G$ to all agents\;
-	\For{$t=0$ \KwTo $R-1$}{
-		\For{$i=1$ \KwTo $N$}{
-			Set $\theta_i\gets\theta^G_t$\;
-			Run $E$ local epochs of PER-MADDPG (Alg.~\ref{alg:maddpg-per}) and obtain $\theta_i^{(t)}$\;
-			Update local adapters $(\psi_i,\xi_i)$ and compute recovery prototypes $\{p_{i,m}^{t}\}_{m\in\mathcal{C}}$\;
-			Estimate $A_i(s,a)$ on recent local transitions and form $\mathcal{D}_i^{\mathrm{high}}$\;
-			Compute $\Delta\theta_i\gets\theta_i^{(t)}-\theta^G_t$\;
-			Apply sparsification $U_i\gets C_\kappa(\Delta\theta_i)$\;
-			Compute confidence statistic $c_i$ and drift score $d_i^t$\;
-			Upload $(U_i,c_i,\{p_{i,m}^{t}\}_{m\in\mathcal{C}})$ to the server\;
-		}
-		Clip uploaded updates and compute credibility weights $\{w_i\}_{i=1}^{N}$ by Eq.~\ref{eq9}\;
-		Update global recovery prototypes by Eq.~\ref{eq:global-prototype}\;
-		Aggregate $\Delta\theta^G_t\gets\sum_{i=1}^{N}w_iU_i$\;
-		Update $\theta^G_{t+1}\gets\theta^G_t+\eta_g\Delta\theta^G_t$ and broadcast $\theta^G_{t+1}$\;
-	}
-\end{algorithm}
-
-AEFC reduces uplink traffic through sparse transmission and reduces the influence of unreliable clients through credibility-weighted aggregation. The prototype channel adds only $\mathcal{O}(|\mathcal{C}|r)$ real values per client per round, where $r$ is the latent dimension, and is typically much smaller than the backbone update. Sparse gradients and prototypes, however, can still leak information about local trajectories, rare states, or high-impact recovery actions. Therefore, AEFC should be regarded as a communication-efficient and privacy-enhancing design rather than a formal privacy mechanism. A deployment that requires mathematical privacy guarantees can combine AEFC with secure aggregation or differential privacy. For example, client $i$ may upload
-\begin{equation}
-\tilde{U}_i=C_\kappa(\Delta\theta_i)+\xi_i,\qquad \xi_i\sim\mathcal{N}(0,\sigma_{\mathrm{dp}}^2 I),
-\end{equation}
-where $\sigma_{\mathrm{dp}}$ is calibrated to a target privacy budget under a standard differential-privacy accountant. This extension trades privacy for recovery accuracy and is therefore evaluated separately from the main AEFC mechanism.
-
-\subsection{Theoretical Convergence Analysis}
-The convergence discussion below specifies the conditions under which a compressed distributed optimization argument is relevant to AEFC. It is not an unconditional convergence claim for arbitrary non-stationary MARL dynamics, nor does it imply global optimality of the learned recovery policy.
-
-Let $F_i(\theta)$ be the expected local return objective of client $i$ after fixing the replay distribution within a federation round, and let $F(\theta)=\sum_{i=1}^{N} q_iF_i(\theta)$ with $q_i\ge 0$ and $\sum_i q_i=1$. Because the RL objective is non-convex, convergence is measured by the expected squared gradient norm. We use the following assumptions.
-
-\begin{assumption}[Smoothness]
-Each $F_i$ is $L$-smooth, i.e.,
-$\|\nabla F_i(\theta)-\nabla F_i(\theta')\|\le L\|\theta-\theta'\|$ for all $\theta,\theta'$.
 \end{assumption}
 
-\begin{assumption}[Stochastic Gradient Noise]
-The local stochastic gradient $g_i^t$ satisfies
-$\mathbb{E}[g_i^t|\theta_t]=\nabla F_i(\theta_t)$ and
-$\mathbb{E}\|g_i^t-\nabla F_i(\theta_t)\|^2\le \sigma^2$.
-\end{assumption}
-
-\begin{assumption}[Bounded Heterogeneity]
-There exists $G_h\ge 0$ such that
-$\sum_{i=1}^{N}q_i\|\nabla F_i(\theta)-\nabla F(\theta)\|^2\le G_h^2$
-for all $\theta$ visited during training.
-\end{assumption}
-
-\begin{assumption}[Contractive Compression]
-The sparsification operator satisfies
-$\mathbb{E}\|C_\kappa(v)-v\|^2\le (1-\delta_\kappa)\|v\|^2$
-for some $\delta_\kappa\in(0,1]$. For Top-$\kappa$ compression, $\delta_\kappa$ depends on the retained fraction and the concentration of the update vector.
-\end{assumption}
-
-\begin{assumption}[Bounded Credibility Weights]
-The server weights satisfy $0\le w_i^t\le w_{\max}$ and
-$\|\sum_i(w_i^t-q_i)\nabla F_i(\theta_t)\|\le b_w$.
-The term $b_w$ captures the bias introduced by advantage-based and shift-aware weighting. The prototype-drift scores are bounded by $0\le d_i^t\le D_s$ after clipping.
-\end{assumption}
-
-\begin{theorem}[Conditional stationarity bound]
-Suppose Assumptions 1--5 hold for the round-level surrogate objective defined above, and let the AEFC update be written as
-\begin{equation}
-\theta_{t+1}=\theta_t+\eta_t\sum_{i=1}^{N}w_i^t C_\kappa(g_i^t).
-\end{equation}
-If $F(\theta)\le F^\star$ for all iterates and the local gradients are bounded by $G$, then, for a constant step size $\eta$ small enough for the smoothness term to be controlled, the iterates satisfy
+\begin{theorem}[Bounded belief distortion]
+Let $b_t^\circ$ denote the clean counterfactual belief. If
+$\|a_t^y\|\le\epsilon_y$ and
+$\|\bar k_t-\bar k_t^\circ\|\le\epsilon_k$ for all $t$, then
 \begin{align}
-\label{eq11}
-&\frac{1}{T}\sum_{t=0}^{T-1}\mathbb{E}\|\nabla F(\theta_t)\|^2 \nonumber\\
-&\quad\le
-\mathcal{O}\left(
-\frac{F^\star-F(\theta_0)}{\eta T}
-+\eta(\sigma^2+G_h^2)
-+(1-\delta_\kappa)G^2
-+b_w^2
-\right),
+\|b_t-b_t^\circ\|
+\le&\ \lambda_b^t\|b_0-b_0^\circ\| \nonumber\\
+&+\frac{L_y\epsilon_y+L_k\epsilon_k}{1-\lambda_b}
+(1-\lambda_b^t).
+\label{eq:belief-bound}
 \end{align}
-where $(1-\delta_\kappa)G^2$ is the residual error caused by sparse compression and $b_w^2$ is the residual bias caused by credibility-aware weighting.
 \end{theorem}
-
 \begin{proof}
-Since each $F_i$ is $L$-smooth, $F$ is also $L$-smooth. Applying the smoothness inequality for gradient ascent gives
-$F(\theta_{t+1})\ge F(\theta_t)+\eta_t\langle\nabla F(\theta_t),\tilde{g}_t\rangle-\frac{L\eta_t^2}{2}\|\tilde{g}_t\|^2$,
-where $\tilde{g}_t=\sum_i w_i^t C_\kappa(g_i^t)$ is the aggregated sparse update. Add and subtract $\sum_i q_i\nabla F_i(\theta_t)$ inside the inner product. The stochastic-gradient term is bounded by Assumption 2, the inter-client drift by Assumption 3, the sparsification residual by Assumption 4, and the credibility-weighting bias by Assumption 5. Summing the resulting inequality from $t=0$ to $T-1$, using $F(\theta_T)\le F^\star$, and dividing by $T$ yields Eq.~\ref{eq11}. This proof follows the usual non-convex compressed federated optimization template, but it keeps the AEFC-specific compression and credibility-bias terms explicit instead of absorbing them into the SGD variance.
+Projection onto $\mathcal B$ is non-expansive. Applying the Lipschitz condition to the attacked and clean recursions gives
+$e_{t+1}\le\lambda_b e_t+L_y\epsilon_y+L_k\epsilon_k$.
+Unrolling the recursion yields \eqref{eq:belief-bound}.
 \end{proof}
 
-Eq.~\ref{eq11} should be interpreted as a conditional stationarity bound. If $\eta=\Theta(T^{-1/2})$ and the residual compression and weighting terms are controlled, the first two terms scale as $\mathcal{O}(T^{-1/2})$. The complete bound, however, also contains $(1-\delta_\kappa)G^2$ and $b_w^2$. Therefore AEFC is not claimed to converge at a pure $\mathcal{O}(T^{-1/2})$ rate unless these residuals are negligible or decrease with training.
+If poisoning stops at $T_p$ and the post-attack disturbance becomes $\epsilon_{\mathrm{clean}}$, the same recursion gives geometric correction toward an $\epsilon_{\mathrm{clean}}/(1-\lambda_b)$ neighborhood. Exact finite-time return is not claimed without an additional reset/rollback mechanism.
 
-Two qualifications are necessary. First, MARL creates non-stationary data distributions because each agent's policy changes during learning; the argument applies to the round-level surrogate objective where the replay distribution is treated as locally fixed. Second, Top-$\kappa$ compression, advantage weighting, and shift-aware prototype penalties are biased operations. Their effect is explicitly represented by $(1-\delta_\kappa)G^2$ and $b_w^2$ rather than assumed away. Section IV reports training diagnostics that monitor whether these residual terms remain controlled in the studied power-grid CPS benchmarks.
+\subsection{Certificate-Supported Local Recovery Knowledge}
+For an honest client, a local transition $\tau=(s,a,r,s')$ is eligible for federation only when it is recovery-useful and consistent with local safety/recovery evidence. Define
+\begin{equation}
+m_i^{\mathrm{safe}}(\tau)=
+\min_\ell\inf_{\substack{x\in\widehat{\mathcal X}_i\\a^u\in\mathcal A_i^u\\w\in\mathcal W_i}}
+\left[\nabla h_{i,\ell}^{\top}
+(f_i+g_i(u+a^u)+w)+\alpha_\ell(h_{i,\ell})\right]
+\end{equation}
+and
+\begin{equation}
+m_i^{\mathrm{rec}}(\tau)=-
+\sup_{\substack{x\in\widehat{\mathcal X}_i\\a^u\in\mathcal A_i^u\\w\in\mathcal W_i}}
+[\dot V_i(x,u,a^u,w)+c_iV_i(x)].
+\end{equation}
+The honest-client sharing set is
+\begin{equation}
+\mathcal B_i^+=
+\{\tau:A_i(\tau)>\zeta_A,\ 
+m_i^{\mathrm{safe}}(\tau)\ge0,\ 
+m_i^{\mathrm{rec}}(\tau)>\zeta_V\}.
+\end{equation}
+This gate limits what an honest client shares. It does not authenticate Byzantine certificates.
 
-\textbf{Training Diagnostics}. The following quantities are recorded during training to connect the assumptions with empirical behavior:
+\subsection{Representation Alignment and Sparse Coordination}
+For coarse recovery mode $m$, honest client $i$ may construct a latent prototype
+\begin{equation}
+p_{i,m}=\frac{1}{|\mathcal B_{i,m}|}\sum_{o\in\mathcal B_{i,m}}e_{\psi_i}(o)
+\end{equation}
+and use a robust center $\bar p_m$ only to reduce honest-client representation drift.
+
+For communication, let $C_k(v)$ retain the $k$ largest-magnitude coordinates. With error feedback,
 \begin{align}
-G_t&=\left\|\sum_{i=1}^{N}w_i^t g_i^t\right\|_2, \nonumber\\
-H_t&=\sum_{i=1}^{N}q_i\|g_i^t-\bar{g}^t\|_2^2, \nonumber\\
-B_t&=\left\|\sum_{i=1}^{N}(w_i^t-q_i)g_i^t\right\|_2, \nonumber\\
-S_t&=\frac{1}{N}\sum_{i=1}^{N} d_i^t,
+z_i^t&=g_i^t+e_i^t,\\
+U_i^t&=C_k(z_i^t),\\
+e_i^{t+1}&=z_i^t-U_i^t.
 \end{align}
-where $\bar{g}^t=\sum_i q_i g_i^t$. Here, $G_t$ tracks the aggregated gradient norm, $H_t$ estimates inter-client gradient heterogeneity, $B_t$ measures the bias introduced by credibility weighting, and $S_t$ measures latent recovery-state drift. Stable or decreasing $G_t$, bounded $H_t$, small $B_t$, and non-explosive $S_t$ provide empirical support for the assumptions used in Eq.~\ref{eq11}. These diagnostics do not prove convergence by themselves, but they make the assumptions auditable rather than purely declarative.
 
-\textbf{Communication Complexity}. In standard federated RL, each of the $N$ clients uploads a dense $d$-dimensional update in every round, giving uplink complexity $\mathcal{O}(NdT)$ over $T$ rounds. AEFC uploads only $\kappa d$ index-value pairs per client and $|\mathcal{C}|r$ prototype values, so the uplink complexity becomes $\mathcal{O}(N(\kappa d+|\mathcal{C}|r)T)$, plus a small scalar confidence statistic per client. Because $|\mathcal{C}|r\ll d$ in the studied models, the dominant term remains $\mathcal{O}(N\kappa dT)$. The downlink broadcast remains $\mathcal{O}(NdT)$ if each client receives a dense global backbone, although practical server-to-client broadcast is often less restrictive than the many-to-one uplink. Thus, AEFC primarily reduces the uplink bottleneck, and the reduction is controlled by the sparsity ratio $\kappa$ with a small prototype-alignment overhead.
+\begin{lemma}[Deterministic Top-$k$ contraction]
+For any $v\in\mathbb R^d$,
+\begin{equation}
+\|v-C_k(v)\|_2^2
+\le\left(1-\frac{k}{d}\right)\|v\|_2^2.
+\end{equation}
+\end{lemma}
+
+The contraction result does not justify treating an untransmitted coordinate as an observed numerical zero in a Byzantine proof. To keep the aggregation semantics well-defined, the preferred implementation uses a common support $S_t$, $|S_t|=k$, determined independently of any single client's report; all participating clients then upload $g_{i,t}[S_t]$. If client-specific supports are used instead, the server must employ a support-aware robust estimator and the corresponding theorem must be changed accordingly.
+
+On a common coordinate population, the server applies a Byzantine-resilient estimator $\mathcal R_f$. For coordinate-wise $f$-trimmed mean, if all honest values on a coordinate lie in
+$[\mu^H_{t,j}-r_{t,j},\mu^H_{t,j}+r_{t,j}]$ and $f<N/2$, then
+\begin{equation}
+|\widehat g_{t,j}-\mu^H_{t,j}|\le r_{t,j}.
+\end{equation}
+This envelope is the source of $\epsilon_k$ used in the belief analysis; client-reported confidence or advantage is not.
+
+\subsection{Risk-Aware Recovery Gate}
+The belief and learned policy produce a candidate $u_t^\pi$. Before this proposal is allowed to exercise recovery authority, AEFC computes a robust safety shortfall
+\begin{equation}
+R_t^{\mathrm{safe}}(u)=
+\max_\ell
+\sup_{\substack{x\in\mathcal X(b_t)\\
+a^u\in\mathcal A_t^u\\
+w\in\mathcal W_t}}
+[-\mathcal B_\ell(x,u,a^u,w)]_+,
+\end{equation}
+where
+\begin{equation}
+\mathcal B_\ell(x,u,a^u,w)=
+\nabla h_\ell(x)^\top[f(x)+g(x)(u+a^u)+w]
++\alpha_\ell(h_\ell(x)).
+\end{equation}
+We combine this term with recovery and uncertainty penalties:
+\begin{align}
+\widehat{\mathfrak R}_t(u)=&
+\lambda_sR_t^{\mathrm{safe}}(u)
++\lambda_r[-m_t^{\mathrm{rec}}(u)]_+ \nonumber\\
+&+\lambda_b\,\mathrm{diam}(\mathcal X(b_t))
++\lambda_p(1-q_t),
+\end{align}
+where $q_t\in[0,1]$ is a protocol-level trust state derived from provenance validity, age, cross-source consistency, and belief uncertainty.
+
+The learned proposal is authorized only when
+\begin{equation}
+G_t(u)=
+\mathbf 1\{\widehat{\mathfrak R}_t(u)\le\rho_{\max}-\epsilon_R\}
+\mathbf 1\{q_t\ge q_{\min}\}.
+\end{equation}
+Then
+\begin{equation}
+u_t^{\mathrm{prop}}=
+\begin{cases}
+u_t^\pi,&G_t=1,\\
+u_t^{\mathrm{fallback}},&G_t=0.
+\end{cases}
+\end{equation}
+
+\begin{theorem}[Bounded false authorization]
+Assume
+\begin{equation}
+\Pr[
+\mathfrak R_t^{\mathrm{true}}(u)
+\le\widehat{\mathfrak R}_t(u)+\epsilon_R]\ge1-\delta_g.
+\end{equation}
+Then
+\begin{equation}
+\Pr[G_t(u)=1\ \wedge\
+\mathfrak R_t^{\mathrm{true}}(u)>\rho_{\max}]
+\le\delta_g.
+\end{equation}
+\end{theorem}
+If all uncertainty sets are deterministic outer approximations, $\delta_g$ can be zero.
+
+\subsection{Trust-Gated Online Policy Adaptation}
+AEFC separates a candidate model from the deployed controller. Given robust aggregate $g_t$, the candidate is
+\begin{equation}
+\widetilde\theta_{t+1}=
+\Pi_{\mathbb B(\theta_t^{\mathrm{dep}},\Delta_\theta)}
+\left[\theta_t^{\mathrm{dep}}
+-\eta_t q_t\,\operatorname{clip}_C(g_t)\right].
+\end{equation}
+Deployment requires
+\begin{equation}
+A_t=
+\mathbf 1\{q_t\ge q_{\min}\}
+\mathbf 1\{G_t=1\}
+\mathbf 1\{\mathrm{validation}_t=1\},
+\end{equation}
+and
+\begin{equation}
+\theta_{t+1}^{\mathrm{dep}}=
+A_t\widetilde\theta_{t+1}
++(1-A_t)\theta_t^{\mathrm{dep}}.
+\end{equation}
+
+\begin{theorem}[Bounded deployed-policy deviation]
+For every accepted round,
+\begin{equation}
+\|\theta_{t+1}^{\mathrm{dep}}-\theta_t^{\mathrm{dep}}\|
+\le
+\min\{\eta_tC,\Delta_\theta\}.
+\end{equation}
+If $\pi_\theta$ is $L_\pi$-Lipschitz in its parameters, then
+\begin{equation}
+\|\pi_{\theta_{t+1}^{\mathrm{dep}}}(x)
+-\pi_{\theta_t^{\mathrm{dep}}}(x)\|
+\le
+L_\pi\min\{\eta_tC,\Delta_\theta\}.
+\end{equation}
+\end{theorem}
+
+Finite correction after poisoning additionally requires either finite detection and rollback to a certified checkpoint, or a clean post-attack contraction
+\begin{equation}
+\|\theta_{t+1}-\theta^c\|
+\le\kappa\|\theta_t-\theta^c\|+\epsilon_c,
+\qquad \kappa<1.
+\end{equation}
+Without such an assumption, finite correction is not claimed.
+
+\subsection{Robust Physical Execution Shield}
+The authorized or fallback proposal is still not directly applied. AEFC solves
+\begin{equation}
+u_t^\star=
+\arg\min_{u,\delta\ge0}
+\|u-u_t^{\mathrm{prop}}\|_2^2+\lambda_\delta\delta^2
+\label{eq:shield-new}
+\end{equation}
+subject to the hard robust safety constraints
+\begin{equation}
+\inf_{\substack{x\in\widehat{\mathcal X}_t\\
+a^u\in\mathcal A_t^u\\
+w\in\mathcal W_t}}
+\left[
+\nabla h_\ell(x)^\top(f(x)+g(x)(u+a^u)+w)
++\alpha_\ell(h_\ell(x))
+\right]\ge0
+\label{eq:robust-cbf}
+\end{equation}
+and a soft recovery CLF constraint. The actual plant receives
+\begin{equation}
+u_t^{\mathrm{exec}}=u_t^\star+a_t^u.
+\end{equation}
+
+\begin{theorem}[Compositional safety under joint corruption]
+Suppose \eqref{eq:coverage} holds for all $t$, the hard constraints in \eqref{eq:robust-cbf} are feasible, and $x(0)\in\mathcal S$. Then
+\begin{equation}
+x(t)\in\mathcal S,\qquad \forall t\ge0,
+\end{equation}
+for any recovery belief, federated knowledge, deployed policy, or learned proposal generated under poisoning, provided the realized physical corruption remains inside the modeled envelope.
+\end{theorem}
+\begin{proof}
+For every admissible state, downstream control corruption, and disturbance, the robust barrier constraint enforces
+$\dot h_\ell+\alpha_\ell(h_\ell)\ge0$.
+Standard forward-invariance arguments therefore preserve every
+$\{h_\ell\ge0\}$ and hence their intersection. The proof is independent of the quality or origin of the learned proposal.
+\end{proof}
+
+\subsection{Guarantee Summary and Scope}
+The security guarantees are intentionally separated:
+\begin{align}
+\text{G1: }&\text{bounded belief distortion},\\
+\text{G2: }&\text{bounded false authorization},\\
+\text{G3: }&\text{finite $\varepsilon$-correction under explicit contraction/rollback},\\
+\text{G4: }&\text{bounded deployed-policy deviation},\\
+\text{G5: }&\text{physical forward invariance}.
+\end{align}
+G5 does not require convergence of the federated learner. G1--G4 explain why federated recovery knowledge has bounded authority rather than being made irrelevant by the final shield.

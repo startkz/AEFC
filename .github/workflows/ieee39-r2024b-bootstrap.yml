@@ -1,0 +1,60 @@
+name: IEEE39 R2024b Bootstrap
+
+on:
+  push:
+    branches:
+      - experiment/ieee39-r2024b-actions
+    paths:
+      - matlab_r2024b/**
+      - .github/workflows/ieee39-r2024b-bootstrap.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out migration branch
+        uses: actions/checkout@v4
+
+      - name: Set up MATLAB R2024b and power-system products
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: >-
+            Simulink
+            Simscape
+            Simscape_Electrical
+          cache: true
+
+      - name: Bootstrap and smoke-test native IEEE 39-bus plant
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); aefc_ieee39_bootstrap
+
+      - name: Upload migration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ieee39-r2024b-bootstrap
+          path: |
+            results/ieee39_r2024b/**
+            Figures/IEEE39-R2024b/**
+          if-no-files-found: warn
+
+      - name: Commit migrated model after successful real simulation
+        if: success()
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- Figures/IEEE39-R2024b results/ieee39_r2024b/bootstrap_inventory.json results/ieee39_r2024b/smoke_summary.json
+          if git diff --cached --quiet; then
+            echo "No generated model changes to commit."
+          else
+            git commit -m "Generate R2024b-native IEEE39 plant after smoke simulation [skip ci]"
+            git push origin HEAD:experiment/ieee39-r2024b-actions
+          fi

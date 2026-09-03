@@ -1,0 +1,24 @@
+{
+  "backend": "reduced_order_mechanism_test",
+  "commit_sha": "b8a7673d36b0066c7f3770b31ecc154d54484b7e",
+  "config_path": "configs/joint20.json",
+  "config_id": "89363b2581483cbf",
+  "seeds": 20,
+  "steps": 120,
+  "methods": [
+    "FedRL",
+    "RobustAgg",
+    "AEFC-no-PATBU",
+    "AEFC-no-Gate",
+    "AEFC-no-TGOPA",
+    "AEFC-no-Shield",
+    "AEFC-Full"
+  ],
+  "scenarios": [
+    "clean",
+    "knowledge",
+    "physical",
+    "joint"
+  ],
+  "rows": 560
+}

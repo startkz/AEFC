@@ -1,0 +1,14 @@
+{
+  "evidence_source": "real_mathworks_ieee39_simscape",
+  "matlab_release": "2024b",
+  "model": "IEEE39BusSystem",
+  "stop_time_s": 0.2,
+  "success": true,
+  "error_identifier": "",
+  "error_message": "",
+  "output_fields": [
+    "SimulationMetadata",
+    "ErrorMessage"
+  ],
+  "final_time": 0.2
+}

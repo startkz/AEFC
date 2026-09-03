@@ -1,272 +1,126 @@
-\section{EXPERIMENTAL}
-The evaluation focuses on power-grid CPS recovery simulations and examines recovery performance, communication cost, heterogeneity stress, robustness against malicious clients, membership-inference risk, scalability, convergence diagnostics, and deployment issues. A small non-grid traffic-signal proof of concept is also included to test whether the AEFC interface depends on power-flow equations. The source code is available at https://github.com/startkz/AEFC-FRL.
+\section{EXPERIMENTAL EVALUATION}
 
-\subsection{Experiment Setup}
-All experiments were conducted on a workstation with an Intel(R) Xeon(R) Gold 6230 CPU at 2.10~GHz, 128~GB RAM, and an NVIDIA RTX 3090 GPU. The software environment used Ubuntu 20.04 LTS, Python 3.9, PyTorch 2.0, and CUDA acceleration. The CPS environment was built on a Simulink--Python co-simulation platform: Simulink models the physical power-grid dynamics, and a custom Gym-compatible interface exposes states, actions, and rewards to the learning agents.
+\subsection{Evidence Policy and Artifact Status}
+The experimental methodology follows a strict code-to-claim rule: every quantitative manuscript result must be generated from a committed executable configuration and raw per-seed trace. A plot script that directly constructs target curves or hard-codes final percentages is not treated as experimental evidence. Accordingly, legacy numerical curves that cannot be traced to raw simulator output are excluded from the security claims of this revision.
 
-The framework is evaluated on two \emph{power-grid CPS} benchmarks: the IEEE 39-bus system and the IEEE 118-bus system. The 39-bus case is used for convergence, recovery performance, robustness, and membership-inference evaluation. The 118-bus case is used to test scalability with different numbers of agents. The current empirical evidence is therefore strongest for power-grid recovery. For other CPS domains, such as transportation control or industrial automation, the state-action semantics, actuation delay, safety constraints, and topology can differ substantially; those differences are treated as external-validity limitations rather than as already validated generalization.
+The final artifact contains two explicitly separated evaluation paths. First, the released reduced-order CPS integration backend executes the complete PATBU--risk-gate--trust-gated-adaptation--shield--post-shield-attack composition and is used only for mechanism-level validation. Second, the native MATLAB R2024b path acquires MathWorks' \texttt{IEEE39BusSystem}, discovers candidate observation and control edges, validates the selected actuator edges through finite-difference causal probing, instruments the validated native model, and executes the same seven methods, four corruption cells, and 20 matched seeds. The authoritative native run uses four generator-local physical rotor-speed/\texttt{Pref} pairs, corresponding to Gen10@Bus30, Gen1@Bus39, Gen2@Bus31, and Gen3@Bus32. The resulting $4\times4$ finite-difference sensitivity matrix has rank four and condition number 5.13. Native IEEE 39-bus numerical claims are taken only from the orientation-safe run whose committed raw traces, summary, statistics, and generated LaTeX all share one configuration and provenance record.
 
-The IEEE 39-bus system contains 10 generators and 39 buses and is partitioned into multiple subsystems for multi-agent control. Fig.~\ref{fig:platform} shows the co-simulation platform, where the physical network, subsystem agents, and federated coordination server are connected in one recovery pipeline. Each agent observes local measurements from its assigned subsystem and executes recovery actions under attack conditions. In federated variants, the server aggregates model updates rather than raw trajectories.
+\subsection{Benchmarks and Environment}
+The primary benchmark is the IEEE 39-bus system. It contains 10 generators and 39 buses and is partitioned into interacting control regions. The existing manuscript also uses the IEEE 118-bus system for scale studies; quantitative 118-bus claims should be retained only when their raw execution traces are made available. Additional IEEE 33-bus or 8500-node results must not be presented as existing results unless corresponding executable adapters and raw logs are added to the artifact.
 
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig4.png}
-	\caption{Simulink--Python co-simulation platform and federated recovery pipeline.}
-	\label{fig:platform}
-\end{figure}
+The legacy experiment description uses a workstation with an Intel Xeon Gold 6230 CPU, 128 GB RAM, an NVIDIA RTX 3090 GPU, Ubuntu 20.04, Python 3.9, PyTorch 2.0, and a Simulink--Python co-simulation stack. The authoritative native IEEE 39-bus evidence instead comes from the released GitHub Actions workflow using MATLAB R2024b with Simulink, Simscape, and Simscape Electrical at commit \texttt{cc315ff522c90ce6adc09df3020472dd9ad820ea}. It executes the native plant at a $1/60$~s sample time, records the validated mapping, configuration hash, seed, and raw trace, and reuses one Fast Restart compile across the $7\times4\times20=560$ experiment matrix through numeric tunable selectors. These CI measurements are reported separately from the legacy workstation description.
 
-All learning methods use the same MADDPG-based actor--critic backbone. Unless otherwise stated, the actor and critic learning rates are both 0.001 with Adam, the replay buffer size is $1\times 10^5$ transitions per agent, the batch size is 256, the discount factor is 0.99, and the soft target update rate is $\tau=0.005$. Each actor and critic has two hidden layers with 128 units per layer and ReLU activations. Exploration uses Ornstein--Uhlenbeck noise with an initial scale of 0.2 that decays during training. Federated synchronization is performed every 5 episodes. For AEFC, the sparsification ratio is $\kappa=0.2$. All methods are trained for 1000 episodes with 30 steps per episode. Table~\ref{table2} summarizes the shared hyperparameter settings.
+\subsection{Methods and Ablations}
+The security-focused comparison includes:
+\begin{itemize}
+    \item a standard federated RL baseline without security controls;
+    \item a robust-aggregation FRL baseline;
+    \item AEFC without provenance-aware belief processing;
+    \item AEFC without the risk-aware recovery gate;
+    \item AEFC without trust-gated online adaptation;
+    \item AEFC without the physical shield; and
+    \item the complete AEFC design.
+\end{itemize}
+The earlier ``NoCW'' and credibility-weighted ablations are excluded unless credibility weighting is reintroduced into the executable algorithm. Heterogeneous adapters and representation alignment can be evaluated separately as utility-oriented ablations.
 
-\begin{table}[htpb]
-	\centering
-	\caption{Parameter settings}
-	\label{table2}
-	\setlength{\tabcolsep}{1mm}
-	\begin{tabular}{ll}
-		\toprule[1.5pt]
-		Parameter & Value \\
-		\midrule
-		Learning rate (actor/critic) & 0.001 \\
-		Discount factor $\gamma$ & 0.99 \\
-		Replay buffer size & $1\times 10^5$ transitions/agent \\
-		Batch size & 256 \\
-		Target update rate $\tau$ & 0.005 \\
-		Exploration noise coefficient & 0.15 \\
-		Federation synchronization interval & 5 episodes \\
-		Gradient sparsification ratio $\kappa$ & 0.2 \\
-		Hidden layers (actor/critic) & 2 layers $\times$ 128 units \\
-		Training episodes $\times$ steps/episode & 1000 $\times$ 30 \\
-		\bottomrule[1.5pt]
-	\end{tabular}
+\subsection{Joint-Corruption Attack Matrix}
+The headline experiment is a $2\times2$ decomposition:
+\begin{equation}
+\{\text{physical-channel corruption off/on}\}
+\times
+\{\text{knowledge poisoning off/on}\}.
+\end{equation}
+This produces clean, knowledge-only, physical-only, and joint-attack conditions. The same scenario names, compared methods, and matched seeds are used in the mechanism-level and native IEEE 39-bus paths so that differences can be attributed to the plant/backend rather than to a changed experimental matrix.
+
+Observation attacks include bounded false-data corruption on the selected native observation channels. Control corruption is injected only after the robust shield and before the validated native actuator edge, preserving the threat-model ordering $u_t^\pi\rightarrow u_t^\star\rightarrow u_t^{\mathrm{exec}}$. Knowledge attacks include model replacement, sign-changing poisoned updates, stale recovery evidence, and colluding Byzantine clients. The native mapping is not inferred from names alone: a control edge is admitted only after a finite-difference probe produces a finite, nontrivial response in the selected native observations.
+
+An additional out-of-envelope stress test should violate the modeled control-attack budget. Failure is acceptable in this setting because the purpose is to demonstrate the theorem boundary:
+\begin{quote}
+inside the modeled attack envelope, the formal guarantee applies; outside it, no formal safety guarantee is claimed.
+\end{quote}
+
+\subsection{Raw-Trace Contract}
+Each episode records at least:
+\begin{table}[htbp]
+\centering
+\caption{Minimum trace fields for code-to-claim reproducibility.}
+\begin{tabular}{ll}
+\toprule
+Category & Required fields\\
+\midrule
+Identity & commit SHA, benchmark, seed, configuration\\
+Attack & type, start/end, magnitude, Byzantine ratio\\
+State & native observation, normalized observation, safety envelope\\
+Belief & belief distortion, clean reference, provenance/trust state\\
+Federation & robust aggregate and poisoning condition\\
+Policy & deployed-policy drift, adaptation decision\\
+Authority & risk bound, gate decision, validation decision\\
+Control & shield correction, post-shield attack, executed correction\\
+Safety & native safety margin, violation indicator\\
+Recovery & recovery state and recovery time\\
+\bottomrule
+\end{tabular}
 \end{table}
 
-We compare AEFC-FRL with the following baselines and ablation variants.
+Logging the shield correction and post-shield corruption separately is essential because it distinguishes learned-policy authority, shield intervention, and downstream control-channel corruption. In the native model, these signals remain separate until the validated control edge, where the plant receives the original reference plus the bounded shield correction plus the post-shield attack.
 
-1) \textit{MADDPG}: a centralized learner that trains a single controller using information from the whole 39-bus system. This is an idealized full-information baseline.
+\subsection{Security and Recovery Metrics}
+The primary safety metrics are the episode-level safety violation rate, the minimum native normalized safety margin, and the shield intervention ratio. Recovery utility is measured using recovery success and time-to-recovery rather than recovery accuracy alone.
 
-2) \textit{FedRL}: a standard federated multi-agent RL baseline. Each agent trains locally and periodically uploads dense model updates for server averaging. It preserves data locality but does not use advantage-guided sparsification or credibility-aware aggregation.
+Knowledge-integrity metrics include
+\begin{equation}
+D_b(t)=\|b_t^{\mathrm{attack}}-b_t^{\mathrm{clean}}\|_2,
+\end{equation}
+\begin{equation}
+D_\theta(t)=
+\frac{\|\theta_t^{\mathrm{dep}}-\theta_t^{\mathrm{clean}}\|}
+{\|\theta_t^{\mathrm{clean}}\|+\epsilon},
+\end{equation}
+and aggregation deviation
+\begin{equation}
+D_g(t)=\|\widehat g_t-\mu_t^{H}\|_2.
+\end{equation}
+The false-authorization rate is
+\begin{equation}
+\mathrm{FAR}=
+\frac{\#\{G_t=1\land
+\mathfrak R_t^{\mathrm{true}}>\rho_{\max}\}}
+{\#\{\mathfrak R_t^{\mathrm{true}}>\rho_{\max}\}}.
+\end{equation}
+The shield intervention ratio measures how often the final execution layer changes an authorized learned proposal.
 
-3) \textit{FedRL-NoAdv}: an ablation variant without advantage execution. Clients use credibility-aware aggregation but upload dense updates, which isolates the contribution of sparse advantage-guided transmission.
+\subsection{Statistical Protocol}
+The default evaluation uses 20 matched seeds,
+\begin{equation}
+\mathrm{seed}\in\{0,1,\ldots,19\},
+\end{equation}
+with the same seed applied across compared methods in each scenario. Skewed recovery-time and distortion metrics are compared with a paired Wilcoxon signed-rank test. Multiple baseline comparisons use Holm correction. Exact all-zero paired differences are assigned $p=1$ before Holm correction, so a no-effect comparison cannot be converted into an artificial significant result by non-finite-value handling. Effect sizes and 95\% confidence intervals are reported together with $p$-values.
 
-4) \textit{FedRL-NoCW}: an ablation variant without critic weighting. Clients use advantage-guided sparse updates, while the server applies equal-weight aggregation.
+For episode-level safety violation proportions, Wilson confidence intervals are reported. If some episodes do not recover before the simulation horizon, the corresponding recovery-success rate is reported explicitly; time-to-event analysis should be added if censoring is substantial rather than interpreting the horizon as an observed recovery time.
 
-\subsection{Performance Evaluation}
-Fig.~\ref{fig:recovery-time} reports recovery time over training episodes. At the beginning of training, all methods require roughly 15--18 time steps to stabilize the system after an attack. As training proceeds, recovery time decreases for all methods. AEFC-FRL reaches a stable level of about 9 recovery steps after approximately 300 episodes. MADDPG and FedRL converge more slowly and settle around 13 and 12 steps, respectively. FedRL-NoAdv and FedRL-NoCW fall between the full method and the baselines: FedRL-NoAdv plateaus at about 10--11 steps, while FedRL-NoCW eventually reaches about 9 steps but needs more training episodes. These results indicate that sparse advantage execution and credibility-aware aggregation improve both recovery speed and training stability in the studied 39-bus setting.
+\subsection{Figure and Table Design}
+The final paper prioritizes the following evidence:
+\begin{enumerate}
+    \item a threat/trust-boundary figure showing observation, knowledge, gate, adaptation, shield, downstream control corruption, and plant;
+    \item a $2\times2$ joint-corruption comparison;
+    \item an attack-episode causal timeline showing $D_b$, $q_t$, $G_t$, $D_\theta$, $u_t^\pi$, $u_t^\star$, $u_t^{\mathrm{exec}}$, and the safety margin;
+    \item the distribution of minimum physical safety margins across seeds;
+    \item post-poisoning belief/policy correction curves; and
+    \item a safety--utility--intervention trade-off over $\rho_{\max}$, $q_{\min}$, and $\Delta_\theta$.
+\end{enumerate}
 
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig5.eps}
-	\caption{Convergence of recovery time.}
-	\label{fig:recovery-time}
-	\vspace{-10pt}
-\end{figure}
+The main results table jointly reports safety violation, minimum safety margin, false authorization, belief distortion, policy drift, recovery success, and recovery time. Communication cost is reported only when computed from actual transmitted bytes in the corresponding trace.
 
-Fig.~\ref{fig:recovery-accuracy} shows recovery accuracy, measured by the percentage of restored load or the fraction of state variables returned to safe ranges after an attack. All methods start at about 60\%--70\% because the initial policies are nearly random. AEFC-FRL rises above 90\% within the first 200 episodes and converges near 98\%. MADDPG plateaus around 85\%, and FedRL reaches about 88\%. FedRL-NoAdv and FedRL-NoCW converge to roughly 93\% and 94\%, respectively. The final gain of AEFC-FRL over centralized MADDPG is about 15.3 percentage points. The ablation results show that both components of AEFC contribute: advantage execution improves the quality and efficiency of transmitted updates, while critic weighting improves global aggregation.
+\IfFileExists{results/generated/Results-Auto.tex}{%
+\input{results/generated/Results-Auto.tex}%
+}{%
+\subsection{Mechanism-Level 20-Seed Results Pending CI}
+The manuscript is wired to import the automatically generated mechanism-level results from \texttt{results/generated/Results-Auto.tex}. Until the CI runner has produced the committed summary and immutable raw-trace artifact, no numerical value is inserted here.
+}
 
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig6.eps}
-	\caption{Convergence of recovery accuracy.}
-	\label{fig:recovery-accuracy}
-	\vspace{-10pt}
-\end{figure}
-
-Fig.~\ref{fig:communication-overhead} compares communication overhead during training for the distributed methods. AEFC-FRL transmits about 270 KB per episode, whereas FedRL requires about 500 KB per episode. This corresponds to a 45.8\% reduction in communication overhead. FedRL-NoCW has a similar communication profile to AEFC-FRL because both use sparse uploads. FedRL and FedRL-NoAdv upload dense updates and remain around 480--510 KB per episode. These results confirm that the communication saving mainly comes from advantage-guided sparsification, while the accuracy gain depends on combining sparsification with credibility-aware aggregation.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig7.eps}
-	\caption{Communication overhead during federated training.}
-	\label{fig:communication-overhead}
-	\vspace{-10pt}
-\end{figure}
-
-\subsection{Hyperparameter Sensitivity and Runtime Cost}
-AEFC introduces two practical hyperparameters: the advantage threshold $\zeta$ and the sparsification ratio $\kappa$. The threshold $\zeta$ controls which local transitions are treated as high-value recovery experiences, while $\kappa$ controls the number of update coordinates transmitted to the server. A very low $\zeta$ or large $\kappa$ makes AEFC close to dense FedRL and weakens the communication benefit. A very high $\zeta$ or small $\kappa$ can discard useful recovery signals and slow policy improvement. For this reason, the default setting uses a moderate sparsification ratio $\kappa=0.2$ and selects high-advantage transitions from the upper range of the local advantage distribution.
-
-In deployment, these parameters need not remain fixed. The advantage threshold can be set adaptively as a local quantile, e.g., selecting the top $p\%$ of recent advantage values in each client buffer. Similarly, $\kappa$ can be adjusted according to available uplink bandwidth or server-side congestion. When the channel is congested, clients can reduce $\kappa$ and upload fewer index-value pairs; when recovery performance drops or attacks intensify, $\kappa$ can be relaxed to transmit more information. This adaptive interpretation makes AEFC less dependent on hand-tuned constants and provides a practical path for bandwidth-aware operation.
-
-AEFC also adds computation beyond standard FedRL. The main additional costs are advantage scoring, Top-$\kappa$ coordinate selection, norm clipping, and credibility-weight calculation. Advantage scores are already available from the actor--critic learner, so the dominant extra client-side operation is Top-$\kappa$ selection over the update vector. This operation is linear or near-linear in the number of parameters with standard partial-selection routines and is executed only at federation rounds rather than at every environment step. The overhead is therefore mainly a synchronization-round cost, while the saved communication volume is paid back whenever uplink bandwidth is the bottleneck. For real-time CPS, the federation interval should be chosen so that all AEFC processing finishes outside the hard control loop, with certified local controllers handling immediate safety responses.
-
-\subsection{Heterogeneity and Shift Stress Test}
-We further evaluate whether the adapter and prototype-alignment components improve stability when subsystem agents no longer share perfectly aligned observations and attack contexts. Four heterogeneity levels are considered. H0 uses aligned local observations and identical adapter dimensions. H1 masks 20\% of local sensing channels for a subset of clients. H2 combines sensing masks with communication delay and separates clients into sensor-attack and control-attack groups. H3 increases the sensing mask to 40\%, adds stochastic message delay, and applies actuator saturation to part of the system. The same federation interval, sparsification ratio, and local training budget are used across all levels.
-
-Fig.~\ref{fig:heterogeneity-stress} reports recovery accuracy averaged over five seeds. Standard FedRL degrades sharply as heterogeneity increases, falling from about 88\% at H0 to about 64\% at H3. AEFC without local adapters performs better than FedRL but still loses accuracy when observation and action mappings become incompatible. Removing recovery-state prototypes also hurts performance under H2 and H3, showing that sparse advantage updates alone do not fully control latent drift. The full AEFC-FRL maintains about 88\% recovery accuracy at H3, which is approximately 9 percentage points higher than the no-adapter variant and 24 percentage points higher than FedRL. This stress test supports the design choice of synchronizing an aligned recovery backbone while keeping subsystem-specific adapters local.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig15.eps}
-	\caption{Recovery accuracy under increasing subsystem heterogeneity.}
-	\label{fig:heterogeneity-stress}
-	\vspace{-10pt}
-\end{figure}
-
-\subsection{Robustness and Empirical Privacy-Risk Assessment}
-Robustness is evaluated by injecting Byzantine clients into the federated training process at ratios of 10\%, 20\%, and 30\%. The malicious clients submit random updates or poisoned gradients, including scaled and sign-flipped perturbations. Fig.~\ref{fig:byzantine-ratio} reports the resulting recovery accuracy. As the fraction of malicious clients increases, all methods degrade, but AEFC-FRL degrades more slowly than the unenhanced federated variants. At 30\% malicious participation, AEFC-FRL preserves approximately 83\% recovery accuracy. This behavior is consistent with the design goal of AEFC: advantage-guided filtering reduces the spread of low-utility local updates, and credibility-aware aggregation lowers the weight assigned to suspicious contributions.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig12.eps}
-	\caption{Recovery accuracy under different Byzantine-client ratios.}
-	\label{fig:byzantine-ratio}
-	\vspace{-10pt}
-\end{figure}
-
-Privacy risk is evaluated through a membership inference attack (MIA). The adversary attempts to determine whether a target sample belongs to a client's local training set. Attack success is measured by AUC, where an AUC close to 0.5 indicates performance close to random guessing under the adopted attack model. Fig.~\ref{fig:mia-auc} shows that AEFC-FRL produces the lowest AUC among the tested methods and approaches 0.5.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig13.eps}
-	\caption{Membership inference attack AUC for each method.}
-	\label{fig:mia-auc}
-	\vspace{-10pt}
-\end{figure}
-
-A near-0.5 AUC in this experiment indicates reduced empirical membership-inference efficacy under the chosen attacker and data split. It is not a formal privacy guarantee, and it does not imply resistance to stronger inference, reconstruction, or gradient-leakage attacks. AEFC reduces the amount of transmitted information, but sparsification alone is not a substitute for differential privacy, secure aggregation, or cryptographic protection. The reported result is therefore an empirical privacy-risk assessment without formal guarantees, rather than proof of privacy preservation.
-
-Gradient leakage is a separate threat. A gradient-reconstruction adversary may use uploaded index-value pairs, model snapshots, and prior knowledge of the subsystem dynamics to infer sensitive local states or rare attack trajectories. AEFC makes such reconstruction harder by transmitting fewer coordinates, but the nonzero coordinates are also more informative because they are selected from high-advantage transitions. In a high-assurance deployment, sparse uploads should therefore be combined with secure aggregation, update clipping, and calibrated differential-privacy noise. The expected trade-off is clear: stronger formal privacy mechanisms reduce reconstruction risk but may also attenuate the recovery signal, especially when high-advantage events are rare.
-
-Fig.~\ref{fig:attack-intensity} complements the Byzantine analysis by examining performance degradation under three attack-intensity levels relative to the no-attack case. AEFC-FRL remains stable across the three regimes. The degradation is small under low intensity, moderate under medium intensity, and remains bounded under high intensity. The result supports the claim that sparse update transmission and credibility-aware aggregation should be used together: sparsification reduces communication and filters weak updates, while credibility weighting improves resistance to outliers.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig8.eps}
-	\caption{Robustness comparison under different attack intensities.}
-	\label{fig:attack-intensity}
-	\vspace{-10pt}
-\end{figure}
-
-\subsection{Scalability Evaluation}
-Scalability is evaluated on the IEEE 118-bus system with 10, 20, 30, and 40 agents. As shown in Fig.~\ref{fig:scalability-time}, AEFC-FRL reaches 90\% recovery accuracy in about 200--250 episodes across the tested agent counts. MADDPG and FedRL plateau below the 90\% threshold in the same training budget, while FedRL-NoAdv and FedRL-NoCW eventually exceed 90\% but require more episodes. The advantage of AEFC-FRL becomes more visible as the number of agents increases, suggesting that federated knowledge sharing is useful when the grid is partitioned into many local controllers.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig9.eps}
-	\caption{Episodes required to reach the target recovery accuracy under different numbers of agents.}
-	\label{fig:scalability-time}
-	\vspace{-10pt}
-\end{figure}
-
-Fig.~\ref{fig:scalability-accuracy} reports final recovery accuracy under different numbers of agents. AEFC-FRL remains near 95\%--98\% restored load across the tested scales. MADDPG is lower and becomes less stable as the number of agents increases, dropping to roughly 70\%--80\% at 40 agents. FedRL remains below 90\% in most cases. FedRL-NoAdv and FedRL-NoCW reach about 93\%--95\%, but remain below the full AEFC-FRL method. These results indicate that the two AEFC components remain useful when the system size and number of local controllers increase.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig10.eps}
-	\caption{Final recovery accuracy under different numbers of agents.}
-	\label{fig:scalability-accuracy}
-	\vspace{-10pt}
-\end{figure}
-
-Fig.~\ref{fig:scalability-communication} shows communication overhead on the 118-bus system. With 10 agents, AEFC-FRL requires about 270 KB per round on average, compared with about 500 KB for FedRL. As the number of agents increases, total communication grows approximately linearly. At 40 agents, FedRL reaches about 2,000 KB per round, while AEFC-FRL uses about 1,080 KB. Across the tested scales, AEFC-FRL reduces communication by approximately 45\%--46\% relative to standard FedRL.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[width=\linewidth]{Fig11.eps}
-	\caption{Communication overhead under different numbers of agents.}
-	\label{fig:scalability-communication}
-	\vspace{-10pt}
-\end{figure}
-
-\subsection{Convergence Diagnostics}
-The convergence analysis in Section III relies on bounded update norm, bounded inter-client heterogeneity, controlled bias from credibility weighting, and bounded prototype drift. To make these assumptions auditable in implementation, four diagnostic quantities are logged during training: the aggregated update norm $G_t$, the relative heterogeneity estimate $H_t$, the relative credibility-weighting bias $B_t/G_t$, and the prototype-drift score $S_t$. Their theoretical definitions are given in Section III-E. Because the released actor--critic implementation exposes client parameter deltas after local optimizer steps rather than raw stochastic gradients, the logged values in Table~\ref{tab:diagnostics} use the corresponding round-level update proxies. We instrumented the released AEFC-FRL reference implementation on a CPS-like Pendulum-v1 stabilization task with five clients, 10\% random Byzantine clients, Top-$\kappa=0.2$, and three random seeds. This lightweight run is used only to audit the training assumptions; it is not reported as an additional power-grid benchmark.
-
-\begin{table}[htpb]
-	\centering
-	\caption{Measured diagnostics for auditing convergence assumptions}
-	\label{tab:diagnostics}
-	\scriptsize
-	\setlength{\tabcolsep}{1.15mm}
-	\begin{tabular}{llccc}
-		\toprule[1.5pt]
-		Metric & Audited quantity & Mean $\pm$ std. & P95 & Max \\
-		\midrule
-		$G_t$ & $\|\Delta_t\|_2$ & $2.092 \pm 0.309$ & $2.580$ & $2.663$ \\
-		$H_t$ & Relative client heterogeneity & $1.129 \pm 0.138$ & $1.313$ & $1.324$ \\
-		$B_t/G_t$ & Relative weighting bias & $0.032 \pm 0.015$ & $0.060$ & $0.066$ \\
-		$S_t$ & Prototype-drift score & $0.022 \pm 0.011$ & $0.039$ & $0.055$ \\
-		\bottomrule[1.5pt]
-	\end{tabular}
-	\vspace{2pt}
-	\begin{minipage}{0.96\linewidth}
-		\footnotesize Values are computed over 21 post-warm-up federation rounds from the released reference implementation. Update-based diagnostics are used as executable proxies for the gradient-based quantities in Section III-E. They quantify whether the boundedness assumptions remain empirically plausible; they are not a formal convergence proof.
-	\end{minipage}
-\end{table}
-
-These diagnostics are used as sanity checks rather than as substitutes for proof. When $G_t$ decreases together with recovery loss, the optimization process is consistent with the stationarity criterion in Eq.~\ref{eq11}. When $H_t$, $B_t/G_t$, or $S_t$ spikes, the corresponding federation round is inspected for local attack imbalance, representation drift, or abnormal client updates. This practice is useful in deployment because it exposes when the assumptions behind the convergence discussion cease to be reliable.
-
-\subsection{External Validity and Deployment}
-The power-grid benchmarks exercise important CPS properties, including continuous dynamics, coupled subsystems, safety constraints, and communication-limited distributed control. Nevertheless, they do not cover every CPS domain. To test whether AEFC is tied to the specific structure of power-flow equations, we add a small non-grid proof of concept using a two-phase traffic-signal queue simulator. Each client represents one local intersection with different arrival rates. A cross-layer incident injects sensor bias and command delay during the recovery window. The local learner uses a lightweight policy-gradient actor with a local observation encoder, and the server receives either dense FedRL updates or AEFC sparse updates selected by recovery advantage. The same interface is preserved: local observation encoding, local policy update, sparse upload, and server aggregation. Table~\ref{tab:traffic-poc} reports this proof-of-concept result.
-
-\begin{table}[htpb]
-	\centering
-	\caption{Non-grid traffic-signal proof of concept under sensor-bias and command-delay attacks}
-	\label{tab:traffic-poc}
-	\scriptsize
-	\setlength{\tabcolsep}{1.2mm}
-	\begin{adjustbox}{width=\linewidth}
-		\begin{tabular}{lcccc}
-			\toprule[1.5pt]
-			Method & Avg. queue $\downarrow$ & Median queue [IQR] $\downarrow$ & Recovery acc. (\%) $\uparrow$ & Comm. units $\downarrow$ \\
-			\midrule
-			FedRL & $35.19$ & $44.06$ [$13.05,46.92$] & $45.55$ & $4800$ \\
-			FedRL-Clip & $24.43$ & $22.53$ [$13.60,31.90$] & $55.47$ & $4800$ \\
-			AEFC-FRL & $29.03$ & $33.89$ [$11.74,45.29$] & $47.25$ & $3200$ \\
-			\bottomrule[1.5pt]
-		\end{tabular}
-	\end{adjustbox}
-\end{table}
-
-The table uses 15 random seeds. The seed-level distribution is skewed, so the table reports both the mean queue length and the median queue with interquartile range; full mean--standard-deviation values are retained in the released CSV logs. AEFC-FRL reduced mean queue length relative to dense FedRL while using one-third fewer communication units. A dense clipped baseline performed best on this small traffic simulator, which shows that the non-grid result should be interpreted as proof of interface portability rather than as a claim of traffic-control superiority. The result supports the narrower claim that AEFC's local-encoder, sparse-upload, and aggregation interface is not hard-coded to grid topology.
-
-The comparison with CyberForce in Table~\ref{tab:comparison} also clarifies the robustness boundary. Under 30\% malicious clients, CyberForce reports 95.0\%--98.0\% recovery accuracy, whereas AEFC-FRL preserves 83.0\%. AEFC-FRL therefore should not be read as replacing specialized Byzantine-defense mechanisms under severe adversarial participation. Its design trades some worst-case robustness for lower communication cost and recovery-conditioned sharing. In deployments where the expected malicious-client ratio is high, AEFC should be combined with stronger robust aggregation, anomaly screening, or secure execution mechanisms.
-
-The privacy boundary is similarly important. AEFC does not include differential privacy, secure aggregation, or a cryptographic protocol. Sparse high-advantage updates can reduce the number of exposed coordinates, but the coordinates that remain may be especially informative because they are selected from rare recovery-critical transitions. Such updates may become high-value targets for gradient-reconstruction attacks, especially when an adversary has access to public model snapshots and prior knowledge of local dynamics. A high-assurance deployment should combine AEFC with secure aggregation, update clipping, calibrated differential-privacy noise, or TEE-based protection. These additions may reduce recovery signal strength, so the privacy--resilience trade-off needs to be evaluated explicitly.
-
-The main empirical conclusion remains bounded: AEFC-FRL has been extensively validated on power-grid CPS and lightly checked on a non-grid traffic-signal simulator. Broader CPS validation still requires domain-specific simulators, safety metrics, actuation-delay models, and fallback controllers.
-
-Practical deployment also raises engineering constraints that are not fully captured by simulation. Federated rounds require clock synchronization or an asynchronous aggregation policy when edge devices report at different rates. Edge controllers may not have enough memory or compute capacity for large actor--critic models, making model compression and local update scheduling necessary. Communication links can be intermittent, so stale updates should be timestamped, clipped, or discarded. The additional runtime cost of advantage scoring and Top-$\kappa$ selection should be scheduled outside the hard real-time control period. Finally, operational CPS often require fail-safe fallback controllers; AEFC should therefore be deployed as an adaptive recovery layer that remains subordinate to certified protection logic during unsafe transients.
-
-\subsection{Comparative Evaluation}
-AEFC-FRL is also compared with three representative federated learning or federated reinforcement learning methods: CyberForce \cite{10908884}, FRAMU \cite{10483278}, and PreM-FedIoV \cite{10536634}. Table~\ref{tab:comparison} summarizes the comparison under 10\% and 30\% malicious participation.
-
-\begin{table}[!htpb]
-	\centering
-	\caption{Comparison with representative federated methods under 10\% and 30\% Byzantine clients}
-	\label{tab:comparison}
-	\setlength{\tabcolsep}{3.5pt}
-	\begin{adjustbox}{width=\linewidth}
-		\begin{tabular}{l|cc|cc|cc}
-			\hline
-			\multirow{2}{*}{\textbf{Method}} &
-			\multicolumn{2}{c|}{\textbf{Convergence Rounds}} &
-			\multicolumn{2}{c|}{\textbf{Recovery Accuracy (\%)}} &
-			\multicolumn{2}{c}{\textbf{Comm. Cost (\% of FedRL)}} \\
-			\cline{2-7}
-			& \textbf{10\%} & \textbf{30\%} & \textbf{10\%} & \textbf{30\%} & \textbf{10\%} & \textbf{30\%} \\
-			\hline
-			AEFC-FRL (Ours) & $\sim$200 & $\sim$220 & \textbf{99.0} & 83.0 & \textbf{50.0} & \textbf{50.0} \\
-			CyberForce & $\sim$200 & $\sim$210 & 98.0--100.0 & \textbf{95.0--98.0} & 100.0 & 100.0 \\
-			FRAMU & $<$200 & $>$250 & 98.0--100.0 & $\sim$60.0--65.0 & 100.0 & 100.0 \\
-			PreM-FedIoV & $\sim$230 & $>$260 & 100.0 & $\sim$65.0 & 34.0 & 34.0 \\
-			\hline
-		\end{tabular}
-	\end{adjustbox}
-\end{table}
-
-The comparison reveals a trade-off. CyberForce is the most robust under heavy malicious participation, but it incurs full communication cost. PreM-FedIoV is more communication-efficient, with communication cost reported as 34.0\% of standard FedRL under both malicious-client ratios, yet its recovery performance deteriorates under adversarial participation. AEFC-FRL occupies a middle point for the target recovery setting: it preserves high recovery accuracy under moderate malicious participation while cutting communication roughly in half. The method does not dominate every baseline on every metric, but it provides a favorable efficiency--robustness balance for the studied power-grid CPS recovery tasks.
-
-\begin{figure}[!htpb]
-	\centering
-	\subfloat[10\% malicious clients]{%
-		\includegraphics[width=0.49\linewidth,height=4.4cm]{Fig14-a.eps}%
-		\label{fig:pareto-10}%
-	}\hfill
-	\subfloat[30\% malicious clients]{%
-		\includegraphics[width=0.49\linewidth,height=4cm]{Fig14-b.eps}%
-		\label{fig:pareto-30}%
-	}
-	\caption{Pareto trade-off curves of recovery accuracy versus communication overhead under different Byzantine-client ratios.}
-	\label{fig:pareto}
-\end{figure}
-
-The Pareto view in Fig.~\ref{fig:pareto} shows the same pattern. Under moderate adversarial participation, communication-efficient methods remain competitive. Under heavier Byzantine participation, robustness becomes more important, and AEFC-FRL and CyberForce remain near the Pareto frontier. This comparison supports the main design choice of AEFC-FRL: sparse communication and robustness-aware aggregation should be optimized jointly rather than treated as separate add-ons.
+\IfFileExists{results/ieee39_generated/IEEE39-Results-Auto.tex}{%
+\input{results/ieee39_generated/IEEE39-Results-Auto.tex}%
+}{%
+\subsection{Native IEEE 39-Bus Results Pending Licensed CI}
+The native R2024b runner and code-to-claim pipeline are implemented, but no IEEE 39-bus numerical result is inserted until the licensed workflow has produced \texttt{interface\_mapping.json}, native per-seed traces, \texttt{results/ieee39\_joint20/summary.csv}, and the automatically generated \texttt{IEEE39-Results-Auto.tex} file.
+}
