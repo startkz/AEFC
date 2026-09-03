@@ -1,6 +1,6 @@
-\subsection{Mechanism-Level 20-Seed Joint-Corruption Results}
+\subsection{Mechanism-Level 20-Run Joint-Corruption Results}
 
-The executable bounded-authority pipeline was evaluated under the joint physical/knowledge attack on the released reduced-order CPS integration backend. This backend exercises PATBU, the risk gate, trust-gated adaptation, Byzantine-resilient coordination, the robust execution shield, and post-shield control corruption. It is used to validate mechanism composition and is not presented as an IEEE 39-bus result. All values below are generated from 20 matched seeds and immutable raw JSONL traces tied to one commit and configuration.
+The executable bounded-authority pipeline was evaluated under the joint physical/knowledge attack on the released reduced-order CPS integration backend. This backend exercises PATBU, the risk gate, trust-gated adaptation, Byzantine-resilient coordination, the robust execution shield, and post-shield control corruption. It is used to validate mechanism composition and is not presented as an IEEE 39-bus result. All values below are generated from 20 stochastic runs per method and immutable raw JSONL traces tied to one commit and configuration.
 
 \input{results/generated/Joint-Table-Auto.tex}
 
@@ -18,4 +18,4 @@ For the joint attack, AEFC-Full yields post-attack recovery time 4.3000 (95\% CI
 
 The ablations expose the intended layer separation. Removing the shield causes physical safety violations despite small policy drift, whereas removing trust-gated adaptation sharply increases false authorization and policy drift while the shield can still preserve the physical invariant. Removing PATBU increases belief distortion. These observations are mechanism-level evidence for the compositional design, not a substitute for native IEEE 39-bus validation.
 
-Paired Wilcoxon tests for the continuous integrity and recovery metrics are computed per seed and corrected across the six alternative methods with Holm's procedure. The corresponding machine-readable statistics are released with the artifact.
+The original reduced-order runner derives its stochastic stream from both the seed and the method identifier. Accordingly, these original 20-run values are used descriptively and are not assigned a strict common-random-number paired significance claim. The fairness-calibrated E3 experiment below supplies method-independent common random numbers and the corresponding paired Wilcoxon/Holm inference.
