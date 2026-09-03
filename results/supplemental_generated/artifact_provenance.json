@@ -1,0 +1,29 @@
+{
+  "native_workflow_run_id": 33713969987,
+  "native_head_sha": "19b60c9995e4e567a3788a96e9713d42d912f203",
+  "native_artifacts": {
+    "intensity-0p5": {"id": 9878782458, "digest": "sha256:9dab607ad6ccc12d52d6a9cc7ccd2827645497edbb4c8f1111ab7762ea299c2b"},
+    "intensity-1": {"id": 9878608945, "digest": "sha256:163bd283236078686277e85d5532f1a29ebe47e55fe4ed56354aac193f6d51a9"},
+    "intensity-1p5": {"id": 9878705622, "digest": "sha256:02fef76b9f880d06096580053e2d75bebba53b78258f0cd3648ccd26127a54d8"},
+    "intensity-2": {"id": 9878737532, "digest": "sha256:29a9d305ad494e89c74ec9098cb37dcbf69bf1d074a2d6e8e83a937b60e2685f"},
+    "gate-0": {"id": 9878286333, "digest": "sha256:71ca11e6727a5bd37dffb1e221b30e03f6dd7aefd6b378494b70247bbc005799"},
+    "gate-0p25": {"id": 9878337715, "digest": "sha256:3e4a9195a43ac3cdf38167253ee6e511edd955c5d3cb9fa843dc9c68bf429858"},
+    "gate-0p5": {"id": 9878764468, "digest": "sha256:acb84bfebaec4d4df554c01a73e2d71136041bcbd546e25c8b586c3585621573"},
+    "gate-0p75": {"id": 9878815688, "digest": "sha256:6cda03d015cfef2230db9a2b97948b1ec4ed4ece9d884825f580d8b7cd806ae7"},
+    "gate-1": {"id": 9879022342, "digest": "sha256:32a251ade90183eb2027c0fa6feec975810a94716d497a5d13ca8b35284ae254"},
+    "qmin-0p1": {"id": 9879043182, "digest": "sha256:3f28818a7a83c0604f96f478673ca36a42dbd712b169319e2542a0be36625fb9"},
+    "qmin-0p3": {"id": 9879087179, "digest": "sha256:1db1ce3f46f4d6617787f6933f49bebd7f3e7c7b07a38536c4006b13526b8541"},
+    "rho-0p4": {"id": 9879059319, "digest": "sha256:2edad68f1b1b377d80ad27273fbeb4ef179099fc198c90c88391427db55df2ec"},
+    "rho-0p7": {"id": 9879076283, "digest": "sha256:d0a4f0aa50b6ea4c487ecf2481db48dc1150839a5b55a1ef9c5c8657cde6bbf6"},
+    "trust-0p02": {"id": 9879129268, "digest": "sha256:4e1c9122eedf688f006b7d106088096e373fffd652c840d8b713d5d7031ac0e0"},
+    "trust-0p06": {"id": 9879385656, "digest": "sha256:5c7ac336f2a4d06aedd795922320f807c24e2e05695a8cd126dfbdd4c350b33e"}
+  },
+  "e3_workflow_run_id": 33714126359,
+  "e3_head_sha": "fa2d6810719da86ad8af7db277b652d7e2406040",
+  "e3_artifact": {
+    "id": 9877902387,
+    "digest": "sha256:000f31f5f890ab5f8dd5861a8b870082cbcb5578c812a46aa7fd92019419b32d",
+    "raw_archive_sha256": "75881b6bb5fb3d216614f86c0d34711566a3ab9e06d3c1fd0acb53e3c82f38c3"
+  },
+  "gamma1_reproduction_max_abs_difference": 1.099120794378905e-14
+}
