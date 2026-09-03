@@ -1,0 +1,17 @@
+\begin{table*}[t]
+\centering
+\caption{Fairness-calibrated mechanism-level joint-corruption results with method-independent common random numbers (20 seeds).}
+\label{tab:calibrated-baselines}
+\scriptsize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Method & SVR & FAR & Belief dist. & Policy mov. & Rec. time & Min CBF margin\\
+\midrule
+FedRL & 1.00 & 1.00 & 1.167 & 3.301 & 40.90 & -1.110\\
+FedRL-Clip & 0.10 & 0.05 & 0.841 & 0.129 & 16.85 & 0.049\\
+RobustFedRL-Clip & 0.00 & 0.00 & 0.841 & 0.085 & 1.35 & 0.078\\
+AEFC-Full & 0.00 & 0.00 & 0.482 & 0.034 & 4.30 & 0.000\\
+\bottomrule
+\end{tabular}
+\end{table*}
