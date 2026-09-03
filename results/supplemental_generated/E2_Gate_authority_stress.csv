@@ -1,0 +1,11 @@
+alpha,method,dangerous_proposals,dangerous_authorizations,pooled_false_authorization_rate,mean_gate_authorization_rate,mean_shield_intervention_ratio,mean_min_native_margin
+0,AEFC-no-Gate,0,0,0,1,0,0.9857279647
+0,AEFC-Full,0,0,0,1,0,0.9857279647
+0.25,AEFC-no-Gate,0,0,0,1,0.3972602740,0.9767192872
+0.25,AEFC-Full,0,0,0,1,0.3972602740,0.9767192872
+0.5,AEFC-no-Gate,0,0,0,1,0.3972602740,0.9767192872
+0.5,AEFC-Full,0,0,0,1,0.3972602740,0.9767192872
+0.75,AEFC-no-Gate,580,580,1,1,0.3972602740,0.9767192872
+0.75,AEFC-Full,580,580,1,1,0.3972602740,0.9767192872
+1,AEFC-no-Gate,580,580,1,1,0.3972602740,0.9767192872
+1,AEFC-Full,580,0,0,0.6027397260,0,0.9852830696
