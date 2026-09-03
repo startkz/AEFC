@@ -18,6 +18,6 @@ Under joint corruption, AEFC-Full yields recovery success rate 1.0000 (95\% CI [
 
 Under joint corruption, AEFC-Full yields post-attack recovery time 0.0167 (95\% CI [0.0167, 0.0167]), versus 0.0167 ([0.0167, 0.0167]) for FedRL.
 
-For AEFC-Full versus FedRL, the paired median differences are -0.4095 for maximum belief distortion, -0.1140 for maximum deployed-policy drift, and 0.0102 for minimum native safety margin; all three comparisons remain significant after Holm correction ($p_{\mathrm{adj}}=1.14\times10^{-5}$, $1.14\times10^{-5}$, and $1.14\times10^{-5}$, respectively).
+For AEFC-Full versus FedRL, the paired median differences are -0.4095 for maximum belief distortion, -0.1140 for maximum deployed-policy drift, and 0.0102 for minimum native safety margin; all three comparisons remain significant after Holm correction ($p_{\mathrm{adj}}=1.14\times10^{-5}$ for each comparison).
 
-Continuous integrity, safety-margin, and recovery metrics use paired Wilcoxon tests across matched seeds with Holm correction across the six alternative methods; exact zero paired differences are assigned $p=1$ before Holm correction. Machine-readable values are released in \texttt{results/ieee39\_generated/ieee39\_joint\_statistics.csv}.
+Continuous integrity, safety-margin, and recovery metrics use paired Wilcoxon tests across matched seeds with Holm correction across the six alternative methods; exact zero paired differences are assigned $p=1$ before Holm correction. The corresponding machine-readable statistics are released with the artifact.
