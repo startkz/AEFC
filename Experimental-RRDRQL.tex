@@ -7,18 +7,46 @@ The first path is a reduced-order CPS integration backend used to exercise the c
 
 The authoritative native run uses four generator-local physical rotor-speed/\texttt{Pref} pairs at Gen10@Bus30, Gen1@Bus39, Gen2@Bus31, and Gen3@Bus32. The resulting $4\times4$ finite-difference sensitivity matrix has rank four and condition number 5.13. The native evidence is tied to commit \texttt{cc315ff522c90ce6adc09df3020472dd9ad820ea}, uses a $1/60$~s sample time, and executes $7\times4\times20=560$ episodes with one Fast Restart compile and numeric tunable selectors. The orientation-safe extraction path applies per-episode semantic guards before a trace is accepted.
 
+\subsection{Experimental Setup}
+\label{subsec:experimental-setup}
+The Main Experiment keeps the native plant, causal mapping, attack timing, and controller parameters fixed across all seven methods. Each episode lasts 1.20~s at $1/60$~s, giving 73 recorded samples including $t=0$. The attack interval is steps 15--43 (29 controller samples). Seven federated clients participate, of which two are Byzantine, and the robust common support has cardinality three. The four scenarios are clean, knowledge-only, physical-only, and joint corruption, corresponding to the Cartesian product of physical corruption off/on and knowledge poisoning off/on. Each method/scenario cell uses 20 seeds, yielding 560 native episodes in the authoritative matrix.
+
+Table~\ref{tab:experimental-settings} records the fixed parameters used by the native Main Experiment. Observation corruption acts on the four validated rotor-speed channels; the value 0.25 is expressed relative to each channel's normalization scale. The control-channel adversary is downstream of the shield and is bounded by 0.005 per channel. Knowledge corruption combines model replacement (scale 6), sign-changing malicious updates, stale evidence delayed by seven steps, and collusion of the two Byzantine clients.
+
+\begin{table*}[t]
+\centering
+\caption{Experimental settings used by the authoritative native IEEE 39-bus Main Experiment.}
+\label{tab:experimental-settings}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.14\textwidth}p{0.31\textwidth}p{0.14\textwidth}p{0.31\textwidth}@{}}
+\toprule
+Item & Setting & Item & Setting\\
+\midrule
+Plant/backend & MathWorks R2024b \texttt{IEEE39BusSystem}; four validated rotor-speed/\texttt{Pref} pairs & Timing & $T_s=1/60$~s; 1.20~s horizon; 73 samples\\
+Federation & 7 clients; 2 Byzantine; common-support $k=3$ & Scenarios & clean, knowledge, physical, joint; 20 seeds per cell\\
+Attack window & steps 15--43 (29 samples) & Observation attack & $0.25$ of normalization scale on four physical channels\\
+Control attack & post-shield additive corruption bounded by 0.005/channel & Knowledge attack & model-replacement scale 6; stale delay 7; colluding Byzantine updates\\
+Execution bounds & action limit 0.05; safe limit 1; recovery limit 0.25; shield reserve 0.12 & PATBU & $\beta_{\mathrm{age}}=0.08$, residual scale 0.25, $\lambda_b=0.72$, observation gain 0.20, knowledge gain 0.08\\
+Risk gate & $\rho_{\max}=0.55$, risk margin 0.05, $q_{\min}=0.18$ & Adaptation & $\eta=0.04$, clip norm 0.20, trust region $\Delta_\theta=0.035$, $q_{\min}=0.18$, validation slack 0.025\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The reduced-order mechanism backend uses 120 steps, the same seven/two client split and $k=3$, a safe-state limit of 0.35, an attack interval of steps 24--72, observation corruption 0.32, post-policy control corruption 0.10, model-replacement scale 6, and stale delay 7. Its PATBU, gate, and adaptation hyperparameters match the values in Table~\ref{tab:experimental-settings}; its execution model uses action limit 0.80, state-disturbance budget 0.006, post-attack budget 0.10, and dynamics gain 0.24.
+
+Five supplemental experiments are pre-specified and do not alter the 560-run Main Experiment. E1 scales the complete joint corruption by $\gamma\in\{0,0.5,1,1.5,2\}$ for FedRL, RobustAgg, AEFC-no-PATBU, AEFC-no-Gate, and AEFC-Full; $\gamma=0$ reuses the Main clean cell and $\gamma=1$ must reproduce the Main joint cell. E2 evaluates PATBU with Full versus no-PATBU across $\gamma\in\{0.5,1,1.5,2\}$ and evaluates the Gate with a pre-gate unsafe-proposal blend $\alpha\in\{0,0.25,0.5,0.75,1\}$ for Full versus no-Gate. E3 is a mechanism-level fairness calibration with FedRL, FedRL-Clip, RobustFedRL-Clip, and AEFC-Full under method-independent common random numbers. E4 compares seven-method rankings across the two backends rather than their absolute scales. E5 applies one-at-a-time native sweeps $q_{\min}\in\{0.10,0.18,0.30\}$, $\rho_{\max}\in\{0.40,0.55,0.70\}$, and $\Delta_\theta\in\{0.020,0.035,0.060\}$.
+
 \subsection{Methods and Joint-Corruption Matrix}
 The comparison includes a standard federated RL baseline (FedRL), a robust-aggregation baseline (RobustAgg), AEFC without PATBU, AEFC without the risk gate, AEFC without trust-gated online policy adaptation, AEFC without the physical shield, and AEFC-Full. Heterogeneous adapters and representation alignment are not treated as security ablations in the reported tables because they address subsystem compatibility rather than recovery authority.
 
-The four scenarios form a $2\times2$ corruption matrix:
+The four Main-Experiment scenarios form a $2\times2$ corruption matrix:
 \begin{equation}
 \{\text{physical corruption off/on}\}
 \times
-\{\text{knowledge poisoning off/on}\},
+\{\text{knowledge poisoning off/on}\}.
 \end{equation}
-which yields clean, knowledge-only, physical-only, and joint conditions. The same 20 seeds, methods, and scenario labels are used across backends. In the native run, seven federated clients include two Byzantine clients. The configured attack window is steps 15--43; observation corruption is bounded to 0.25 of the normalization scale, downstream post-shield control corruption is bounded by 0.005 per channel, the model-replacement scale is 6, and stale Byzantine evidence is delayed by seven steps.
-
-Observation attacks perturb the selected physical rotor-speed channels. Knowledge attacks include model replacement, sign-changing poisoned updates, stale evidence, and colluding Byzantine clients. Control corruption is injected after the shield and before the validated native actuator edge, preserving the threat-model ordering
+Observation attacks perturb the selected physical rotor-speed channels. Control corruption is injected after the shield and before the validated native actuator edge, preserving the threat-model ordering
 $u_t^\pi\rightarrow u_t^\star\rightarrow u_t^{\mathrm{exec}}$. The formal guarantee applies only inside the modeled uncertainty and attack sets; the reported experiments do not claim safety against arbitrary unbounded downstream actuation.
 
 \subsection{Released Evidence Contract}
@@ -73,7 +101,9 @@ The indicator is backend-specific but fixed by the executable configuration: the
 Recovery is summarized by an episode-level recovery-success indicator and post-attack time-to-recovery. Safety is summarized by the episode-level violation indicator and the minimum native margin. The shield-intervention ratio records the fraction of time steps at which the execution layer changes the authorized proposal.
 
 \subsection{Statistical Protocol}
-All headline comparisons use the same 20 matched seeds, $\mathrm{seed}\in\{0,1,\ldots,19\}$. Continuous integrity, margin, and recovery metrics are compared with paired Wilcoxon signed-rank tests. For each metric, the six AEFC-Full-versus-alternative comparisons are corrected with Holm's procedure. Exact all-zero paired differences are assigned $p=1$ before multiplicity correction, preventing a no-effect comparison from becoming spuriously significant through non-finite-value handling. The generated statistics also report paired median differences. Episode-level binary proportions use Wilson 95\% confidence intervals; continuous table entries use mean 95\% confidence intervals across the 20 matched seeds.
+The native Main Experiment uses the same 20 seeds, $\mathrm{seed}\in\{0,1,\ldots,19\}$, across methods within each scenario. Continuous native integrity, margin, and recovery metrics are therefore compared with paired Wilcoxon signed-rank tests; for each metric, the six AEFC-Full-versus-alternative comparisons are corrected with Holm's procedure. Exact all-zero paired differences are assigned $p=1$ before multiplicity correction.
+
+The original reduced-order mechanism experiment also uses 20 per-method seeded runs, but its random stream was derived from both the seed and the method identifier. Its original table is therefore retained as multi-run descriptive mechanism evidence (means and confidence intervals), not as a strict common-random-number paired experiment. E3 supplies the fairness-calibrated inferential comparison: all four methods receive method-independent common random numbers, and AEFC-Full-versus-baseline continuous metrics use paired Wilcoxon tests with Holm correction across the three alternatives. E2 applies paired Wilcoxon tests to Full versus no-PATBU at each of four attack intensities and corrects those four tests with Holm's procedure. E4 uses Spearman rank correlation across the seven method means. Episode-level binary proportions use Wilson 95\% confidence intervals; continuous table entries use mean 95\% confidence intervals across the 20 runs.
 
 \subsection{Trace-Generated Results}
 The mechanism-level and native result sections below are imported directly from generated LaTeX files. The manuscript build therefore fails if the committed result files are absent rather than silently substituting unverified numerical values.
@@ -81,3 +111,5 @@ The mechanism-level and native result sections below are imported directly from 
 \input{results/generated/Results-Auto.tex}
 
 \input{results/ieee39_generated/IEEE39-Results-Auto.tex}
+
+\input{results/supplemental_generated/Supplemental-Results-Auto.tex}
