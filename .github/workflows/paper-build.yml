@@ -12,7 +12,7 @@ on:
       - '.github/workflows/paper-build.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-paper:
@@ -27,6 +27,27 @@ jobs:
           root_file: main.tex
           latexmk_use_xelatex: false
           args: -pdf -interaction=nonstopmode -halt-on-error -file-line-error
+
+      - name: Validate final LaTeX log
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s main.pdf
+          test -s main.log
+          if grep -Eiq 'undefined citations?|undefined references?|Citation .* undefined|Reference .* undefined|There were undefined references' main.log; then
+            echo 'Undefined citation/reference detected.' >&2
+            exit 1
+          fi
+          if grep -Eiq 'Overfull \\hbox|Overfull \\vbox' main.log; then
+            echo 'Overfull box detected.' >&2
+            grep -Ei 'Overfull \\hbox|Overfull \\vbox' main.log >&2 || true
+            exit 1
+          fi
+          if grep -Eiq '^! |LaTeX Error|Fatal error|Emergency stop' main.log; then
+            echo 'LaTeX error detected.' >&2
+            exit 1
+          fi
+          echo 'Final log validation passed: 0 undefined citations/references, 0 overfull boxes, 0 LaTeX errors.'
 
       - name: Preserve build log
         if: always()
@@ -45,3 +66,19 @@ jobs:
           name: AEFC-TDSC-manuscript-${{ github.sha }}
           path: main.pdf
           if-no-files-found: error
+
+      - name: Publish reviewed PDF to main
+        if: success() && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp main.pdf AEFC-TDSC-final.pdf
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add AEFC-TDSC-final.pdf
+          if git diff --cached --quiet; then
+            echo 'AEFC-TDSC-final.pdf is already current.'
+            exit 0
+          fi
+          git commit -m 'Publish final reviewed manuscript PDF [skip ci]'
+          git push origin HEAD:main
