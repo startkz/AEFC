@@ -1,0 +1,179 @@
+name: AEFC supplemental five experiments
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/supplemental-five-final]
+    paths:
+      - 'ci/supplemental-five-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Python syntax preflight
+        run: python -m py_compile experiments/run_mechanism_calibration.py analysis/make_supplemental_results.py
+
+  mechanism-calibration:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install mechanism dependencies
+        run: python -m pip install --upgrade pip numpy scipy matplotlib
+      - name: Run common-random-number calibrated baselines
+        run: python experiments/run_mechanism_calibration.py
+      - name: Archive mechanism calibration raw traces
+        shell: bash
+        run: |
+          cd results/supplemental_mechanism/calibration
+          tar -czf "raw-traces-${GITHUB_SHA}.tar.gz" --exclude='raw-traces-*.tar.gz' */*.jsonl */*.summary.json
+          sha256sum "raw-traces-${GITHUB_SHA}.tar.gz" > raw-traces.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supp-mechanism-calibration-${{ github.sha }}
+          path: results/supplemental_mechanism/calibration
+          retention-days: 90
+
+  native-cell:
+    needs: preflight
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        include:
+          - { name: intensity-0p5, kind: intensity, value: '0.5', tag: 0p5 }
+          - { name: intensity-1, kind: intensity, value: '1.0', tag: '1' }
+          - { name: intensity-1p5, kind: intensity, value: '1.5', tag: 1p5 }
+          - { name: intensity-2, kind: intensity, value: '2.0', tag: '2' }
+          - { name: gate-0, kind: gate, value: '0.0', tag: '0' }
+          - { name: gate-0p25, kind: gate, value: '0.25', tag: 0p25 }
+          - { name: gate-0p5, kind: gate, value: '0.5', tag: 0p5 }
+          - { name: gate-0p75, kind: gate, value: '0.75', tag: 0p75 }
+          - { name: gate-1, kind: gate, value: '1.0', tag: '1' }
+          - { name: qmin-0p1, kind: qmin, value: '0.10', tag: 0p1 }
+          - { name: qmin-0p3, kind: qmin, value: '0.30', tag: 0p3 }
+          - { name: rho-0p4, kind: rho, value: '0.40', tag: 0p4 }
+          - { name: rho-0p7, kind: rho, value: '0.70', tag: 0p7 }
+          - { name: trust-0p02, kind: trust, value: '0.020', tag: 0p02 }
+          - { name: trust-0p06, kind: trust, value: '0.060', tag: 0p06 }
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Materialize official IEEE39 and build native instrumented model
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mp=fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'); assert(exist(mp,'file')==2,'Committed mapping missing'); mm=jsondecode(fileread(mp)); assert(logical(mm.validated) && strcmp(mm.selection_policy,'paired-generator-physical-speed-v2'),'Authoritative mapping invalid'); aefc_ieee39_build_native_model
+      - name: Run supplemental native cell
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_supplemental_cell('${{ matrix.kind }}',${{ matrix.value }})
+      - name: Archive cell raw traces
+        shell: bash
+        run: |
+          CELL="results/supplemental_native/${{ matrix.kind }}/${{ matrix.tag }}"
+          cd "$CELL"
+          tar -czf "raw-traces-${GITHUB_SHA}.tar.gz" --exclude='raw-traces-*.tar.gz' */*.jsonl */*.summary.json
+          sha256sum "raw-traces-${GITHUB_SHA}.tar.gz" > raw-traces.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supp-native-${{ matrix.name }}-${{ github.sha }}
+          path: results/supplemental_native/${{ matrix.kind }}/${{ matrix.tag }}
+          retention-days: 90
+
+  aggregate:
+    needs: [mechanism-calibration, native-cell]
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all supplemental cell artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: supp-native-*-${{ github.sha }}
+          path: results/supplemental_native_download
+          merge-multiple: false
+      - name: Restore native artifact directory structure
+        shell: bash
+        run: |
+          mkdir -p results/supplemental_native
+          for d in results/supplemental_native_download/supp-native-*; do
+            n="$(basename "$d")"
+            case "$n" in
+              supp-native-intensity-0p5-*) dst='intensity/0p5' ;;
+              supp-native-intensity-1p5-*) dst='intensity/1p5' ;;
+              supp-native-intensity-1-*) dst='intensity/1' ;;
+              supp-native-intensity-2-*) dst='intensity/2' ;;
+              supp-native-gate-0p25-*) dst='gate/0p25' ;;
+              supp-native-gate-0p5-*) dst='gate/0p5' ;;
+              supp-native-gate-0p75-*) dst='gate/0p75' ;;
+              supp-native-gate-0-*) dst='gate/0' ;;
+              supp-native-gate-1-*) dst='gate/1' ;;
+              supp-native-qmin-0p1-*) dst='qmin/0p1' ;;
+              supp-native-qmin-0p3-*) dst='qmin/0p3' ;;
+              supp-native-rho-0p4-*) dst='rho/0p4' ;;
+              supp-native-rho-0p7-*) dst='rho/0p7' ;;
+              supp-native-trust-0p02-*) dst='trust/0p02' ;;
+              supp-native-trust-0p06-*) dst='trust/0p06' ;;
+              *) echo "Unknown artifact $n" >&2; exit 1 ;;
+            esac
+            mkdir -p "results/supplemental_native/$dst"
+            cp -a "$d"/. "results/supplemental_native/$dst/"
+          done
+      - name: Download mechanism calibration artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: supp-mechanism-calibration-${{ github.sha }}
+          path: results/supplemental_mechanism/calibration
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install analysis dependencies
+        run: python -m pip install --upgrade pip numpy scipy matplotlib
+      - name: Generate E1-E5 statistics, figures, and auto-LaTeX
+        run: python analysis/make_supplemental_results.py
+      - name: Build immutable supplemental raw evidence archive
+        shell: bash
+        run: |
+          tar -czf "results/supplemental-raw-${GITHUB_SHA}.tar.gz" \
+            results/supplemental_native/*/*/raw-traces-*.tar.gz \
+            results/supplemental_native/*/*/raw-traces.sha256 \
+            results/supplemental_mechanism/calibration/raw-traces-*.tar.gz \
+            results/supplemental_mechanism/calibration/raw-traces.sha256
+          sha256sum "results/supplemental-raw-${GITHUB_SHA}.tar.gz" > results/supplemental-raw.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aefc-supplemental-five-${{ github.sha }}
+          path: |
+            results/supplemental_native
+            results/supplemental_mechanism
+            results/supplemental_generated
+            results/supplemental-raw-${{ github.sha }}.tar.gz
+            results/supplemental-raw.sha256
+          retention-days: 90
+      - name: Persist verified supplemental summaries and generated evidence
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          find results/supplemental_native -name '*.jsonl' -delete
+          find results/supplemental_mechanism -name '*.jsonl' -delete
+          git add results/supplemental_native results/supplemental_mechanism results/supplemental_generated results/supplemental-raw-*.tar.gz results/supplemental-raw.sha256
+          git commit -m 'Generate five supplemental experiments and analysis [skip ci]'
+          git push origin HEAD:experiment/supplemental-five-final
