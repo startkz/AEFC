@@ -109,13 +109,13 @@ with (GEN/'ieee39_joint_statistics.csv').open('w',newline='') as f:
     w=csv.writer(f); w.writerow(['metric','comparison','median_paired_difference_full_minus_comparison','wilcoxon_p','holm_adjusted_p']); w.writerows(stat)
 stat_lookup={(metric,m):(med,p,pa) for metric,m,med,p,pa in stat}
 
-tex=[r'\begin{table*}[t]',r'\centering',r'\caption{Native MathWorks IEEE 39-bus joint-corruption results over 20 matched seeds. Values are means with 95\% confidence intervals; Wilson intervals are used for binary rates.}',r'\label{tab:ieee39-joint-native}',r'\scriptsize',r'\begin{tabular}{lccccccc}',r'\toprule',r'Method & SVR $\downarrow$ & Min. margin $\uparrow$ & FAR $\downarrow$ & Belief dist. $\downarrow$ & Policy drift $\downarrow$ & Rec. success $\uparrow$ & Rec. time $\downarrow$\\',r'\midrule']
+tex=[r'\begin{table*}[t]',r'\centering',r'\caption{Native MathWorks IEEE 39-bus joint-corruption results over 20 matched seeds. Values are means with 95\% confidence intervals; Wilson intervals are used for binary rates.}',r'\label{tab:ieee39-joint-native}',r'\scriptsize',r'\resizebox{\textwidth}{!}{%',r'\begin{tabular}{lccccccc}',r'\toprule',r'Method & SVR $\downarrow$ & Min. margin $\uparrow$ & FAR $\downarrow$ & Belief dist. $\downarrow$ & Policy drift $\downarrow$ & Rec. success $\uparrow$ & Rec. time $\downarrow$\\',r'\midrule']
 for m in methods:
     rr=joint[m]; vals=[]
     for k,b in [('safety_violation',True),('min_native_margin',False),('false_authorization_rate','bounded'),('max_belief_distortion',False),('max_policy_drift',False),('recovery_success',True),('recovery_time',False)]:
         vals.append(fmt([r[k] for r in rr],b is True,b=='bounded')[3])
     name=r'\textbf{AEFC-Full}' if m=='AEFC-Full' else m; tex.append(name+' & '+' & '.join(vals)+r'\\')
-tex += [r'\bottomrule',r'\end{tabular}',r'\end{table*}']
+tex += [r'\bottomrule',r'\end{tabular}%',r'}',r'\end{table*}']
 (GEN/'IEEE39-Joint-Table-Auto.tex').write_text('\n'.join(tex)+'\n')
 
 lines=[r'\subsection{Native IEEE 39-Bus 20-Seed Joint-Corruption Results}',
@@ -127,8 +127,8 @@ for key,label,binary in [('safety_violation','episode safety-violation rate',Tru
 med_b,p_b,pa_b=stat_lookup[('max_belief_distortion','FedRL')]
 med_d,p_d,pa_d=stat_lookup[('max_policy_drift','FedRL')]
 med_m,p_m,pa_m=stat_lookup[('min_native_margin','FedRL')]
-lines.append(f'For AEFC-Full versus FedRL, the paired median differences are {med_b:.4f} for maximum belief distortion, {med_d:.4f} for maximum deployed-policy drift, and {med_m:.4f} for minimum native safety margin; all three comparisons remain significant after Holm correction ($p_{{\\mathrm{{adj}}}}={ptex(pa_b)}$, ${ptex(pa_d)}$, and ${ptex(pa_m)}$, respectively).')
-lines.append(r'Continuous integrity, safety-margin, and recovery metrics use paired Wilcoxon tests across matched seeds with Holm correction across the six alternative methods; exact zero paired differences are assigned $p=1$ before Holm correction. Machine-readable values are released in \texttt{results/ieee39\_generated/ieee39\_joint\_statistics.csv}.')
+lines.append(f'For AEFC-Full versus FedRL, the paired median differences are {med_b:.4f} for maximum belief distortion, {med_d:.4f} for maximum deployed-policy drift, and {med_m:.4f} for minimum native safety margin; all three comparisons remain significant after Holm correction ($p_{{\\mathrm{{adj}}}}={ptex(pa_b)}$ for each comparison).')
+lines.append(r'Continuous integrity, safety-margin, and recovery metrics use paired Wilcoxon tests across matched seeds with Holm correction across the six alternative methods; exact zero paired differences are assigned $p=1$ before Holm correction. The corresponding machine-readable statistics are released with the artifact.')
 (GEN/'IEEE39-Results-Auto.tex').write_text('\n\n'.join(lines)+'\n')
 
 fig,ax=plt.subplots(figsize=(7.2,3.6)); means=[]; los=[]; his=[]
