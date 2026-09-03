@@ -1,0 +1,15 @@
+{
+  "main_experiment_untouched": true,
+  "native_supplemental_workflow_run": 33713969987,
+  "native_supplemental_head_sha": "19b60c9995e4e567a3788a96e9713d42d912f203",
+  "e3_workflow_run": 33714126359,
+  "e3_head_sha": "fa2d6810719da86ad8af7db277b652d7e2406040",
+  "gamma1_reproduction_max_abs_difference": 1.099120794378905e-14,
+  "experiments": [
+    "E1 attack intensity",
+    "E2 PATBU/Gate local causal ablation",
+    "E3 fairness-calibrated baselines",
+    "E4 cross-backend consistency",
+    "E5 OAT sensitivity"
+  ]
+}
