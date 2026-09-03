@@ -1,0 +1,47 @@
+name: Build AEFC manuscript PDF
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '**.tex'
+      - 'ref.bib'
+      - '**.pdf'
+      - '**.eps'
+      - '.github/workflows/paper-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-paper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compile IEEE manuscript
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          latexmk_use_xelatex: false
+          args: -pdf -interaction=nonstopmode -halt-on-error -file-line-error
+
+      - name: Preserve build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aefc-paper-build-log-${{ github.sha }}
+          path: |
+            main.log
+            main.blg
+          if-no-files-found: ignore
+
+      - name: Upload manuscript PDF
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AEFC-TDSC-manuscript-${{ github.sha }}
+          path: main.pdf
+          if-no-files-found: error
