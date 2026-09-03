@@ -1,0 +1,28 @@
+\subsection{Supplemental Robustness and Component Validation}
+\label{subsec:supplemental-validation}
+The authoritative 560-run native matrix is kept unchanged. We add five pre-specified supplemental experiments to test attack-intensity robustness, component-local causal effects, baseline fairness, cross-backend consistency, and local parameter sensitivity. The supplemental native controller reproduces the shared Main-Experiment cells at $\gamma=1$ with a maximum per-summary discrepancy of $1.10\times10^{-14}$, well below the $10^{-9}$ acceptance threshold.
+
+\textbf{E1---Attack-intensity robustness.}
+Table~\ref{tab:e1-intensity} scales joint physical and knowledge corruption by $\gamma\in\{0,0.5,1,1.5,2\}$ while retaining the same validated native interfaces and 20 seeds. No method incurs an episode-level native safety violation over this range, so the experiment is interpreted through continuous integrity and margin measures rather than an artificial binary separation. For AEFC-Full, the mean minimum native margin changes only from 0.9858 at $\gamma=0.5$ to 0.9858 at $\gamma=2$, while maximum belief distortion increases from 0.0443 to 0.1735. At $\gamma=2$, FedRL reaches belief distortion 0.9893 and policy movement 0.2700, whereas AEFC-Full remains at 0.1735 and 0.0225, respectively.
+
+\input{results/supplemental_generated/E1-Intensity-Table-Auto.tex}
+
+\textbf{E2---PATBU and Gate local causal ablations.}
+PATBU is evaluated at the evidence-to-belief boundary, where its contribution is not masked by the downstream gate and shield. At $\gamma=2$, AEFC-Full has mean maximum belief distortion 0.1735, versus 0.9889 without PATBU, a reduction of 82.5\%; the median paired Full-minus-no-PATBU difference is $-0.8205$ and remains significant after Holm correction across the four intensity levels ($p_{\mathrm{adj}}=7.63\times10^{-6}$).
+
+The Gate is evaluated separately with a targeted unsafe learned-proposal blend $\alpha\in\{0,0.25,0.5,0.75,1\}$ injected before authorization, while the downstream post-shield threat model is unchanged. At $\alpha=0.75$, both Full and no-Gate authorize the dangerous proposals, indicating that the configured risk threshold has not yet separated the two cases. At $\alpha=1$, however, the 20 seeds contain 580 dangerous attack-window proposals: AEFC-Full authorizes none (pooled FAR 0), whereas AEFC-no-Gate authorizes all 580 (pooled FAR 1). The no-Gate configuration consequently invokes the shield on 39.7\% of all samples, while Full rejects the dangerous proposals before the shield and has zero shield intervention in this stress cell. Both configurations remain free of observed plant-envelope violations. This is the intended layer separation: the Gate bounds action authority, while the shield provides downstream physical protection.
+
+\input{results/supplemental_generated/E2-Gate-Table-Auto.tex}
+
+\textbf{E3---Fairness-calibrated baselines.}
+To test whether the reduced-order backend exaggerates the comparison with an unconstrained FedRL update, we rerun the joint mechanism-level experiment with method-independent common random numbers and add FedRL-Clip and RobustFedRL-Clip. Table~\ref{tab:calibrated-baselines} shows that clipping and robust aggregation remove most of the extreme FedRL behavior: RobustFedRL-Clip reaches zero safety violations and zero FAR and reduces mean policy movement to 0.0846. AEFC-Full nevertheless reduces mean belief distortion from 0.8412 to 0.4818 and policy movement from 0.0846 to 0.0339; both paired comparisons remain significant after Holm correction ($p_{\mathrm{adj}}=5.72\times10^{-6}$). RobustFedRL-Clip recovers faster (1.35 versus 4.30 steps) and has a larger mechanism-level safety margin, so the result supports an integrity advantage rather than Pareto dominance over every recovery-utility measure.
+
+\input{results/supplemental_generated/E3-Baseline-Table-Auto.tex}
+
+\textbf{E4---Cross-backend consistency.}
+We do not compare absolute magnitudes across the reduced-order and native plants. Instead, the seven-method rankings show significant alignment for belief distortion (Spearman $\rho=0.778$, $p=0.039$) and policy movement ($\rho=0.785$, $p=0.036$). Continuous-margin rankings do not align ($\rho=0.038$, $p=0.935$), which is consistent with the reduced-order backend amplifying failure physics while the native IEEE 39-bus plant remains inside its observed envelope. Thus the cross-backend evidence supports the direction of the integrity effects, not equality of physical margins.
+
+\textbf{E5---Local parameter sensitivity.}
+For AEFC-Full under the native joint condition, one-at-a-time sweeps of $q_{\min}\in\{0.10,0.18,0.30\}$, $\rho_{\max}\in\{0.40,0.55,0.70\}$, and the trust-region radius $\Delta_\theta\in\{0.020,0.035,0.060\}$ produce the same reported mean margin (0.9857), belief distortion (0.0873), policy movement (0.0230), and recovery time (0.0167 s) to the shown precision. This plateau is evidence of local non-fragility, not of parameter optimality: under the nominal joint condition these thresholds are not activated strongly enough to change the accepted trajectory, whereas the targeted Gate stress in E2 explicitly crosses an authorization boundary.
+
+Together, E1--E5 qualify the Main Experiment without replacing it. In particular, they show that the native contribution of PATBU is visible before downstream masking, that Gate and shield have separable roles, and that AEFC's mechanism-level advantage persists against a substantially stronger fairness-calibrated baseline on the integrity metrics it is designed to bound.
