@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\caption{Native attack-intensity robustness (20 seeds per method/intensity). No cell in this sweep exhibits an episode-level native safety violation.}
+\label{tab:e1-intensity}
+\scriptsize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+$\gamma$ & Full belief & no-PATBU belief & FedRL belief & Full policy mov. & FedRL policy mov.\\
+\midrule
+0 & 0.004 & 0.019 & 0.024 & 0.021 & 0.081\\
+0.5 & 0.044 & 0.253 & 0.251 & 0.023 & 0.090\\
+1 & 0.087 & 0.498 & 0.498 & 0.023 & 0.141\\
+1.5 & 0.130 & 0.744 & 0.743 & 0.023 & 0.203\\
+2 & 0.174 & 0.989 & 0.989 & 0.022 & 0.270\\
+\bottomrule
+\end{tabular}
+\end{table*}
