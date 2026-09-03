@@ -1,126 +1,83 @@
 \section{EXPERIMENTAL EVALUATION}
 
-\subsection{Evidence Policy and Artifact Status}
-The experimental methodology follows a strict code-to-claim rule: every quantitative manuscript result must be generated from a committed executable configuration and raw per-seed trace. A plot script that directly constructs target curves or hard-codes final percentages is not treated as experimental evidence. Accordingly, legacy numerical curves that cannot be traced to raw simulator output are excluded from the security claims of this revision.
+\subsection{Evidence Policy and Evaluation Backends}
+Every quantitative result reported in this paper is generated from a committed executable configuration and per-seed traces. Tables and statistical summaries are derived from those traces rather than from manually specified target curves. The released artifact contains two deliberately separated evaluation paths.
 
-The final artifact contains two explicitly separated evaluation paths. First, the released reduced-order CPS integration backend executes the complete PATBU--risk-gate--trust-gated-adaptation--shield--post-shield-attack composition and is used only for mechanism-level validation. Second, the native MATLAB R2024b path acquires MathWorks' \texttt{IEEE39BusSystem}, discovers candidate observation and control edges, validates the selected actuator edges through finite-difference causal probing, instruments the validated native model, and executes the same seven methods, four corruption cells, and 20 matched seeds. The authoritative native run uses four generator-local physical rotor-speed/\texttt{Pref} pairs, corresponding to Gen10@Bus30, Gen1@Bus39, Gen2@Bus31, and Gen3@Bus32. The resulting $4\times4$ finite-difference sensitivity matrix has rank four and condition number 5.13. Native IEEE 39-bus numerical claims are taken only from the orientation-safe run whose committed raw traces, summary, statistics, and generated LaTeX all share one configuration and provenance record.
+The first path is a reduced-order CPS integration backend used to exercise the complete PATBU--risk-gate--trust-gated-adaptation--aggregation--shield--post-shield-attack composition. It is reported only as mechanism-level evidence. The second path is the native MathWorks R2024b \texttt{IEEE39BusSystem} model. The native workflow materializes the official example, discovers candidate observation and control edges, validates the selected pairs by finite-difference causal probing, instruments the validated model, and executes the same method/scenario matrix used by the mechanism-level evaluation.
 
-\subsection{Benchmarks and Environment}
-The primary benchmark is the IEEE 39-bus system. It contains 10 generators and 39 buses and is partitioned into interacting control regions. The existing manuscript also uses the IEEE 118-bus system for scale studies; quantitative 118-bus claims should be retained only when their raw execution traces are made available. Additional IEEE 33-bus or 8500-node results must not be presented as existing results unless corresponding executable adapters and raw logs are added to the artifact.
+The authoritative native run uses four generator-local physical rotor-speed/\texttt{Pref} pairs at Gen10@Bus30, Gen1@Bus39, Gen2@Bus31, and Gen3@Bus32. The resulting $4\times4$ finite-difference sensitivity matrix has rank four and condition number 5.13. The native evidence is tied to commit \texttt{cc315ff522c90ce6adc09df3020472dd9ad820ea}, uses a $1/60$~s sample time, and executes $7\times4\times20=560$ episodes with one Fast Restart compile and numeric tunable selectors. The orientation-safe extraction path applies per-episode semantic guards before a trace is accepted.
 
-The legacy experiment description uses a workstation with an Intel Xeon Gold 6230 CPU, 128 GB RAM, an NVIDIA RTX 3090 GPU, Ubuntu 20.04, Python 3.9, PyTorch 2.0, and a Simulink--Python co-simulation stack. The authoritative native IEEE 39-bus evidence instead comes from the released GitHub Actions workflow using MATLAB R2024b with Simulink, Simscape, and Simscape Electrical at commit \texttt{cc315ff522c90ce6adc09df3020472dd9ad820ea}. It executes the native plant at a $1/60$~s sample time, records the validated mapping, configuration hash, seed, and raw trace, and reuses one Fast Restart compile across the $7\times4\times20=560$ experiment matrix through numeric tunable selectors. These CI measurements are reported separately from the legacy workstation description.
+\subsection{Methods and Joint-Corruption Matrix}
+The comparison includes a standard federated RL baseline (FedRL), a robust-aggregation baseline (RobustAgg), AEFC without PATBU, AEFC without the risk gate, AEFC without trust-gated online policy adaptation, AEFC without the physical shield, and AEFC-Full. Heterogeneous adapters and representation alignment are not treated as security ablations in the reported tables because they address subsystem compatibility rather than recovery authority.
 
-\subsection{Methods and Ablations}
-The security-focused comparison includes:
-\begin{itemize}
-    \item a standard federated RL baseline without security controls;
-    \item a robust-aggregation FRL baseline;
-    \item AEFC without provenance-aware belief processing;
-    \item AEFC without the risk-aware recovery gate;
-    \item AEFC without trust-gated online adaptation;
-    \item AEFC without the physical shield; and
-    \item the complete AEFC design.
-\end{itemize}
-The earlier ``NoCW'' and credibility-weighted ablations are excluded unless credibility weighting is reintroduced into the executable algorithm. Heterogeneous adapters and representation alignment can be evaluated separately as utility-oriented ablations.
-
-\subsection{Joint-Corruption Attack Matrix}
-The headline experiment is a $2\times2$ decomposition:
+The four scenarios form a $2\times2$ corruption matrix:
 \begin{equation}
-\{\text{physical-channel corruption off/on}\}
+\{\text{physical corruption off/on}\}
 \times
-\{\text{knowledge poisoning off/on}\}.
+\{\text{knowledge poisoning off/on}\},
 \end{equation}
-This produces clean, knowledge-only, physical-only, and joint-attack conditions. The same scenario names, compared methods, and matched seeds are used in the mechanism-level and native IEEE 39-bus paths so that differences can be attributed to the plant/backend rather than to a changed experimental matrix.
+which yields clean, knowledge-only, physical-only, and joint conditions. The same 20 seeds, methods, and scenario labels are used across backends. In the native run, seven federated clients include two Byzantine clients. The configured attack window is steps 15--43; observation corruption is bounded to 0.25 of the normalization scale, downstream post-shield control corruption is bounded by 0.005 per channel, the model-replacement scale is 6, and stale Byzantine evidence is delayed by seven steps.
 
-Observation attacks include bounded false-data corruption on the selected native observation channels. Control corruption is injected only after the robust shield and before the validated native actuator edge, preserving the threat-model ordering $u_t^\pi\rightarrow u_t^\star\rightarrow u_t^{\mathrm{exec}}$. Knowledge attacks include model replacement, sign-changing poisoned updates, stale recovery evidence, and colluding Byzantine clients. The native mapping is not inferred from names alone: a control edge is admitted only after a finite-difference probe produces a finite, nontrivial response in the selected native observations.
+Observation attacks perturb the selected physical rotor-speed channels. Knowledge attacks include model replacement, sign-changing poisoned updates, stale evidence, and colluding Byzantine clients. Control corruption is injected after the shield and before the validated native actuator edge, preserving the threat-model ordering
+$u_t^\pi\rightarrow u_t^\star\rightarrow u_t^{\mathrm{exec}}$. The formal guarantee applies only inside the modeled uncertainty and attack sets; the reported experiments do not claim safety against arbitrary unbounded downstream actuation.
 
-An additional out-of-envelope stress test should violate the modeled control-attack budget. Failure is acceptable in this setting because the purpose is to demonstrate the theorem boundary:
-\begin{quote}
-inside the modeled attack envelope, the formal guarantee applies; outside it, no formal safety guarantee is claimed.
-\end{quote}
+\subsection{Released Evidence Contract}
+The native JSONL traces and per-seed summaries expose the quantities used by the manuscript. Table~\ref{tab:trace-contract} lists the actual evidence schema rather than an aspirational logging interface. The mechanism-level traces additionally record the clean belief reference, robust aggregate, aggregate deviation, common support, and cumulative transmitted bytes.
 
-\subsection{Raw-Trace Contract}
-Each episode records at least:
 \begin{table}[htbp]
 \centering
-\caption{Minimum trace fields for code-to-claim reproducibility.}
-\begin{tabular}{ll}
+\caption{Released native evidence fields used for code-to-claim reproducibility.}
+\label{tab:trace-contract}
+\scriptsize
+\begin{tabular}{@{}p{0.19\columnwidth}p{0.73\columnwidth}@{}}
 \toprule
-Category & Required fields\\
+Category & Recorded quantities\\
 \midrule
-Identity & commit SHA, benchmark, seed, configuration\\
-Attack & type, start/end, magnitude, Byzantine ratio\\
-State & native observation, normalized observation, safety envelope\\
-Belief & belief distortion, clean reference, provenance/trust state\\
-Federation & robust aggregate and poisoning condition\\
-Policy & deployed-policy drift, adaptation decision\\
-Authority & risk bound, gate decision, validation decision\\
-Control & shield correction, post-shield attack, executed correction\\
-Safety & native safety margin, violation indicator\\
-Recovery & recovery state and recovery time\\
+Identity & commit/configuration identifiers, mapping policy, seed, method, scenario, time\\
+State & native and normalized observations, native safe-envelope indicator\\
+Integrity & trust score, risk bound, gate decision, belief distortion, deployed-policy movement\\
+Decisions & attack-active flag, dangerous-proposal flag, adaptation decision, shield intervention\\
+Control & shield action, post-shield corruption, executed correction\\
+Summary & safety violation, minimum native margin, FAR, maximum belief distortion, maximum policy movement, recovery success/time, intervention ratio\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Logging the shield correction and post-shield corruption separately is essential because it distinguishes learned-policy authority, shield intervention, and downstream control-channel corruption. In the native model, these signals remain separate until the validated control edge, where the plant receives the original reference plus the bounded shield correction plus the post-shield attack.
+Separating the shield action and the post-shield corruption is essential: it distinguishes learned-policy authority, safety-layer intervention, and downstream control-channel corruption. In the native plant, these signals are combined only at the validated control edge.
 
 \subsection{Security and Recovery Metrics}
-The primary safety metrics are the episode-level safety violation rate, the minimum native normalized safety margin, and the shield intervention ratio. Recovery utility is measured using recovery success and time-to-recovery rather than recovery accuracy alone.
+Belief integrity is measured against the clean counterfactual belief,
+\begin{equation}
+D_b(t)=\|b_t-b_t^{\circ}\|_2.
+\end{equation}
+The reported policy-drift metric is the movement of the deployed policy from its pre-update reference,
+\begin{equation}
+D_\theta(t)=\|\theta_t^{\mathrm{dep}}-\theta_0^{\mathrm{dep}}\|_2,
+\end{equation}
+which matches the quantity recorded by both executable backends. It should not be interpreted as a normalized attacked-versus-clean parameter distance unless such a clean parameter trajectory is explicitly recorded.
 
-Knowledge-integrity metrics include
+For the native IEEE 39-bus path, let $z_t$ denote the four normalized physical rotor-speed observations and let $\ell_{\mathrm{safe}}=1$ be the configured normalized envelope. The instantaneous native margin is
 \begin{equation}
-D_b(t)=\|b_t^{\mathrm{attack}}-b_t^{\mathrm{clean}}\|_2,
+m_t^{\mathrm{native}}=\ell_{\mathrm{safe}}-\|z_t\|_\infty,
 \end{equation}
-\begin{equation}
-D_\theta(t)=
-\frac{\|\theta_t^{\mathrm{dep}}-\theta_t^{\mathrm{clean}}\|}
-{\|\theta_t^{\mathrm{clean}}\|+\epsilon},
-\end{equation}
-and aggregation deviation
-\begin{equation}
-D_g(t)=\|\widehat g_t-\mu_t^{H}\|_2.
-\end{equation}
-The false-authorization rate is
+and each episode reports $\min_t m_t^{\mathrm{native}}$. A negative value therefore denotes an observed envelope violation.
+
+The false-authorization rate is computed from the logged dangerous-proposal indicator $d_t\in\{0,1\}$:
 \begin{equation}
 \mathrm{FAR}=
-\frac{\#\{G_t=1\land
-\mathfrak R_t^{\mathrm{true}}>\rho_{\max}\}}
-{\#\{\mathfrak R_t^{\mathrm{true}}>\rho_{\max}\}}.
+\frac{\sum_t\mathbf 1\{G_t=1\land d_t=1\}}
+{\max\{\sum_t d_t,1\}}.
 \end{equation}
-The shield intervention ratio measures how often the final execution layer changes an authorized learned proposal.
+The indicator is backend-specific but fixed by the executable configuration: the mechanism-level path uses a one-step true-state surrogate safety criterion, whereas the native path uses the normalized predicted envelope associated with the validated sensitivity model. Consequently, empirical FAR is an operational authorization metric; it is not itself an estimate of the theoretical probability parameter $\delta_g$.
+
+Recovery is summarized by an episode-level recovery-success indicator and post-attack time-to-recovery. Safety is summarized by the episode-level violation indicator and the minimum native margin. The shield-intervention ratio records the fraction of time steps at which the execution layer changes the authorized proposal.
 
 \subsection{Statistical Protocol}
-The default evaluation uses 20 matched seeds,
-\begin{equation}
-\mathrm{seed}\in\{0,1,\ldots,19\},
-\end{equation}
-with the same seed applied across compared methods in each scenario. Skewed recovery-time and distortion metrics are compared with a paired Wilcoxon signed-rank test. Multiple baseline comparisons use Holm correction. Exact all-zero paired differences are assigned $p=1$ before Holm correction, so a no-effect comparison cannot be converted into an artificial significant result by non-finite-value handling. Effect sizes and 95\% confidence intervals are reported together with $p$-values.
+All headline comparisons use the same 20 matched seeds, $\mathrm{seed}\in\{0,1,\ldots,19\}$. Continuous integrity, margin, and recovery metrics are compared with paired Wilcoxon signed-rank tests. For each metric, the six AEFC-Full-versus-alternative comparisons are corrected with Holm's procedure. Exact all-zero paired differences are assigned $p=1$ before multiplicity correction, preventing a no-effect comparison from becoming spuriously significant through non-finite-value handling. The generated statistics also report paired median differences. Episode-level binary proportions use Wilson 95\% confidence intervals; continuous table entries use mean 95\% confidence intervals across the 20 matched seeds.
 
-For episode-level safety violation proportions, Wilson confidence intervals are reported. If some episodes do not recover before the simulation horizon, the corresponding recovery-success rate is reported explicitly; time-to-event analysis should be added if censoring is substantial rather than interpreting the horizon as an observed recovery time.
+\subsection{Trace-Generated Results}
+The mechanism-level and native result sections below are imported directly from generated LaTeX files. The manuscript build therefore fails if the committed result files are absent rather than silently substituting unverified numerical values.
 
-\subsection{Figure and Table Design}
-The final paper prioritizes the following evidence:
-\begin{enumerate}
-    \item a threat/trust-boundary figure showing observation, knowledge, gate, adaptation, shield, downstream control corruption, and plant;
-    \item a $2\times2$ joint-corruption comparison;
-    \item an attack-episode causal timeline showing $D_b$, $q_t$, $G_t$, $D_\theta$, $u_t^\pi$, $u_t^\star$, $u_t^{\mathrm{exec}}$, and the safety margin;
-    \item the distribution of minimum physical safety margins across seeds;
-    \item post-poisoning belief/policy correction curves; and
-    \item a safety--utility--intervention trade-off over $\rho_{\max}$, $q_{\min}$, and $\Delta_\theta$.
-\end{enumerate}
+\input{results/generated/Results-Auto.tex}
 
-The main results table jointly reports safety violation, minimum safety margin, false authorization, belief distortion, policy drift, recovery success, and recovery time. Communication cost is reported only when computed from actual transmitted bytes in the corresponding trace.
-
-\IfFileExists{results/generated/Results-Auto.tex}{%
-\input{results/generated/Results-Auto.tex}%
-}{%
-\subsection{Mechanism-Level 20-Seed Results Pending CI}
-The manuscript is wired to import the automatically generated mechanism-level results from \texttt{results/generated/Results-Auto.tex}. Until the CI runner has produced the committed summary and immutable raw-trace artifact, no numerical value is inserted here.
-}
-
-\IfFileExists{results/ieee39_generated/IEEE39-Results-Auto.tex}{%
-\input{results/ieee39_generated/IEEE39-Results-Auto.tex}%
-}{%
-\subsection{Native IEEE 39-Bus Results Pending Licensed CI}
-The native R2024b runner and code-to-claim pipeline are implemented, but no IEEE 39-bus numerical result is inserted until the licensed workflow has produced \texttt{interface\_mapping.json}, native per-seed traces, \texttt{results/ieee39\_joint20/summary.csv}, and the automatically generated \texttt{IEEE39-Results-Auto.tex} file.
-}
+\input{results/ieee39_generated/IEEE39-Results-Auto.tex}
