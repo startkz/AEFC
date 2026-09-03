@@ -18,6 +18,4 @@ For the joint attack, AEFC-Full yields post-attack recovery time 4.3000 (95\% CI
 
 The ablations expose the intended layer separation. Removing the shield causes physical safety violations despite small policy drift, whereas removing trust-gated adaptation sharply increases false authorization and policy drift while the shield can still preserve the physical invariant. Removing PATBU increases belief distortion. These observations are mechanism-level evidence for the compositional design, not a substitute for native IEEE 39-bus validation.
 
-Paired Wilcoxon tests for the continuous integrity and recovery metrics are computed per seed and corrected across the six alternative methods with Holm's procedure; the machine-readable statistics are released in \texttt{results/generated/joint\_statistics.csv}.
-
-Native IEEE 39-bus Results remain pending until the licensed R2024b workflow successfully executes the model and validates the observation/actuation injection points.
+Paired Wilcoxon tests for the continuous integrity and recovery metrics are computed per seed and corrected across the six alternative methods with Holm's procedure. The corresponding machine-readable statistics are released with the artifact.
