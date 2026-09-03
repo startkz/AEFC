@@ -8,10 +8,10 @@ We consider a CPS partitioned into $N$ interacting subsystems. Subsystem $i$ has
 \end{equation}
 and the received observation is
 \begin{equation}
-y_i=h_i(x_i)+a_i^y,
+y_i=\mathcal H_i(x_i)+a_i^y,
 \label{eq:obs}
 \end{equation}
-where $a_i^y$ models observation/communication corruption, $a_i^u$ models corruption between the shield output and the plant input, and $w_i$ represents bounded modeling disturbance.
+where $\mathcal H_i$ is the observation map, $a_i^y$ models observation/communication corruption, $a_i^u$ models corruption between the shield output and the plant input, and $w_i$ represents bounded modeling disturbance.
 
 Let
 \begin{equation}
@@ -87,6 +87,7 @@ and the recovery belief is updated by
 b_{t+1}=\Pi_{\mathcal B}T(b_t,\widehat y_t,\bar k_t).
 \label{eq:belief}
 \end{equation}
+We take $\mathcal B$ to be closed and convex and $\Pi_{\mathcal B}$ to be the Euclidean projection; hence the projection used in the analysis is non-expansive.
 
 \begin{assumption}[Contractive recovery-belief dynamics]
 There exist $0\le\lambda_b<1$, $L_y\ge0$, and $L_k\ge0$ such that
@@ -115,7 +116,7 @@ $e_{t+1}\le\lambda_b e_t+L_y\epsilon_y+L_k\epsilon_k$.
 Unrolling the recursion yields \eqref{eq:belief-bound}.
 \end{proof}
 
-If poisoning stops at $T_p$ and the post-attack disturbance becomes $\epsilon_{\mathrm{clean}}$, the same recursion gives geometric correction toward an $\epsilon_{\mathrm{clean}}/(1-\lambda_b)$ neighborhood. Exact finite-time return is not claimed without an additional reset/rollback mechanism.
+If poisoning stops at $T_p$ and the combined post-attack discrepancy entering the belief recursion is bounded by $\epsilon_{\mathrm{clean}}$, the same recursion gives geometric correction toward an $\epsilon_{\mathrm{clean}}/(1-\lambda_b)$ residual neighborhood. Exact finite-time return is not claimed without zero residual disturbance or an additional reset/rollback mechanism.
 
 \subsection{Certificate-Supported Local Recovery Knowledge}
 For an honest client, a local transition $\tau=(s,a,r,s')$ is eligible for federation only when it is recovery-useful and consistent with local safety/recovery evidence. Define
@@ -266,16 +267,28 @@ L_\pi\min\{\eta_tC,\Delta_\theta\}.
 \end{equation}
 \end{theorem}
 
-Finite correction after poisoning additionally requires either finite detection and rollback to a certified checkpoint, or a clean post-attack contraction
+Finite correction after poisoning additionally requires either finite detection and rollback to a certified checkpoint, or a clean post-attack contraction.
+\begin{corollary}[Finite $\varepsilon$-correction after poisoning]
+Suppose poisoning stops at $T_p$ and, for $t\ge T_p$,
 \begin{equation}
 \|\theta_{t+1}-\theta^c\|
 \le\kappa\|\theta_t-\theta^c\|+\epsilon_c,
-\qquad \kappa<1.
+\qquad 0\le\kappa<1.
 \end{equation}
-Without such an assumption, finite correction is not claimed.
+Then, for every integer $s\ge0$,
+\begin{equation}
+\|\theta_{T_p+s}-\theta^c\|
+\le \kappa^s\|\theta_{T_p}-\theta^c\|
++\frac{1-\kappa^s}{1-\kappa}\epsilon_c.
+\end{equation}
+Consequently, for any $\varepsilon>\epsilon_c/(1-\kappa)$, the deployed parameters enter the $\varepsilon$-ball around $\theta^c$ after finitely many clean rounds. Exact return requires $\epsilon_c=0$ or a certified rollback/reset mechanism.
+\end{corollary}
+\begin{proof}
+Unrolling the contraction recursion for $s$ clean rounds gives the stated geometric bound. Since $\kappa^s\to0$, every radius strictly larger than the residual floor $\epsilon_c/(1-\kappa)$ is reached in finite time.
+\end{proof}
 
 \subsection{Robust Physical Execution Shield}
-The authorized or fallback proposal is still not directly applied. AEFC solves
+For compactness, let $x$ and $u$ denote the stacked subsystem state and input and let $\mathcal S=\prod_i\mathcal S_i$. Assume $f$ and $g$ are locally Lipschitz, each barrier function $h_\ell$ is continuously differentiable, and $\alpha_\ell$ is an extended class-$\mathcal K$ function. The authorized or fallback proposal is still not directly applied. AEFC solves
 \begin{equation}
 u_t^\star=
 \arg\min_{u,\delta\ge0}
@@ -293,7 +306,7 @@ w\in\mathcal W_t}}
 \right]\ge0
 \label{eq:robust-cbf}
 \end{equation}
-and a soft recovery CLF constraint. The actual plant receives
+and a soft recovery CLF constraint that may be relaxed by $\delta$; the safety constraints remain hard. The actual plant receives
 \begin{equation}
 u_t^{\mathrm{exec}}=u_t^\star+a_t^u.
 \end{equation}
@@ -317,7 +330,7 @@ The security guarantees are intentionally separated:
 \begin{align}
 \text{G1: }&\text{bounded belief distortion},\\
 \text{G2: }&\text{bounded false authorization},\\
-\text{G3: }&\text{finite $\varepsilon$-correction under explicit contraction/rollback},\\
+\text{G3: }&\text{finite $\varepsilon$-correction above the residual floor under contraction/rollback},\\
 \text{G4: }&\text{bounded deployed-policy deviation},\\
 \text{G5: }&\text{physical forward invariance}.
 \end{align}
