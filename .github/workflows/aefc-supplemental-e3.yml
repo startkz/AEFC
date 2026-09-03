@@ -1,0 +1,44 @@
+name: AEFC supplemental E3 calibrated baselines
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/supplemental-five-final]
+    paths:
+      - 'ci/supplemental-e3-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip numpy scipy matplotlib
+      - name: Run common-random-number calibrated baselines
+        run: PYTHONPATH=. python experiments/run_mechanism_calibration.py
+      - name: Archive raw traces
+        shell: bash
+        run: |
+          cd results/supplemental_mechanism/calibration
+          tar -czf "raw-traces-${GITHUB_SHA}.tar.gz" --exclude='raw-traces-*.tar.gz' */*.jsonl */*.summary.json
+          sha256sum "raw-traces-${GITHUB_SHA}.tar.gz" > raw-traces.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supp-mechanism-calibration-${{ github.sha }}
+          path: results/supplemental_mechanism/calibration
+          retention-days: 90
+      - name: Persist calibrated-baseline evidence
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          find results/supplemental_mechanism/calibration -name '*.jsonl' -delete
+          git add results/supplemental_mechanism/calibration
+          git commit -m 'Generate fairness-calibrated mechanism baselines [skip ci]'
+          git push origin HEAD:experiment/supplemental-five-final
