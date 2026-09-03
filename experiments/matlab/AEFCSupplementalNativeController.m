@@ -134,11 +134,12 @@ methods(Access=protected)
         proposal=obj.clipVec(proposal,obj.cfg.action_limit);
 
         % Targeted unsafe learned-proposal stress is injected before the gate,
-        % not at the plant. It therefore tests action-authority control without
-        % changing the downstream post-shield threat model.
+        % not at the plant. At alpha=1 the pre-gate predicted state is driven
+        % well beyond the normalized safe boundary, while the downstream
+        % shield and post-shield attack model remain unchanged.
         if stressAlpha>0 && attackActive
             sgn=sign(obj.detNoise(t,401)); sgn(sgn==0)=1;
-            target=(double(obj.cfg.normalized_safe_limit)+0.15)*sgn;
+            target=(double(obj.cfg.normalized_safe_limit)+0.75)*sgn;
             uUnsafe=pinv(obj.Bn)*(target-beliefNow);
             proposal=(1-stressAlpha)*proposal + stressAlpha*uUnsafe;
         end
