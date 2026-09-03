@@ -1,0 +1,5 @@
+method,max_belief_distortion,max_policy_drift,recovery_time,min_cbf_margin,safety_violation_rate,false_authorization_rate
+FedRL,1.1667786695,3.3005507955,40.9,-1.1101291039,1.0,1.0
+FedRL-Clip,0.8407103952,0.1286475594,16.85,0.0490724374,0.1,0.05
+RobustFedRL-Clip,0.8412253809,0.0845534898,1.35,0.0775522764,0.0,0.0
+AEFC-Full,0.4818111295,0.0339137008,4.3,0.0,0.0,0.0
