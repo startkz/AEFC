@@ -1,0 +1,17 @@
+{
+  "backend": "reduced_order_mechanism_fairness_calibration",
+  "commit_sha": "fa2d6810719da86ad8af7db277b652d7e2406040",
+  "config_id": "89363b2581483cbf-crn",
+  "common_random_numbers": true,
+  "seeds": 20,
+  "steps": 120,
+  "methods": [
+    "FedRL",
+    "FedRL-Clip",
+    "RobustFedRL-Clip",
+    "AEFC-Full"
+  ],
+  "scenario": "joint",
+  "rows": 80,
+  "purpose": "Calibrate the extreme FedRL mechanism-level contrast using matched disturbance streams and tuned clipping baselines."
+}

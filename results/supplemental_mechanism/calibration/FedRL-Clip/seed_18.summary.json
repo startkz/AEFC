@@ -1,0 +1,18 @@
+{
+  "commit_sha": "fa2d6810719da86ad8af7db277b652d7e2406040",
+  "config_id": "89363b2581483cbf-crn",
+  "common_random_numbers": true,
+  "seed": 18,
+  "method": "FedRL-Clip",
+  "scenario": "joint",
+  "safety_violation": 0,
+  "min_cbf_margin": 0.017783699331295977,
+  "false_authorization_rate": 0.0,
+  "max_belief_distortion": 0.8145146554802434,
+  "max_policy_drift": 0.15841106577637767,
+  "recovery_success": 1,
+  "recovery_time": 23,
+  "shield_intervention_ratio": 0.0,
+  "mean_aggregate_deviation": 0.24963572579755494,
+  "backend": "reduced_order_mechanism_fairness_calibration"
+}

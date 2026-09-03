@@ -1,0 +1,18 @@
+{
+  "commit_sha": "fa2d6810719da86ad8af7db277b652d7e2406040",
+  "config_id": "89363b2581483cbf-crn",
+  "common_random_numbers": true,
+  "seed": 8,
+  "method": "AEFC-Full",
+  "scenario": "joint",
+  "safety_violation": 0,
+  "min_cbf_margin": -5.551115123125783e-17,
+  "false_authorization_rate": 0.0,
+  "max_belief_distortion": 0.4816706822440403,
+  "max_policy_drift": 0.03118368952079943,
+  "recovery_success": 1,
+  "recovery_time": 5,
+  "shield_intervention_ratio": 0.1,
+  "mean_aggregate_deviation": 0.10304348548247555,
+  "backend": "reduced_order_mechanism_fairness_calibration"
+}
