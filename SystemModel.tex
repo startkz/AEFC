@@ -120,12 +120,12 @@ If poisoning stops at $T_p$ and the combined post-attack discrepancy entering th
 
 \subsection{Certificate-Supported Local Recovery Knowledge}
 For an honest client, a local transition $\tau=(s,a,r,s')$ is eligible for federation only when it is recovery-useful and consistent with local safety/recovery evidence. Define
-\begin{equation}
-m_i^{\mathrm{safe}}(\tau)=
-\min_\ell\inf_{\substack{x\in\widehat{\mathcal X}_i\\a^u\in\mathcal A_i^u\\w\in\mathcal W_i}}
-\left[\nabla h_{i,\ell}^{\top}
-(f_i+g_i(u+a^u)+w)+\alpha_\ell(h_{i,\ell})\right]
-\end{equation}
+\begin{align}
+m_i^{\mathrm{safe}}(\tau)
+=&\ \min_\ell\inf_{\substack{x\in\widehat{\mathcal X}_i\\a^u\in\mathcal A_i^u\\w\in\mathcal W_i}}
+\Big[\nabla h_{i,\ell}^{\top}(f_i+g_i(u+a^u)+w) \nonumber\\
+&\hspace{5em}+\alpha_\ell(h_{i,\ell})\Big]
+\end{align}
 and
 \begin{equation}
 m_i^{\mathrm{rec}}(\tau)=-
@@ -183,11 +183,12 @@ w\in\mathcal W_t}}
 [-\mathcal B_\ell(x,u,a^u,w)]_+,
 \end{equation}
 where
-\begin{equation}
-\mathcal B_\ell(x,u,a^u,w)=
-\nabla h_\ell(x)^\top[f(x)+g(x)(u+a^u)+w]
-+\alpha_\ell(h_\ell(x)).
-\end{equation}
+\begin{align}
+\mathcal B_\ell(x,u,a^u,w)
+=&\ \nabla h_\ell(x)^\top
+[f(x)+g(x)(u+a^u)+w] \nonumber\\
+&+\alpha_\ell(h_\ell(x)).
+\end{align}
 We combine this term with recovery and uncertainty penalties:
 \begin{align}
 \widehat{\mathfrak R}_t(u)=&
@@ -276,11 +277,11 @@ Suppose poisoning stops at $T_p$ and, for $t\ge T_p$,
 \qquad 0\le\kappa<1.
 \end{equation}
 Then, for every integer $s\ge0$,
-\begin{equation}
+\begin{align}
 \|\theta_{T_p+s}-\theta^c\|
-\le \kappa^s\|\theta_{T_p}-\theta^c\|
-+\frac{1-\kappa^s}{1-\kappa}\epsilon_c.
-\end{equation}
+\le&\ \kappa^s\|\theta_{T_p}-\theta^c\| \nonumber\\
+&+\frac{1-\kappa^s}{1-\kappa}\epsilon_c.
+\end{align}
 Consequently, for any $\varepsilon>\epsilon_c/(1-\kappa)$, the deployed parameters enter the $\varepsilon$-ball around $\theta^c$ after finitely many clean rounds. Exact return requires $\epsilon_c=0$ or a certified rollback/reset mechanism.
 \end{corollary}
 \begin{proof}
@@ -296,16 +297,14 @@ u_t^\star=
 \label{eq:shield-new}
 \end{equation}
 subject to the hard robust safety constraints
-\begin{equation}
+\begin{align}
 \inf_{\substack{x\in\widehat{\mathcal X}_t\\
 a^u\in\mathcal A_t^u\\
 w\in\mathcal W_t}}
-\left[
-\nabla h_\ell(x)^\top(f(x)+g(x)(u+a^u)+w)
-+\alpha_\ell(h_\ell(x))
-\right]\ge0
+\Big[&\nabla h_\ell(x)^\top(f(x)+g(x)(u+a^u)+w) \nonumber\\
+&+\alpha_\ell(h_\ell(x))\Big]\ge0
 \label{eq:robust-cbf}
-\end{equation}
+\end{align}
 and a soft recovery CLF constraint that may be relaxed by $\delta$; the safety constraints remain hard. The actual plant receives
 \begin{equation}
 u_t^{\mathrm{exec}}=u_t^\star+a_t^u.
@@ -330,7 +329,8 @@ The security guarantees are intentionally separated:
 \begin{align}
 \text{G1: }&\text{bounded belief distortion},\\
 \text{G2: }&\text{bounded false authorization},\\
-\text{G3: }&\text{finite $\varepsilon$-correction above the residual floor under contraction/rollback},\\
+\text{G3: }&\text{finite $\varepsilon$-correction above the residual floor} \nonumber\\
+&\text{under explicit contraction/rollback},\\
 \text{G4: }&\text{bounded deployed-policy deviation},\\
 \text{G5: }&\text{physical forward invariance}.
 \end{align}
