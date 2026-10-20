@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "backend": "reduced_order_shadow_exploration",
+  "not_a_native_ieee39_test": true,
+  "not_formal_G1_G3_G5_validation": true,
+  "commit_sha": "132006a4f1fe936803e140441d49d8bb0326404c",
+  "config_sha256": "89363b2581483cbf5d1c1ee3cf75140447a51caf93b123d850dfb8b57953d6c9",
+  "episodes": 80,
+  "steps": 240,
+  "seeds": 40,
+  "conditions": [
+    "knowledge",
+    "joint"
+  ],
+  "online_inputs": "received observation, all syntactically valid reports, local timestamps",
+  "shadow_inputs": "clean observations/reports; held outside live controller",
+  "g1_reference": "same operator and matched actual plant path",
+  "g3_target": "independent clean-knowledge shadow; dynamic reference, not theorem fixed point",
+  "g5_scope": "sampled reduced-order box shield; Gaussian state disturbance unbounded",
+  "epsilon": 0.01,
+  "persistence_steps": 20
+}
