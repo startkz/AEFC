@@ -1,0 +1,52 @@
+name: P0 native IEEE39 boundary-activation sensitivity
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/p0-gh-shadow-contract]
+    paths:
+      - ".github/workflows/p0-native-activation.yml"
+permissions:
+  contents: read
+jobs:
+  ieee39-boundary-cell:
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - {name: qmin-0p43, kind: qmin, value: "0.43", tag: "0p43"}
+          - {name: qmin-0p48, kind: qmin, value: "0.48", tag: "0p48"}
+          - {name: rho-0p09, kind: rho, value: "0.09", tag: "0p09"}
+          - {name: rho-0p12, kind: rho, value: "0.12", tag: "0p12"}
+          - {name: trust-0p002, kind: trust, value: "0.002", tag: "0p002"}
+          - {name: trust-0p005, kind: trust, value: "0.005", tag: "0p005"}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup native MathWorks simulator
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Materialize validated IEEE39 plant and actuator mapping
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mm=jsondecode(fileread(fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'))); assert(logical(mm.validated) && strcmp(mm.selection_policy,'paired-generator-physical-speed-v2')); aefc_ieee39_build_native_model
+      - name: Run 20 matched native seeds in frozen supplemental cell
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_supplemental_cell('${{ matrix.kind }}', ${{ matrix.value }})
+      - name: Archive original traces and cell summaries
+        shell: bash
+        run: |
+          cd results/supplemental_native/${{ matrix.kind }}/${{ matrix.tag }}
+          tar -czf raw-traces.tar.gz */*.jsonl */*.summary.json
+          sha256sum raw-traces.tar.gz > raw-traces.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AEFC-P0-native-${{ matrix.name }}
+          path: results/supplemental_native/${{ matrix.kind }}/${{ matrix.tag }}
+          if-no-files-found: error
+          retention-days: 90
