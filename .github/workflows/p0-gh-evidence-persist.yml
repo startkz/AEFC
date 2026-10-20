@@ -1,0 +1,55 @@
+name: Persist verified P0 G-H evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/p0-gh-shadow-contract]
+    paths:
+      - ".github/workflows/p0-gh-evidence-persist.yml"
+permissions:
+  contents: write
+  actions: read
+jobs:
+  persist-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get successful fixed-seed experiment artifact
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 39386495369
+          name: AEFC-P0-GH-shadow-132006a4f1fe936803e140441d49d8bb0326404c
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: results/p0_shadow_reduced
+      - name: Validate full archived experiment and reproducibility record
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import csv,json, pathlib
+          p=pathlib.Path('results/p0_shadow_reduced')
+          rows=list(csv.DictReader((p/'summary.csv').open()))
+          assert len(rows)==80
+          for cond in ('joint','knowledge'):
+            rr=[x for x in rows if x['condition']==cond]
+            assert len(rr)==40
+            for x in rr:
+              seed=int(x['seed'])
+              trace=p/cond/f'seed_{seed:02d}.jsonl'
+              summary=p/cond/f'seed_{seed:02d}.summary.json'
+              assert trace.exists() and summary.exists()
+              ls=trace.read_text().splitlines()
+              assert len(ls)==240
+              assert abs(max(json.loads(a)['belief_error_same_operator'] for a in ls)-float(x['max_belief_error_same_operator']))<1e-10
+          manifest=json.loads((p/'manifest.json').read_text())
+          assert manifest['episodes']==80 and manifest['steps']==240
+          print('Accepted: 80x240 samples, matched raw traces, fixed manifest')
+          PY
+          cd results/p0_shadow_reduced
+          sha256sum -c raw-traces.sha256 || sha256sum raw-traces.tar.gz
+      - name: Commit immutable archive and summary on experiment branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/p0_shadow_reduced/summary.csv results/p0_shadow_reduced/manifest.json results/p0_shadow_reduced/raw-traces.tar.gz results/p0_shadow_reduced/raw-traces.sha256
+          git commit -m 'Archive measured P0 G-H shadow traces and summaries [skip ci]'
+          git push origin HEAD:experiment/p0-gh-shadow-contract
