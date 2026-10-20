@@ -1,0 +1,37 @@
+name: Audit P0 archived native evidence
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [paper/p0-cn-audit-20261020]
+    paths:
+      - ".github/workflows/audit-p0-native-archive.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-archived-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout paper and audit code
+        uses: actions/checkout@v4
+      - name: Download immutable supplemental run artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 33713969987
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: supp-native-*
+          merge-multiple: false
+          path: results/p0-audit-artifacts
+      - name: Audit raw JSONL, summaries and Main reproduction
+        run: python3 analysis/audit_p0_archived_native.py
+      - name: Store audit result as independent artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AEFC-P0-native-archive-audit-${{ github.sha }}
+          path: results/p0_audit_20261020/audit.json
+          if-no-files-found: warn
