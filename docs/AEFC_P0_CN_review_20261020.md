@@ -41,3 +41,8 @@
 中文稿已经按上述证据边界完成对应段落修订；该版本是技术审校参考稿，保留Word中LaTeX形式的公式/参考文献源码，不等同于已替换IEEEtran英文投稿LaTeX。不能把统计重算或GitHub证据上传当作新增MATLAB实验。审校提出的G1/G3/G5/无特权输入P0均保留「未完成／未验证」状态。
 
 可运行的历史工件复核见 \`analysis/audit_p0_archived_native.py\` 及工作流 \`.github/workflows/audit-p0-native-archive.yml\`。
+
+
+## 2026-10-21 追加证据
+
+GitHub Actions \`39387453311\` 已完成六个真正跨越风险/信任域激活边界的原生IEEE39单元，共120回合、8760点，六份原始证据已逐条检验。旧E5在非激活区表现为平台，新E5发现\`rho_max=0.09\`可拒绝451/1460，\`Delta_theta=0.002\`可减小部署参数移动。但这不是G1/G3/G5定理证书，也不能改变旧560-run Main的统计口径。详见 \`docs/P0_native_E5_activation_20261021.md\`及其脚本、GitHub工件。
