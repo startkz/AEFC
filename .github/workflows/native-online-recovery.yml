@@ -1,0 +1,80 @@
+name: P0 IEEE39 online relearning (exploratory)
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/native-online-recovery-20261021]
+    paths: ['.github/workflows/native-online-recovery.yml']
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - {scenario: 1, tag: clean}
+          - {scenario: 2, tag: knowledge}
+          - {scenario: 4, tag: joint}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Build exact same validated IEEE39 physical plant
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mm=jsondecode(fileread(fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'))); assert(logical(mm.validated) && strcmp(mm.selection_policy,'paired-generator-physical-speed-v2')); aefc_ieee39_build_native_model
+      - name: Run 8 exploratory seeds x three methods x 480 native samples
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_online_recovery(${{ matrix.scenario }})
+      - name: Archive raw traces and immutable hash
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          d=results/p0_native_online_recovery/scenario_${{ matrix.scenario }}
+          if [ -d "$d" ]; then
+            (cd "$d" && tar -czf raw-traces.tar.gz AEFC-Unprivileged AEFC-Checkpoint AEFC-OnlineRelearn && sha256sum raw-traces.tar.gz > raw-traces.sha256)
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AEFC-OnlinePilot-${{ matrix.tag }}-${{ github.sha }}
+          path: results/p0_native_online_recovery/scenario_${{ matrix.scenario }}/
+          if-no-files-found: warn
+          retention-days: 90
+  audit:
+    if: always()
+    needs: native
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: AEFC-OnlinePilot-*
+          merge-multiple: false
+          path: results/p0_online_download
+      - name: Check ZIP payload SHA256 before computing results
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tag in clean knowledge joint; do
+            d=$(find results/p0_online_download -mindepth 1 -maxdepth 1 -type d -name "AEFC-OnlinePilot-$tag-*" | head -n 1)
+            test -n "$d"
+            (cd "$d" && sha256sum -c raw-traces.sha256)
+          done
+      - name: Recompute all 72 raw-trace outcomes and publish negative results
+        run: python analysis/audit_native_online_recovery.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AEFC-OnlinePilot-audit-${{ github.sha }}
+          path: results/p0_native_online_recovery/audit/
+          if-no-files-found: warn
+          retention-days: 90
