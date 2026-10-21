@@ -1,0 +1,49 @@
+name: Persist P0 fixed-target pilot evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/p0-recovery-contract-utility-20261021]
+    paths:
+      - '.github/workflows/p0-recovery-persist.yml'
+permissions:
+  contents: write
+  actions: read
+jobs:
+  persist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39537403594
+          name: AEFC-P0-fixed-target-recovery-c237d37e6566685001e7adf671427c542ae2cecf
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: results/p0_contract_pilot
+      - name: Validate frozen pilot and raw archive
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import csv,json,pathlib
+          p=pathlib.Path('results/p0_contract_pilot')
+          rows=list(csv.DictReader((p/'summary.csv').open()))
+          assert len(rows)==80
+          for mode in ('bounded','unfiltered'):
+              rr=[r for r in rows if r['mode']==mode]
+              assert len(rr)==40
+              for r in rr:
+                  f=p/mode/f"seed_{int(r['seed']):02d}.jsonl"
+                  s=p/mode/f"seed_{int(r['seed']):02d}.summary.json"
+                  assert f.exists() and s.exists()==False
+                  lines=f.read_text().splitlines()
+                  assert len(lines)==240
+                  assert abs(float(json.loads(lines[-1])['theta_error'])-float(r['theta_error_last']))<1e-8
+          print('Validated 80 runs and 19200 raw steps')
+          PY
+      - name: Store machine-readable data and archived raw evidence
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/p0_contract_pilot/summary.csv results/p0_contract_pilot/manifest.json results/p0_contract_pilot/raw-traces.tar.gz results/p0_contract_pilot/raw-traces.sha256
+          git commit -m 'Preserve audited P0 contract pilot archive [skip ci]'
+          git push origin HEAD:experiment/p0-recovery-contract-utility-20261021
