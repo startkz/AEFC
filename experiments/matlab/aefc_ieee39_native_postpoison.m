@@ -76,7 +76,7 @@ for mi=1:numel(methodCodes)
         diagv=sampleOutput(out,'AEFC_DIAG',tq,23);
         ushield=sampleOutput(out,'AEFC_SHIELD_VECTOR',tq,4);
         upost=sampleOutput(out,'AEFC_POST_ATTACK_VECTOR',tq,4);
-        validateEvidence(diagv,upost,mc,cfg,attackScale);
+        validateEvidence(diagv,upost,mc,cfg,attackScale,scenarioCode);
         errTheta=sqrt(sum((diagv(:,11:14)-diagv(:,15:18)).^2,2));
         assert(max(errTheta(1:cfg.attack_start_step))<1e-9,'AEFC:ShadowPreAttack','Clean shadow differs before attack');
         postIdx=(double(cfg.attack_end_step)+2):numel(tq);
@@ -191,13 +191,13 @@ perm=[timeDim setdiff(1:nd,timeDim,'stable')]; d=permute(d,perm); d=reshape(d,nT
 assert(size(d,2)==dim,'AEFC:OutputDimension','Signal %s channel count mismatch.',name);
 end
 
-function validateEvidence(diagv,upost,mc,cfg,attackScale)
+function validateEvidence(diagv,upost,mc,cfg,attackScale,scenarioCode)
 tol=1e-10; assert(size(diagv,2)==23 && size(upost,2)==4,'AEFC:EvidenceShape','Evidence shape mismatch.');
 if any(mc==[1 2 6]), assert(max(abs(diagv(:,6)))<=tol,'AEFC:InterventionSemantics','Method must have zero shield intervention.'); end
 if any(mc==[1 2 3]), assert(max(abs(diagv(:,1)-0.5))<=tol,'AEFC:TrustSemantics','Method must retain fixed trust 0.5.'); end
 active=false(size(upost,1),1); active(double(cfg.attack_start_step)+1:double(cfg.attack_end_step)+1)=true;
 amp=max(abs(upost),[],2); bound=double(cfg.post_shield_control_attack)*attackScale;
-if attackScale<=tol
+if attackScale<=tol || scenarioCode==2
     assert(max(amp)<=tol,'AEFC:PostAttackSemantics','Zero-scale run contains post-shield attack.');
 else
     assert(all(amp(~active)<=tol),'AEFC:PostAttackWindow','Post-shield attack appears outside configured window.');
