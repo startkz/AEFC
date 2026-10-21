@@ -1,4 +1,5 @@
 name: Audit and persist native AEFC post-poisoning results
+# Re-run after both immutable source artifacts from run 39538932151 exist.
 on:
   workflow_dispatch:
   push:
