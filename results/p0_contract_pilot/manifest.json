@@ -1,0 +1,29 @@
+{
+  "experiment": "P0 synthetic fixed-target contractive diagnostic",
+  "status": "exploratory only",
+  "backend": "4d synthetic bounded plant; NOT native IEEE39",
+  "not_native_G1_or_G3_or_G5_proof": true,
+  "seeds": 40,
+  "modes": [
+    "bounded",
+    "unfiltered"
+  ],
+  "runs": 80,
+  "steps": 240,
+  "poison_window": [
+    24,
+    72
+  ],
+  "fixed_reference": [
+    0.1,
+    -0.08,
+    0.06,
+    -0.04
+  ],
+  "contraction_alpha": 0.9,
+  "epsilon": 0.01,
+  "consecutive": 20,
+  "disturbance_model": "uniform; bounded by construction",
+  "state_regulation_cost": "mean L1 norm of true evaluation-only plant state",
+  "source_sha": "c237d37e6566685001e7adf671427c542ae2cecf"
+}
