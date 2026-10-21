@@ -1,0 +1,48 @@
+name: AEFC P0 native unprivileged utility evaluation
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/p0-native-recovery-contract-20261021]
+    paths:
+      - ".github/workflows/p0-native-unprivileged.yml"
+permissions:
+  contents: read
+jobs:
+  native-no-oracle:
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - {name: default, kind: default, value: "1", tag: "1"}
+          - {name: qmin-0p48, kind: qmin, value: "0.48", tag: "0p48"}
+          - {name: rho-0p09, kind: rho, value: "0.09", tag: "0p09"}
+          - {name: trust-0p002, kind: trust, value: "0.002", tag: "0p002"}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Build validated native IEEE39 plant
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; m=jsondecode(fileread('results/ieee39_r2024b/interface_mapping.json')); assert(m.validated && strcmp(m.selection_policy,'paired-generator-physical-speed-v2')); aefc_ieee39_build_native_model
+      - name: Test receiver-only controller on 20 matched seeds
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_p0_native_cell('${{ matrix.kind }}',${{ matrix.value }})
+      - name: Preserve all original traces
+        run: |
+          cd results/p0_native_unprivileged/${{ matrix.kind }}/${{ matrix.tag }}
+          tar -czf raw-traces.tar.gz */*.jsonl */*.summary.json
+          sha256sum raw-traces.tar.gz > raw-traces.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AEFC-P0-no-oracle-${{ matrix.name }}
+          path: results/p0_native_unprivileged/${{ matrix.kind }}/${{ matrix.tag }}
+          if-no-files-found: error
+          retention-days: 90
