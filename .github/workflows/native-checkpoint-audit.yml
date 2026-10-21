@@ -1,0 +1,54 @@
+name: Audit and persist P0 checkpoint recovery
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all immutable native source artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 39555085441
+          pattern: AEFC-Checkpoint-*
+          merge-multiple: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: results/p0_checkpoint_download
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Audit every 220-sample original trace and check rollback contract
+        run: python analysis/audit_native_checkpoint_recovery.py
+      - name: Verify original tar SHA256 and archive all raw evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          for mode in clean knowledge joint; do
+            found=$(find results/p0_checkpoint_download -maxdepth 1 -name "AEFC-Checkpoint-$mode-*" -type d | head -1)
+            test -n "$found"
+            (cd "$found" && sha256sum -c raw-traces.sha256)
+            d=results/p0_native_checkpoint/archive_$mode
+            mkdir -p "$d"
+            cp "$found"/summary.csv "$found"/manifest.json "$found"/raw-traces.tar.gz "$found"/raw-traces.sha256 "$d"/
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AEFC-P0-checkpoint-audit-${{ github.sha }}
+          path: |
+            results/p0_native_checkpoint/audit.json
+            results/p0_native_checkpoint/per_seed.csv
+            results/p0_native_checkpoint/summary.csv
+          if-no-files-found: warn
+      - name: Persist immutable auditable experiment evidence
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/p0_native_checkpoint
+          git commit -m 'Persist independent native checkpoint recovery evidence [skip ci]'
+          git push origin HEAD:experiment/native-checkpoint-recovery-20261021
