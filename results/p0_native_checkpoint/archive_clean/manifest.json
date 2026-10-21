@@ -1,0 +1,41 @@
+{
+  "backend": "mathworks_ieee39_r2024b_native_supplemental",
+  "commit_sha": "edf1a10660e89941f13d15c8fe9ccec56ba0c87f",
+  "experiment_id": "dc46e55035b035df",
+  "experiment_kind": "checkpoint_recovery_v1",
+  "level_value": 1,
+  "mapping_policy": "paired-generator-physical-speed-v2",
+  "seeds": 20,
+  "methods": [
+    "AEFC-Unprivileged",
+    "AEFC-Quarantine",
+    "AEFC-Checkpoint"
+  ],
+  "scenario": "clean",
+  "rows": 60,
+  "attack_scale": 1,
+  "proposal_stress_alpha": 0,
+  "rho_override": -1,
+  "qmin_override": -1,
+  "trust_region_override": -1,
+  "main_experiment_untouched": true,
+  "sample_time_s": 0.016666666666666666,
+  "post_poison_steps": 176,
+  "epsilon": 0.001,
+  "hold_steps": 20,
+  "new_seed_range": "20:39 held-out versus previous 0:19 exploration",
+  "modes": [
+    "AEFC-Unprivileged",
+    "AEFC-Quarantine",
+    "AEFC-Checkpoint"
+  ],
+  "detector_threshold": 0.35,
+  "checkpoint_sample": 10,
+  "clean_streak_required": 3,
+  "rollback_factor": 0.5,
+  "checkpoint_integrity": "local commissioning snapshot assumed intact, not cryptographically attested",
+  "shadow_reference": "offline same operator, same physical observation path, no feedback",
+  "parameter_kind": "actual four-dimensional deployed recovery coefficients, not neural backbone",
+  "experiment_not_main": true,
+  "evidence_capture": "full theta + clean shadow + deployment acceptance at every original sample"
+}
