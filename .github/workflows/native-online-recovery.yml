@@ -1,4 +1,5 @@
 name: P0 IEEE39 aligned online proxy v2 (independent exploratory)
+# Rerun after MATLAB multiline comment parser fix (new source SHA).
 on:
   workflow_dispatch:
   push:
