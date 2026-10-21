@@ -186,6 +186,6 @@ lines.extend([
      "information, so this experiment does not validate an unprivileged online "
      "federation or the continuous-time robust CBF contract.")
 ])
-(DST/"Results-Native-PostPoison.tex").write_text("\n\n".join(lines)+"\n")
+(DST/"Results-Native-PostPoison.tex").write_text("\n".join(lines)+"\n")
 
 print(json.dumps(report,ensure_ascii=False,indent=2))
