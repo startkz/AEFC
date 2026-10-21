@@ -1,4 +1,5 @@
 name: Verify and persist P0 native unprivileged physical utility
+# Uses MATLAB's strict comparison for the postattack sample boundary
 on:
   workflow_dispatch:
   push:
