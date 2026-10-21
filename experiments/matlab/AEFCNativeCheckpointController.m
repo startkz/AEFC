@@ -339,7 +339,7 @@ methods(Access=protected)
     end
 
     function [s1,s2,s3]=getOutputSizeImpl(~)
-        s1=[4 1]; s2=[4 1]; s3=[32 1];
+        s1=[4 1]; s2=[4 1]; s3=[33 1];
     end
     function [d1,d2,d3]=getOutputDataTypeImpl(~)
         d1='double'; d2='double'; d3='double';
