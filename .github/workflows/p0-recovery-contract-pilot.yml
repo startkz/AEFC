@@ -1,0 +1,30 @@
+name: AEFC P0 recovery-contract pilot
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/p0-recovery-contract-utility-20261021]
+    paths:
+      - '.github/workflows/p0-recovery-contract-pilot.yml'
+permissions:
+  contents: read
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Execute fixed-target paired-seed bounded contract pilot
+        run: python experiments/run_p0_recovery_contract_pilot.py
+      - name: Archive raw trace and summary
+        shell: bash
+        run: |
+          tar -czf results/p0_contract_pilot/raw-traces.tar.gz -C results/p0_contract_pilot bounded unfiltered
+          sha256sum results/p0_contract_pilot/raw-traces.tar.gz > results/p0_contract_pilot/raw-traces.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AEFC-P0-fixed-target-recovery-${{ github.sha }}
+          path: results/p0_contract_pilot
+          if-no-files-found: error
