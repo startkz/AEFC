@@ -1,0 +1,46 @@
+name: Persist P0 bounded-recovery contract evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/p0-native-recovery-contract-20261021]
+    paths: [".github/workflows/p0-contract-persist.yml"]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  persist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39532976595
+          name: AEFC-P0-bounded-contract-ad1b79f1ab89dbd8c3cf60b6ce2b2f6c242a4d83
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: results/p0_bounded_contract
+      - name: Verify identity and per-seed metrics
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import csv,json,pathlib,math
+          p=pathlib.Path('results/p0_bounded_contract')
+          rows=list(csv.DictReader((p/'summary.csv').open()))
+          assert len(rows)==120
+          assert set(x['mode'] for x in rows)=={'no_cleanup','certified_anchor','certified_anchor_residual'}
+          for row in rows:
+            name=row['mode']; seed=int(row['seed'])
+            vals=[json.loads(k) for k in (p/name/f'seed_{seed:02d}.jsonl').read_text().splitlines()]
+            assert len(vals)==240
+            assert abs(float(row['parameter_distance_end'])-float(vals[-1]['parameter_error']))<1e-12
+            assert float(row['contraction_bound_violations'])==0
+            assert float(row['bounded_disturbance_failures'])==0
+          PY
+          sha256sum -c results/p0_bounded_contract/raw-traces.sha256
+      - name: Commit immutable raw archive
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/p0_bounded_contract/summary.csv results/p0_bounded_contract/manifest.json results/p0_bounded_contract/raw-traces.tar.gz results/p0_bounded_contract/raw-traces.sha256
+          git commit -m 'Archive 120 audited P0 bounded recovery episodes [skip ci]'
+          git push origin HEAD:experiment/p0-native-recovery-contract-20261021
