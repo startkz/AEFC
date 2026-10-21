@@ -1,8 +1,8 @@
-name: P0 IEEE39 online relearning (exploratory)
+name: P0 IEEE39 aligned online proxy v2 (independent exploratory)
 on:
   workflow_dispatch:
   push:
-    branches: [experiment/native-online-recovery-20261021]
+    branches: [experiment/native-online-recovery-consistent-20261021]
     paths: ['.github/workflows/native-online-recovery.yml']
 permissions:
   contents: read
@@ -29,7 +29,7 @@ jobs:
         uses: matlab-actions/run-command@v3
         with:
           command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mm=jsondecode(fileread(fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'))); assert(logical(mm.validated) && strcmp(mm.selection_policy,'paired-generator-physical-speed-v2')); aefc_ieee39_build_native_model
-      - name: Run 8 exploratory seeds x three methods x 480 native samples
+      - name: Run new 48-55 seeds x three methods x 480 native samples
         uses: matlab-actions/run-command@v3
         with:
           command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_online_recovery(${{ matrix.scenario }})
@@ -69,7 +69,7 @@ jobs:
             test -n "$d"
             (cd "$d" && sha256sum -c raw-traces.sha256)
           done
-      - name: Recompute all 72 raw-trace outcomes and publish negative results
+      - name: Independently re-evaluate all 72 post-fix native traces, failures included
         run: python analysis/audit_native_online_recovery.py
       - uses: actions/upload-artifact@v4
         if: always()
