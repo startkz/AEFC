@@ -137,4 +137,55 @@ report={"main_unchanged":True,"source_run":39538932151,"base_attack_steps":[15,4
         "post_observation_samples":STEPS-POST_START,
         "results":summary}
 (DST/"audit.json").write_text(json.dumps(report,ensure_ascii=False,indent=2,allow_nan=False)+"\n")
+
+def pretty(x):
+    return f"{float(x):.3g}"
+
+lines=[
+    r"\subsection{Extended Native Post-Poisoning Deployment Audit}",
+    r"\label{subsec:native-postpoison}",
+    ("A separate IEEE 39-bus diagnostic experiment records the actual "
+     "four-dimensional deployed controller coefficients and an offline "
+     "same-operator clean-report shadow on the identical observed plant path. "
+     "Knowledge-only and joint corruption are each tested with 20 seeds for "
+     "FedRL, AEFC-no-TGOPA and AEFC-Full. The original attack window remains "
+     "samples 15--43, while each native episode is extended to 220 samples, "
+     "including 176 post-attack samples. These four coefficients are not "
+     "a trained neural-network backbone; the shadow does not represent an "
+     "independently simulated clean plant or a certified fixed optimum."),
+    r"\begin{table*}[t]",
+    r"\centering",
+    r"\caption{Original native four-coefficient deployment under post-poisoning observation, 20 seeds per cell. An episode is corrected only if initially outside $\varepsilon=10^{-3}$ after attack and later remains inside for 20 consecutive samples. All counts use seeds, not time samples.}",
+    r"\label{tab:native-postpoison}",
+    r"\scriptsize",
+    r"\begin{tabular}{@{}llcccccc@{}}",
+    r"\toprule",
+    r"Scenario & Method & Exposed & Corrected & Error at stop & Error at end & Accepted after & Error increased\\",
+    r"\midrule"
+]
+for a in summary:
+    label="Knowledge" if a["scenario"]=="knowledge" else "Joint"
+    fields=[label,a["method"],str(a["exposed_at_stop"])+"/20",
+            str(a["corrected_after_attack"])+"/20",
+            pretty(a["mean_error_stop"]),pretty(a["mean_error_final"]),
+            pretty(a["mean_accepted_post"]),str(a["seeds_with_error_increases"])+"/20"]
+    lines.append(" & ".join(fields)+r"\\")
+lines.extend([
+    r"\bottomrule",
+    r"\end{tabular}",
+    r"\end{table*}",
+    ("The reported error is the Euclidean distance to the dynamically updated "
+     "offline clean-report shadow, rather than the G3 theorem's fixed certified "
+     "target. The 120 per-seed trajectories pass an independent recomputation "
+     "of deployment-vector norms and comparison of original-window fields "
+     "against the unchanged Main Experiment (maximum difference "
+     +pretty(maxdiff)+"). "
+     "Neither a decrease in average error nor an observed correction implies "
+     "a uniform contraction inequality or bounded cumulative deployment drift. "
+     "The original native implementation still uses synthetic attack-provenance "
+     "information, so this experiment does not validate an unprivileged online "
+     "federation or the continuous-time robust CBF contract.")
+])
+(DST/"Results-Native-PostPoison.tex").write_text("\n\n".join(lines)+"\n")
+
 print(json.dumps(report,ensure_ascii=False,indent=2))
