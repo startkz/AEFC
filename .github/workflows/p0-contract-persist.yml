@@ -35,7 +35,7 @@ jobs:
             assert float(row['contraction_bound_violations'])==0
             assert float(row['bounded_disturbance_failures'])==0
           PY
-          sha256sum -c results/p0_bounded_contract/raw-traces.sha256
+          (cd results/p0_bounded_contract && sha256sum -c raw-traces.sha256)
       - name: Commit immutable raw archive
         shell: bash
         run: |
