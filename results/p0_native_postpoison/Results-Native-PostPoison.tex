@@ -1,43 +1,22 @@
 \subsection{Extended Native Post-Poisoning Deployment Audit}
-
 \label{subsec:native-postpoison}
-
 A separate IEEE 39-bus diagnostic experiment records the actual four-dimensional deployed controller coefficients and an offline same-operator clean-report shadow on the identical observed plant path. Knowledge-only and joint corruption are each tested with 20 seeds for FedRL, AEFC-no-TGOPA and AEFC-Full. The original attack window remains samples 15--43, while each native episode is extended to 220 samples, including 176 post-attack samples. These four coefficients are not a trained neural-network backbone; the shadow does not represent an independently simulated clean plant or a certified fixed optimum.
-
 \begin{table*}[t]
-
 \centering
-
 \caption{Original native four-coefficient deployment under post-poisoning observation, 20 seeds per cell. An episode is corrected only if initially outside $\varepsilon=10^{-3}$ after attack and later remains inside for 20 consecutive samples. All counts use seeds, not time samples.}
-
 \label{tab:native-postpoison}
-
 \scriptsize
-
 \begin{tabular}{@{}llcccccc@{}}
-
 \toprule
-
 Scenario & Method & Exposed & Corrected & Error at stop & Error at end & Accepted after & Error increased\\
-
 \midrule
-
 Knowledge & FedRL & 20/20 & 0/20 & 0.131 & 0.131 & 176 & 0/20\\
-
 Knowledge & AEFC-no-TGOPA & 20/20 & 0/20 & 0.0508 & 0.0508 & 176 & 0/20\\
-
 Knowledge & AEFC-Full & 20/20 & 0/20 & 0.01 & 0.01 & 176 & 20/20\\
-
 Joint & FedRL & 20/20 & 0/20 & 0.13 & 0.13 & 176 & 0/20\\
-
 Joint & AEFC-no-TGOPA & 20/20 & 0/20 & 0.0505 & 0.0505 & 176 & 0/20\\
-
 Joint & AEFC-Full & 20/20 & 0/20 & 0.0101 & 0.0101 & 176 & 20/20\\
-
 \bottomrule
-
 \end{tabular}
-
 \end{table*}
-
 The reported error is the Euclidean distance to the dynamically updated offline clean-report shadow, rather than the G3 theorem's fixed certified target. The 120 per-seed trajectories pass an independent recomputation of deployment-vector norms and comparison of original-window fields against the unchanged Main Experiment (maximum difference 5e-16). Neither a decrease in average error nor an observed correction implies a uniform contraction inequality or bounded cumulative deployment drift. The original native implementation still uses synthetic attack-provenance information, so this experiment does not validate an unprivileged online federation or the continuous-time robust CBF contract.
