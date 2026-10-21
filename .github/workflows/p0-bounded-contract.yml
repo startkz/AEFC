@@ -1,0 +1,32 @@
+name: AEFC P0 bounded contraction and execution
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/p0-native-recovery-contract-20261021]
+    paths:
+      - ".github/workflows/p0-bounded-contract.yml"
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: python -m pip install numpy
+      - name: Run pre-registered 120 bounded-discrete contract episodes
+        run: python experiments/run_p0_bounded_contract.py
+      - name: Validate and archive all data
+        shell: bash
+        run: |
+          cd results/p0_bounded_contract
+          tar -czf raw-traces.tar.gz no_cleanup/*.jsonl no_cleanup/*.summary.json certified_anchor/*.jsonl certified_anchor/*.summary.json certified_anchor_residual/*.jsonl certified_anchor_residual/*.summary.json
+          sha256sum raw-traces.tar.gz > raw-traces.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AEFC-P0-bounded-contract-${{ github.sha }}
+          path: results/p0_bounded_contract
+          if-no-files-found: error
+          retention-days: 90
