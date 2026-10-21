@@ -2,7 +2,7 @@ classdef AEFCNativeOnlineRecoveryController < matlab.System
 % AEFCNativeOnlineRecoveryController: independently instrumented full native controller.
 % Precommitted commissioning checkpoint and message-consistency detector; no
 % attack-start/end flag, malicious identity label, or clean shadow used by recovery.
-% Three RecoveryMode variants: 0=no intervention, 1=quarantine, 2=quarantine+rollback.
+% RecoveryMode 0=baseline, 1=quarantine, 2=checkpoint rollback, 3=online consistent-proxy relearning.
 % Logs real four-parameter federated deployment plus offline same-operator
 % clean-input shadow using matched actual plant observations.
 % Supplemental-only controller used for attack-intensity, targeted gate-stress,
@@ -288,7 +288,9 @@ methods(Access=protected)
                 wSafe(jj)=1/(1+(rr/max(obj.cfg.patbu.residual_scale,1e-9))^2);
                 weightedSafe(:,jj)=wSafe(jj)*eSafe(:,jj);
             end
-            fSafe=min(1,f);
+            % Match the clean-shadow f=2 operator whenever at least 5 reports remain;
+            % this still does not reveal missing honest/malicious counterfactuals.
+            fSafe=min(f,floor((size(eSafe,2)-1)/2));
             kSafe=obj.trimmedMean(weightedSafe,fSafe);
             bSafe=obj.cfg.patbu.lambda_b*obj.teacherBelief + ...
                 obj.cfg.patbu.obs_gain*obsReceived + obj.cfg.patbu.knowledge_gain*kSafe;
@@ -306,9 +308,14 @@ methods(Access=protected)
             pSafe=-0.20*(obj.Bn')*bSafe+1.5*obj.teacherTheta;
             pSafe=obj.clipVec(pSafe,obj.cfg.action_limit);
             predSafe=bSafe+obj.Bn*pSafe;
+            legacySafeNext=0.72*obj.teacherLegacy+0.20*obsReceived+ ...
+                0.08*mean(eSafe,2);
             riskSafe=0.62*max(0,max(abs(predSafe))-0.85) + ...
                 0.16*max(0,max(abs(bSafe))-obj.cfg.normalized_recovery_limit) + ...
-                0.14*min(1,norm(obsReceived-bSafe,2)) + 0.08*(1-trustSafe);
+                % The original clean-shadow risk uses belief-vs-legacy innovation,
+                % not received-observation-vs-belief. Align the online
+                % verifier; do not borrow the shadow belief or labels.
+                0.14*min(1,norm(bSafe-legacySafeNext,2)) + 0.08*(1-trustSafe);
             obj.teacherGate=(riskSafe<=rhoMax-obj.cfg.gate.risk_margin) && (trustSafe>=qMin);
             acceptedSafe=obj.teacherGate && ...
                 norm(bSafe,2)+0.08*norm(candidateSafe,2) <= ...
@@ -317,8 +324,7 @@ methods(Access=protected)
             if acceptedSafe, obj.teacherTheta=candidateSafe; end
             obj.teacherAccepted=acceptedSafe;
             obj.teacherBelief=bSafe;
-            obj.teacherLegacy=0.72*obj.teacherLegacy+0.20*obsReceived+ ...
-                0.08*mean(eSafe,2);
+            obj.teacherLegacy=legacySafeNext;
         else
             obj.teacherAccepted=false; obj.teacherGate=false;
         end
