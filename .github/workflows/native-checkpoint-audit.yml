@@ -1,6 +1,9 @@
 name: Audit and persist P0 checkpoint recovery
 on:
   workflow_dispatch:
+  push:
+    branches: [experiment/native-checkpoint-recovery-20261021]
+    paths: ['.github/workflows/native-checkpoint-audit.yml']
 permissions:
   contents: write
   actions: read
