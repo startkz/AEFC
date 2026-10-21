@@ -226,7 +226,7 @@ methods(Access=protected)
         end
         % The authorization and adaptation decision above is the ORIGINAL
         % TGOPA output; quarantine and rollback operate AFTER it.
-        if obj.RecoveryMode>0 && obj.checkpointValid && obj.alarmLatched
+        if any(double(obj.RecoveryMode)==[1 2]) && obj.checkpointValid && obj.alarmLatched
             if obj.recoveryPhase==1
                 obj.theta=thetaBefore; % isolate any learned candidate
                 adaptAccepted=false;
@@ -337,6 +337,9 @@ methods(Access=protected)
                 obj.theta=obj.checkpointTheta;
                 adaptAccepted=false;
             elseif obj.recoveryPhase>=2
+                % Discard speculative base-TGOPA deployment; recovery applies
+                % only an approved bounded step toward the online proxy.
+                obj.theta=thetaBefore;
                 if ~reportSuspicious && obj.teacherGate && gateAllowed
                     errSafe=obj.teacherTheta-obj.theta;
                     dFollow=0.25*errSafe;
