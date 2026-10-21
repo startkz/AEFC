@@ -1,0 +1,27 @@
+\subsection{Held-Out Native Checkpoint Isolation and Rollback}
+\label{subsec:native-checkpoint}
+We implemented an additional recovery controller on the same validated MathWorks R2024b IEEE 39-bus plant. Unlike the preceding native post-poisoning diagnostic, its online PATBU and risk-gate decisions do not read the simulator's Byzantine-identity labels or an offline clean-belief reference. A fixed report-median dispersion threshold of 0.35, selected on earlier seeds 0--19, initiates quarantine. After three consecutive non-alarming reports, the checkpoint variant rolls its four deployed coefficients back to an isolated local commissioning snapshot captured at step 10, before attacks start at step 15. The quarantine-only arm keeps its parameters frozen; the unprivileged arm continues standard adaptation. All three arms use distinct held-out seeds 20--39 in the clean, knowledge-only, and joint conditions (180 native episodes in total, 220 samples each). The snapshot's integrity and the clean commissioning period are \emph{assumed}, not cryptographically attested. The reference is a static historical controller state, \emph{not} the clean shadow or a certified optimal policy.
+
+\begin{table*}[t]
+\centering
+\caption{Native IEEE 39-bus held-out checkpoint recovery (20 seeds per cell). Correction counts only transitions from outside the $\varepsilon=10^{-3}$ checkpoint tolerance to 20 consecutive in-tolerance samples. Response and actuation are distinct per-sample physical proxies averaged first within each episode.}
+\label{tab:native-checkpoint}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llcccccc@{}}
+\toprule
+Scenario & Arm & Alarm & Corrected & Checkpoint error & Clean-shadow error & Response $L_1$ & Action $L_2$\\
+\midrule
+Knowledge & Unprivileged & --- & 0/20 & 0.026090 & 0.010483 & 0.019272 & 0.033877\\
+Knowledge & Quarantine & 20/20 & 0/20 & 0.002304 & 0.064697 & 0.034568 & 0.012172\\
+Knowledge & Checkpoint & 20/20 & 19/20 & 0 & 0.064342 & 0.034609 & 0.011649\\
+Joint & Unprivileged & --- & 0/20 & 0.026142 & 0.010420 & 0.019767 & 0.034098\\
+Joint & Quarantine & 20/20 & 0/20 & 0.002304 & 0.064846 & 0.034671 & 0.012289\\
+Joint & Checkpoint & 20/20 & 19/20 & 0 & 0.064538 & 0.034712 & 0.011765\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The detector caused zero false alarms over 20 independent clean seeds, for which all three variants produced matching native outcomes. Both detection-enabled arms flagged all 20 seeds in each attacked scenario at step 15. In both attacked conditions, the checkpoint arm reached and maintained the checkpoint tolerance in all 20 runs; one had already satisfied it at the first post-attack sample, hence the genuine correction count is 19/20. The quarantine arm exhibited no new correction. The rollback's observed stage was brief: in 13/20 seeds per attacked scenario, one sample was explicitly tagged as rollback, while the other seven entered the completed-checkpoint phase immediately. Consequently, these observations verify the executed rollback steps and final checkpoint restoration but do not estimate a general long-horizon contraction rate.
+
+The trade-off is substantial. In the joint scenario, checkpoint rollback raises the final deviation from the dynamically updated clean-report shadow from 0.010420 to 0.064538, and increases the mean normalized response magnitude from 0.019767 to 0.034712, while lowering the mean executed correction norm from 0.034098 to 0.011765. No native episode in this matrix exits the sampled recovery or safety envelope, so no post-instability recovery-time advantage can be inferred. All checkpoint/quarantine episodes freeze post-attack parameter acceptance. These data support an \emph{implementable degraded survival mode with bounded return to a historical local snapshot}, not continued learning toward the current clean target or verification of G3 for a general federated network. Native report generation remains synthetic, snapshot integrity is assumed, and G5's full-state continuous-time robust CBF execution contract remains unverified.
