@@ -38,6 +38,7 @@ properties(Access=private)
     scale
     belief
     cleanBelief
+    shadowBelief
     theta
     stepCount
 end
@@ -116,6 +117,15 @@ methods(Access=protected)
         cleanK=mean(cleanEvidence,2);
         if isempty(cleanK), cleanK=zeros(4,1); end
         obj.cleanBelief=0.72*obj.cleanBelief + 0.20*zPhysical + 0.08*cleanK;
+        % OFFLINE SHADOW ONLY: same PATBU operator on paired clean plant path.
+        sw=zeros(4,nClients);
+        for j=1:nClients
+            residual=norm(cleanEvidence(:,j)-obj.shadowBelief,2);
+            sw(:,j)=cleanEvidence(:,j)/(1+(residual/max(obj.cfg.patbu.residual_scale,1e-9))^2);
+        end
+        shadowK=obj.trimmedMean(sw,f);
+        obj.shadowBelief=min(max(obj.cfg.patbu.lambda_b*obj.shadowBelief + ...
+            obj.cfg.patbu.obs_gain*zPhysical + obj.cfg.patbu.knowledge_gain*shadowK,-2),2);
 
         if any(mc==[1 2 3])
             beliefNow=obsReceived;
@@ -182,12 +192,15 @@ methods(Access=protected)
         % Deployment still enforces receiver trust, step bound, and local validation.
         adaptAccepted=trust>=double(obj.cfg.adaptation.q_min) && ...
             valAfter<=valBefore+obj.cfg.adaptation.validation_slack;
+        thetaBefore=obj.theta;
         if any(mc==[1 2 5])
             obj.theta=obj.theta-0.12*agg; adaptAccepted=true;
         elseif adaptAccepted
             obj.theta=candidate;
         end
         policyDrift=norm(obj.theta,2);
+        sameOperatorError=norm(beliefNow-obj.shadowBelief,2);
+        deploymentStep=norm(obj.theta-thetaBefore,2);
 
         if any(mc==[1 2 6])
             uShield=obj.clipVec(proposal,obj.cfg.action_limit);
@@ -203,7 +216,8 @@ methods(Access=protected)
             uPost=attackScale*obj.cfg.post_shield_control_attack*obj.detNoise(t,211);
         end
         diagOut=[trust;risk;double(gateAllowed);beliefDist;policyDrift;intervention; ...
-            minMargin;double(attackActive);double(dangerous);double(adaptAccepted)];
+            minMargin;double(attackActive);double(dangerous);double(adaptAccepted); ...
+            sameOperatorError;deploymentStep];
         obj.stepCount=obj.stepCount+1;
     end
 
@@ -213,7 +227,7 @@ methods(Access=protected)
     end
 
     function [s1,s2,s3]=getOutputSizeImpl(~)
-        s1=[4 1]; s2=[4 1]; s3=[10 1];
+        s1=[4 1]; s2=[4 1]; s3=[12 1];
     end
     function [d1,d2,d3]=getOutputDataTypeImpl(~)
         d1='double'; d2='double'; d3='double';
@@ -229,7 +243,7 @@ methods(Access=protected)
         s=saveObjectImpl@matlab.System(obj);
         s.cfg=obj.cfg; s.mapping=obj.mapping; s.B=obj.B; s.Bn=obj.Bn;
         s.center=obj.center; s.scale=obj.scale; s.belief=obj.belief;
-        s.cleanBelief=obj.cleanBelief; s.theta=obj.theta; s.stepCount=obj.stepCount;
+        s.cleanBelief=obj.cleanBelief; s.shadowBelief=obj.shadowBelief; s.theta=obj.theta; s.stepCount=obj.stepCount;
     end
 
     function loadObjectImpl(obj,s,wasLocked)
@@ -241,6 +255,7 @@ methods(Access=protected)
         if isfield(s,'scale'), obj.scale=s.scale; end
         if isfield(s,'belief'), obj.belief=s.belief; end
         if isfield(s,'cleanBelief'), obj.cleanBelief=s.cleanBelief; end
+        if isfield(s,'shadowBelief'), obj.shadowBelief=s.shadowBelief; end
         if isfield(s,'theta'), obj.theta=s.theta; end
         if isfield(s,'stepCount'), obj.stepCount=s.stepCount; end
         loadObjectImpl@matlab.System(obj,s,wasLocked);
@@ -264,7 +279,7 @@ methods(Access=private)
     end
 
     function resetRuntimeState(obj)
-        obj.belief=zeros(4,1); obj.cleanBelief=zeros(4,1);
+        obj.belief=zeros(4,1); obj.cleanBelief=zeros(4,1); obj.shadowBelief=zeros(4,1);
         obj.theta=zeros(4,1); obj.stepCount=0;
     end
 
@@ -277,6 +292,7 @@ methods(Access=private)
         if ~(cfgOK && mapOK && dynOK), obj.loadRuntimeConfig(); end
         if ~isnumeric(obj.belief) || numel(obj.belief)~=4, obj.belief=zeros(4,1); end
         if ~isnumeric(obj.cleanBelief) || numel(obj.cleanBelief)~=4, obj.cleanBelief=zeros(4,1); end
+        if ~isnumeric(obj.shadowBelief) || numel(obj.shadowBelief)~=4, obj.shadowBelief=zeros(4,1); end
         if ~isnumeric(obj.theta) || numel(obj.theta)~=4, obj.theta=zeros(4,1); end
         if ~isnumeric(obj.stepCount) || ~isscalar(obj.stepCount) || ~isfinite(obj.stepCount), obj.stepCount=0; end
     end
