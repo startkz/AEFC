@@ -13,7 +13,7 @@ OUT = Path("results/p0_native_online_recovery/audit")
 OUT.mkdir(parents=True, exist_ok=True)
 SCENES = ("clean", "knowledge", "joint")
 METHODS = ("AEFC-Unprivileged", "AEFC-Checkpoint", "AEFC-OnlineRelearn")
-SEEDS = tuple(range(40, 48))
+SEEDS = tuple(range(48, 56))
 EPS = 0.001
 HOLD = 20
 SAMPLES = 480
@@ -157,11 +157,11 @@ with (OUT/"summary.csv").open("w",newline="") as f:
     w.writeheader();w.writerows(tables)
 
 result={
-  "stage":"EXPLORATORY PILOT, NOT G3 CERTIFICATION",
+  "stage":"POST-FIX EXPLORATORY, NOT G3 CERTIFICATION",
   "native_backend":"MathWorks R2024b IEEE39 (must verify workflow logs)",
   "source":"only original workflow-uploaded seed traces",
   "episodes":72,"samples":72*SAMPLES,
-  "seeds":"40..47","steps_per_episode":SAMPLES,
+  "seeds":"48..55","steps_per_episode":SAMPLES,
   "attack_window_inclusive":[15,43],
   "epsilon":EPS,"hold_steps":HOLD,
   "reference":"offline dynamic same-operator/same-physical-observation clean shadow",
