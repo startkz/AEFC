@@ -1,0 +1,61 @@
+name: Audit and persist native AEFC post-poisoning results
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/native-theta-postpoison-20261021]
+    paths:
+      - '.github/workflows/native-postpoison-audit.yml'
+permissions:
+  contents: write
+  actions: read
+jobs:
+  evidence-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download both completed native scenario archives
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 39538932151
+          pattern: AEFC-P0-native-parameter-*
+          merge-multiple: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: results/p0_native_postpoison_download
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Independently reconstruct deployed vectors and compare original Main
+        run: python analysis/analyze_native_postpoison_theta.py
+      - name: Freeze raw evidence archives and source manifests
+        shell: bash
+        run: |
+          for scenario in knowledge joint; do
+            if [[ "$scenario" == knowledge ]]; then code=2; else code=4; fi
+            from=$(find results/p0_native_postpoison_download -maxdepth 1 -type d -name "AEFC-P0-native-parameter-$scenario-*" | head -1)
+            test -n "$from"
+            dest="results/p0_native_postpoison/scenario_$code"
+            mkdir -p "$dest"
+            cp "$from/summary.csv" "$from/manifest.json" "$from/raw-traces.tar.gz" "$from/raw-traces.sha256" "$dest/"
+            (
+              cd "$from"
+              sha256sum -c raw-traces.sha256
+            )
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AEFC-native-postpoison-audit-${{ github.sha }}
+          path: |
+            results/p0_native_postpoison/summary_analysis.csv
+            results/p0_native_postpoison/seed_level_analysis.csv
+            results/p0_native_postpoison/audit.json
+          if-no-files-found: warn
+      - name: Commit verified reproducible raw archives, summaries, and analysis
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/p0_native_postpoison
+          git commit -m 'Archive independently verified native post-poisoning recovery evidence [skip ci]'
+          git push origin HEAD:experiment/native-theta-postpoison-20261021
