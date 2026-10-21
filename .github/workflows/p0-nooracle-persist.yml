@@ -1,0 +1,51 @@
+name: Verify and persist P0 native unprivileged physical utility
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/p0-native-recovery-contract-20261021]
+    paths:
+      - ".github/workflows/p0-nooracle-persist.yml"
+permissions:
+  contents: write
+  actions: read
+jobs:
+  audit-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39532719191
+          pattern: AEFC-P0-no-oracle-*
+          merge-multiple: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: results/p0_nooracle_download
+      - name: Recompute 80 episodes from raw trajectories
+        run: python3 analysis/audit_p0_nooracle_native.py
+      - name: Preserve verified immutable artifacts
+        shell: bash
+        run: |
+          mkdir -p results/p0_native_unprivileged_verified/archives
+          for p in results/p0_nooracle_download/AEFC-P0-no-oracle-*; do
+            test -s "$p/raw-traces.tar.gz"
+            ( cd "$p" && sha256sum -c raw-traces.sha256 )
+            nm="$(basename "$p")"
+            cp "$p/raw-traces.tar.gz" "results/p0_native_unprivileged_verified/archives/$nm.tar.gz"
+            cp "$p/raw-traces.sha256" "results/p0_native_unprivileged_verified/archives/$nm.sha256"
+          done
+          sha256sum results/p0_native_unprivileged_verified/archives/*.tar.gz > results/p0_native_unprivileged_verified/archives.sha256
+      - name: Upload independent audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: AEFC-P0-no-oracle-verified-${{ github.sha }}
+          path: results/p0_native_unprivileged_verified
+          if-no-files-found: error
+      - name: Persist evidence only after all checks pass
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/p0_native_unprivileged_verified
+          git commit -m 'Persist audited native no-oracle physical utility evidence [skip ci]'
+          git push origin HEAD:experiment/p0-native-recovery-contract-20261021
