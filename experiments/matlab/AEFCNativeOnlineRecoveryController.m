@@ -310,11 +310,10 @@ methods(Access=protected)
             predSafe=bSafe+obj.Bn*pSafe;
             legacySafeNext=0.72*obj.teacherLegacy+0.20*obsReceived+ ...
                 0.08*mean(eSafe,2);
+            % Match the original clean-shadow belief-vs-legacy innovation,
+            % without accessing the offline shadow belief or malicious labels.
             riskSafe=0.62*max(0,max(abs(predSafe))-0.85) + ...
                 0.16*max(0,max(abs(bSafe))-obj.cfg.normalized_recovery_limit) + ...
-                % The original clean-shadow risk uses belief-vs-legacy innovation,
-                % not received-observation-vs-belief. Align the online
-                % verifier; do not borrow the shadow belief or labels.
                 0.14*min(1,norm(bSafe-legacySafeNext,2)) + 0.08*(1-trustSafe);
             obj.teacherGate=(riskSafe<=rhoMax-obj.cfg.gate.risk_margin) && (trustSafe>=qMin);
             acceptedSafe=obj.teacherGate && ...
