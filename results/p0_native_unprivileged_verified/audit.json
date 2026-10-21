@@ -1,0 +1,175 @@
+{
+  "source_run": 39532719191,
+  "backend": "native_matlab_R2024b_supplemental_no_oracle_decision",
+  "original_Main_untouched": true,
+  "independent_utility": true,
+  "sample_count": 5840,
+  "episodes": 80,
+  "raw_to_summary_metric_checks": 720,
+  "max_numeric_discrepancy": 1.6263032587282567e-19,
+  "comparison": {
+    "qmin-0p48": {
+      "integrated_squared_physical_deviation": {
+        "paired_mean_delta": -2.9135710444097728e-05,
+        "bootstrap95_each_comparison": [
+          -5.2435408612974296e-05,
+          -5.687790675628194e-06
+        ]
+      },
+      "integrated_postattack_physical_deviation": {
+        "paired_mean_delta": -1.8391867746929037e-05,
+        "bootstrap95_each_comparison": [
+          -3.5653051738262463e-05,
+          -8.630327459477584e-07
+        ]
+      },
+      "integrated_correction_effort": {
+        "paired_mean_delta": -6.533738556784024e-05,
+        "bootstrap95_each_comparison": [
+          -8.05795588295785e-05,
+          -5.0954383465672024e-05
+        ]
+      },
+      "max_same_operator_shadow_error": {
+        "paired_mean_delta": 4.9926069804120955e-05,
+        "bootstrap95_each_comparison": [
+          7.222407246906121e-06,
+          9.223691182848882e-05
+        ]
+      },
+      "model_accepted_despite_gate_rejection_count": {
+        "paired_mean_delta": 20.7,
+        "bootstrap95_each_comparison": [
+          20.1,
+          21.3
+        ]
+      }
+    },
+    "rho-0p09": {
+      "integrated_squared_physical_deviation": {
+        "paired_mean_delta": -3.953079571622889e-05,
+        "bootstrap95_each_comparison": [
+          -7.219307897060457e-05,
+          -6.495497712194294e-06
+        ]
+      },
+      "integrated_postattack_physical_deviation": {
+        "paired_mean_delta": -2.4786158341321818e-05,
+        "bootstrap95_each_comparison": [
+          -4.884468622768953e-05,
+          -3.001410018674737e-07
+        ]
+      },
+      "integrated_correction_effort": {
+        "paired_mean_delta": -9.034297573122232e-05,
+        "bootstrap95_each_comparison": [
+          -0.000114708962883446,
+          -6.871125447769258e-05
+        ]
+      },
+      "max_same_operator_shadow_error": {
+        "paired_mean_delta": 5.78264514739385e-05,
+        "bootstrap95_each_comparison": [
+          -2.8846533072994505e-06,
+          0.00011378100600488023
+        ]
+      },
+      "model_accepted_despite_gate_rejection_count": {
+        "paired_mean_delta": 28.95,
+        "bootstrap95_each_comparison": [
+          28.85,
+          29.0
+        ]
+      }
+    },
+    "trust-0p002": {
+      "integrated_squared_physical_deviation": {
+        "paired_mean_delta": -5.8454123846544205e-05,
+        "bootstrap95_each_comparison": [
+          -9.237402224900641e-05,
+          -2.3217472776836724e-05
+        ]
+      },
+      "integrated_postattack_physical_deviation": {
+        "paired_mean_delta": -4.2757142033517865e-05,
+        "bootstrap95_each_comparison": [
+          -6.838397810398498e-05,
+          -1.5932954160370278e-05
+        ]
+      },
+      "integrated_correction_effort": {
+        "paired_mean_delta": -0.00019518775886787112,
+        "bootstrap95_each_comparison": [
+          -0.0002481563288879576,
+          -0.000142798345883366
+        ]
+      },
+      "max_same_operator_shadow_error": {
+        "paired_mean_delta": 6.399735425836605e-05,
+        "bootstrap95_each_comparison": [
+          1.3400304364669797e-05,
+          0.00011461616070573901
+        ]
+      },
+      "model_accepted_despite_gate_rejection_count": {
+        "paired_mean_delta": 0,
+        "bootstrap95_each_comparison": [
+          0.0,
+          0.0
+        ]
+      }
+    }
+  },
+  "table": [
+    {
+      "cell": "default",
+      "episodes": 20,
+      "state_cost_mean": 0.00022834108771039986,
+      "postattack_cost_mean": 0.00017610756853712366,
+      "correction_effort_mean": 0.00034264192674153266,
+      "same_operator_belief_error_mean": 0.0823710900704846,
+      "gate_rejections": 1,
+      "model_accepts": 1459,
+      "model_accepts_despite_gate_reject": 0,
+      "physical_violations": 0
+    },
+    {
+      "cell": "qmin-0p48",
+      "episodes": 20,
+      "state_cost_mean": 0.00019920537726630212,
+      "postattack_cost_mean": 0.00015771570079019462,
+      "correction_effort_mean": 0.0002773045411736924,
+      "same_operator_belief_error_mean": 0.08242101614028871,
+      "gate_rejections": 415,
+      "model_accepts": 1459,
+      "model_accepts_despite_gate_reject": 414,
+      "physical_violations": 0
+    },
+    {
+      "cell": "rho-0p09",
+      "episodes": 20,
+      "state_cost_mean": 0.00018881029199417095,
+      "postattack_cost_mean": 0.00015132141019580183,
+      "correction_effort_mean": 0.0002522989510103103,
+      "same_operator_belief_error_mean": 0.08242891652195854,
+      "gate_rejections": 580,
+      "model_accepts": 1459,
+      "model_accepts_despite_gate_reject": 579,
+      "physical_violations": 0
+    },
+    {
+      "cell": "trust-0p002",
+      "episodes": 20,
+      "state_cost_mean": 0.00016988696386385565,
+      "postattack_cost_mean": 0.00013335042650360578,
+      "correction_effort_mean": 0.00014745416787366152,
+      "same_operator_belief_error_mean": 0.08243508742474297,
+      "gate_rejections": 2,
+      "model_accepts": 1458,
+      "model_accepts_despite_gate_reject": 0,
+      "physical_violations": 0
+    }
+  ],
+  "errors": [],
+  "scope_warning": "Off-path shadow remains in same class. No independent full-state estimator nor continuous-time G5 certificate."
+}
