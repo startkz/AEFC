@@ -1,0 +1,117 @@
+{
+  "main_unchanged": true,
+  "source_run": 39538932151,
+  "base_attack_steps": [
+    15,
+    43
+  ],
+  "method_names": [
+    "FedRL",
+    "AEFC-no-TGOPA",
+    "AEFC-Full"
+  ],
+  "scenarios": [
+    "knowledge",
+    "joint"
+  ],
+  "seeds_each": 20,
+  "native_episodes": 120,
+  "native_samples": 26400,
+  "main_baseline_compared_fields": 360,
+  "max_baseline_difference": 4.996003610813204e-16,
+  "full_parameter_vectors": true,
+  "federated_parameter_dimension": 4,
+  "not_neural_network_backbone": true,
+  "shadow": "Offline counterfactual using SAME observed actual plant path and clean synthetic reports",
+  "shadow_never_fed_back": true,
+  "not_independent_clean_physical_plant": true,
+  "epsilon": 0.001,
+  "consecutive_hold_samples": 20,
+  "post_observation_samples": 176,
+  "results": [
+    {
+      "scenario": "knowledge",
+      "method": "FedRL",
+      "seeds": 20,
+      "mean_error_stop": 0.13092670849214288,
+      "mean_error_final": 0.13092670849214294,
+      "exposed_at_stop": 20,
+      "corrected_after_attack": 0,
+      "attained20": 0,
+      "mean_accepted_post": 176.0,
+      "mean_rejected_post": 0.0,
+      "seeds_with_error_increases": 0,
+      "sampled_safety_violations": 0
+    },
+    {
+      "scenario": "knowledge",
+      "method": "AEFC-no-TGOPA",
+      "seeds": 20,
+      "mean_error_stop": 0.05080401649334285,
+      "mean_error_final": 0.05080401649334286,
+      "exposed_at_stop": 20,
+      "corrected_after_attack": 0,
+      "attained20": 0,
+      "mean_accepted_post": 176.0,
+      "mean_rejected_post": 0.0,
+      "seeds_with_error_increases": 0,
+      "sampled_safety_violations": 0
+    },
+    {
+      "scenario": "knowledge",
+      "method": "AEFC-Full",
+      "seeds": 20,
+      "mean_error_stop": 0.010047861684355381,
+      "mean_error_final": 0.010047546474173902,
+      "exposed_at_stop": 20,
+      "corrected_after_attack": 0,
+      "attained20": 0,
+      "mean_accepted_post": 176.0,
+      "mean_rejected_post": 0.0,
+      "seeds_with_error_increases": 20,
+      "sampled_safety_violations": 0
+    },
+    {
+      "scenario": "joint",
+      "method": "FedRL",
+      "seeds": 20,
+      "mean_error_stop": 0.13041678324469835,
+      "mean_error_final": 0.13041678324469835,
+      "exposed_at_stop": 20,
+      "corrected_after_attack": 0,
+      "attained20": 0,
+      "mean_accepted_post": 176.0,
+      "mean_rejected_post": 0.0,
+      "seeds_with_error_increases": 0,
+      "sampled_safety_violations": 0
+    },
+    {
+      "scenario": "joint",
+      "method": "AEFC-no-TGOPA",
+      "seeds": 20,
+      "mean_error_stop": 0.050481750786820136,
+      "mean_error_final": 0.05048175078682014,
+      "exposed_at_stop": 20,
+      "corrected_after_attack": 0,
+      "attained20": 0,
+      "mean_accepted_post": 176.0,
+      "mean_rejected_post": 0.0,
+      "seeds_with_error_increases": 0,
+      "sampled_safety_violations": 0
+    },
+    {
+      "scenario": "joint",
+      "method": "AEFC-Full",
+      "seeds": 20,
+      "mean_error_stop": 0.010147179648844654,
+      "mean_error_final": 0.010146903881869054,
+      "exposed_at_stop": 20,
+      "corrected_after_attack": 0,
+      "attained20": 0,
+      "mean_accepted_post": 176.0,
+      "mean_rejected_post": 0.0,
+      "seeds_with_error_increases": 20,
+      "sampled_safety_violations": 0
+    }
+  ]
+}

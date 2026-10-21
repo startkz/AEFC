@@ -1,0 +1,7 @@
+scenario,method,seeds,mean_error_stop,mean_error_final,exposed_at_stop,corrected_after_attack,attained20,mean_accepted_post,mean_rejected_post,seeds_with_error_increases,sampled_safety_violations
+knowledge,FedRL,20,0.13092670849214288,0.13092670849214294,20,0,0,176.0,0.0,0,0
+knowledge,AEFC-no-TGOPA,20,0.05080401649334285,0.05080401649334286,20,0,0,176.0,0.0,0,0
+knowledge,AEFC-Full,20,0.010047861684355381,0.010047546474173902,20,0,0,176.0,0.0,20,0
+joint,FedRL,20,0.13041678324469835,0.13041678324469835,20,0,0,176.0,0.0,0,0
+joint,AEFC-no-TGOPA,20,0.050481750786820136,0.05048175078682014,20,0,0,176.0,0.0,0,0
+joint,AEFC-Full,20,0.010147179648844654,0.010146903881869054,20,0,0,176.0,0.0,20,0

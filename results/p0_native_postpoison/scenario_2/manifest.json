@@ -1,0 +1,30 @@
+{
+  "backend": "mathworks_ieee39_r2024b_native_supplemental",
+  "commit_sha": "1254e9a06bda150bcbc31558490b9b422d754053",
+  "experiment_id": "e1a069385476a1a0",
+  "experiment_kind": "postpoison",
+  "level_value": 2,
+  "mapping_policy": "paired-generator-physical-speed-v2",
+  "seeds": 20,
+  "methods": [
+    "FedRL",
+    "AEFC-no-TGOPA",
+    "AEFC-Full"
+  ],
+  "scenario": "knowledge",
+  "rows": 60,
+  "attack_scale": 1,
+  "proposal_stress_alpha": 0,
+  "rho_override": -1,
+  "qmin_override": -1,
+  "trust_region_override": -1,
+  "main_experiment_untouched": true,
+  "sample_time_s": 0.016666666666666666,
+  "post_poison_steps": 176,
+  "epsilon": 0.001,
+  "hold_steps": 20,
+  "shadow_reference": "offline same operator, same physical observation path, no feedback",
+  "parameter_kind": "actual four-dimensional deployed recovery coefficients, not neural backbone",
+  "experiment_not_main": true,
+  "evidence_capture": "full theta + clean shadow + deployment acceptance at every original sample"
+}
