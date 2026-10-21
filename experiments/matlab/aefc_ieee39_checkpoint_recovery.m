@@ -75,17 +75,17 @@ for mi=1:numel(methodCodes)
 
         obs=zeros(numel(tq),4);
         for q=1:4, obs(:,q)=sampleOutput(out,sprintf('AEFC_NATIVE_OBS_%02d',q),tq,1); end
-        diagv=sampleOutput(out,'AEFC_DIAG',tq,32);
+        diagv=sampleOutput(out,'AEFC_DIAG',tq,33);
         ushield=sampleOutput(out,'AEFC_SHIELD_VECTOR',tq,4);
         upost=sampleOutput(out,'AEFC_POST_ATTACK_VECTOR',tq,4);
         validateEvidence(diagv,upost,mc,cfg,attackScale,scenarioCode);
         % Stable intact local commissioning checkpoint captured at t=10;
         % no malware identity or attack schedule may enter its action rule.
-        assert(all(diagv(11:end,32)>0.5),'AEFC:CheckpointEnrollment','Missing commissioning snapshot');
+        assert(all(diagv(11:end,33)>0.5),'AEFC:CheckpointEnrollment','Missing commissioning snapshot');
         assert(all(isfinite(diagv(:))),'AEFC:TraceFinite','Nonfinite controller diagnostics');
         assert(all(abs(diagv(:,24))>=0),'AEFC:ReportDetector','Bad report distance');
-        checkpointDistance=diagv(:,30);
-        checkpointValid=diagv(:,32)>0.5;
+        checkpointDistance=diagv(:,31);
+        checkpointValid=diagv(:,33)>0.5;
         detAlert=diagv(:,25)>0.5;
         phase=diagv(:,26);
         alertDetected=any(detAlert(16:44));
@@ -93,6 +93,8 @@ for mi=1:numel(methodCodes)
             (scenarioCode==1 && any(detAlert));
         pidx=find(detAlert,1,'first');
         cidx=find(phase==3,1,'first');
+        if isempty(pidx), pidx=NaN; end
+        if isempty(cidx), cidx=NaN; end
         errTheta=sqrt(sum((diagv(:,11:14)-diagv(:,15:18)).^2,2));
         assert(max(errTheta(1:cfg.attack_start_step))<1e-9,'AEFC:ShadowPreAttack','Clean shadow differs before attack');
         postIdx=(double(cfg.attack_end_step)+2):numel(tq);
@@ -133,7 +135,7 @@ for mi=1:numel(methodCodes)
                 'detector_scatter',diagv(k,24),'alert_latched',logical(detAlert(k)), ...
                 'recovery_phase',phase(k),'checkpoint_theta',diagv(k,27:30), ...
                 'checkpoint_distance',checkpointDistance(k), ...
-                'rollback_step_norm',diagv(k,31),'checkpoint_valid',logical(checkpointValid(k)), ...
+                'rollback_step_norm',diagv(k,32),'checkpoint_valid',logical(checkpointValid(k)), ...
                 'shield_action',ushield(k,:),'post_shield_attack',upost(k,:), ...
                 'executed_correction',ushield(k,:)+upost(k,:),'safe_native_envelope',logical(safe(k)));
             fwrite(fid,jsonencode(r),'char'); fwrite(fid,sprintf('\n'),'char');
@@ -175,7 +177,7 @@ for mi=1:numel(methodCodes)
         rows(rowIdx).checkpoint_distance_post_first=checkpointDistance(45);
         rows(rowIdx).checkpoint_distance_final=checkpointDistance(end);
         rows(rowIdx).shadow_error_final=errTheta(end);
-        rows(rowIdx).rollback_steps=sum(diagv(:,31)>1e-9 & phase>=2);
+        rows(rowIdx).rollback_steps=sum(diagv(:,32)>1e-9 & phase>=2);
         rows(rowIdx).mean_normalized_state_l1=mean(sum(abs(z),2));
         rows(rowIdx).mean_executed_correction_l2=mean(sqrt(sum((ushield+upost).^2,2)));
         rows(rowIdx).backend='native_R2024b_true_AEFC_four_coefficient_checkpoint_extension';
@@ -228,7 +230,7 @@ assert(size(d,2)==dim,'AEFC:OutputDimension','Signal %s channel count mismatch.'
 end
 
 function validateEvidence(diagv,upost,mc,cfg,attackScale,scenarioCode)
-tol=1e-10; assert(size(diagv,2)==32 && size(upost,2)==4,'AEFC:EvidenceShape','Evidence shape mismatch.');
+tol=1e-10; assert(size(diagv,2)==33 && size(upost,2)==4,'AEFC:EvidenceShape','Evidence shape mismatch.');
 if any(mc==[1 2 6]), assert(max(abs(diagv(:,6)))<=tol,'AEFC:InterventionSemantics','Method must have zero shield intervention.'); end
 if any(mc==[1 2 3]), assert(max(abs(diagv(:,1)-0.5))<=tol,'AEFC:TrustSemantics','Method must retain fixed trust 0.5.'); end
 active=false(size(upost,1),1); active(double(cfg.attack_start_step)+1:double(cfg.attack_end_step)+1)=true;
