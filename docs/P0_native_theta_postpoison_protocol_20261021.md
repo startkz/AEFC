@@ -34,3 +34,8 @@ Dangerous-proposal zero denominator must remain NE. No claim of continuous-time 
 ## Workflow provenance
 
 Native run [39538932151](https://github.com/startkz/AEFC/actions/runs/39538932151). Source includes `AEFCNativePostPoisonController.m`, `aefc_ieee39_native_postpoison.m`. Independent audit requires all 120 full trajectories, raw hashes, matched baseline comparison, and exports summary/seed tables. Results cannot be promoted into manuscript tables until audit has passed.
+
+
+## Audit outcome (2026-10-21)
+
+The independent strict audit completed successfully (run \`39542414884\`). It reconstructed the full four-vector trajectories in 120 episodes and reproduced all 360 compared original-window fields within \`4.996003610813204e-16\`. **Genuine corrected-after-poisoning count is 0/20 for every method in both scenarios.** AEFC-Full mean residual distance after the 176 post-attack observations is \`0.010047546\` under knowledge-only and \`0.010146904\` under joint corruption. The report at \`docs/P0_native_theta_postpoison_results_20261021.md\` must be used in place of anticipated positive outcomes. No confirmed global G3 contraction, fixed certified target, or unprivileged native deployment follows.
