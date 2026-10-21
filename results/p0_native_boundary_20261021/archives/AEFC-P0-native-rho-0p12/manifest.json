@@ -1,0 +1,22 @@
+{
+  "backend": "mathworks_ieee39_r2024b_native_supplemental",
+  "commit_sha": "67aa2c3cb5cb8d6d79b344e638c282f4f346ee39",
+  "experiment_id": "5353da11a348d5f6",
+  "experiment_kind": "rho",
+  "level_value": 0.12,
+  "mapping_policy": "paired-generator-physical-speed-v2",
+  "seeds": 20,
+  "methods": [
+    "AEFC-Full"
+  ],
+  "scenario": "joint",
+  "rows": 20,
+  "attack_scale": 1,
+  "proposal_stress_alpha": 0,
+  "rho_override": 0.12,
+  "qmin_override": -1,
+  "trust_region_override": -1,
+  "main_experiment_untouched": true,
+  "sample_time_s": 0.016666666666666666,
+  "evidence_capture": "orientation-safe SimulationOutput extraction with supplemental semantic guards"
+}
