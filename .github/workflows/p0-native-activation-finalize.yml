@@ -1,0 +1,45 @@
+name: Verify and persist P0 native E5 evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [paper/p0-native-boundary-final-20261021]
+    paths:
+      - ".github/workflows/p0-native-activation-finalize.yml"
+permissions:
+  contents: write
+  actions: read
+jobs:
+  audit-and-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve all six immutable raw native artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 39387453311
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: AEFC-P0-native-*
+          merge-multiple: false
+          path: results/p0_native_boundary_20261021/archives
+      - name: Independently audit all 120 native runs, tar SHA, 20 seeds per cell, Main reproduction
+        run: python3 analysis/audit_p0_native_activation.py
+      - name: Publish independent audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AEFC-P0-E5-native-final-audit-${{ github.sha }}
+          path: |
+            results/p0_native_boundary_20261021/audit.json
+            results/p0_native_boundary_20261021/summary.csv
+          retention-days: 90
+          if-no-files-found: error
+      - name: Preserve raw archives and machine-readable evidence in branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          find results/p0_native_boundary_20261021/archives -name '*.jsonl' -delete
+          git add results/p0_native_boundary_20261021
+          git commit -m 'Persist and verify all six native E5 boundary-activation cells [skip ci]'
+          git push origin HEAD:paper/p0-native-boundary-final-20261021
