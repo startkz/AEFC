@@ -1,0 +1,28 @@
+{
+  "experimental_status": "genuine_executed_new_mechanism",
+  "backend": "discrete_bounded_4state_contract",
+  "not_native_ieee39": true,
+  "does_not_prove_continuous_CBF_G5": true,
+  "does_not_validate_old_AEFC_G3": true,
+  "full_state_measured_without_uncertainty": true,
+  "trusted_incident_clearance_assumed": true,
+  "config": {
+    "seed_count": 40,
+    "steps": 240,
+    "cleanup": 72,
+    "alpha": 0.9,
+    "epsilon": 0.01,
+    "persistence": 20,
+    "state_limit": 0.35,
+    "action_limit": 0.8,
+    "post_shield_attack_bound": 0.1,
+    "state_disturbance_bound": 0.006
+  },
+  "methods": [
+    "no_cleanup",
+    "certified_anchor",
+    "certified_anchor_residual"
+  ],
+  "episodes": 120,
+  "commit_sha": "ad1b79f1ab89dbd8c3cf60b6ce2b2f6c242a4d83"
+}
