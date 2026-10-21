@@ -44,7 +44,7 @@ for name in CELL_NAMES:
         values={}
         values["integrated_squared_physical_deviation"]=sum(sum(float(v)**2 for v in t["observation_normalized"]) for t in raw)*DT
         values["integrated_absolute_physical_deviation"]=sum(sum(abs(float(v)) for v in t["observation_normalized"]) for t in raw)*DT
-        values["integrated_postattack_physical_deviation"]=sum(sum(float(v)**2 for v in t["observation_normalized"]) for t in raw[ATTACK_END:])*DT
+        values["integrated_postattack_physical_deviation"]=sum(sum(float(v)**2 for v in t["observation_normalized"]) for t in raw if float(t["time"])>=ATTACK_END*DT)*DT
         values["integrated_correction_effort"]=sum(sum((float(u)+float(a))**2 for u,a in zip(t["shield_action"],t["post_shield_attack"])) for t in raw)*DT
         values["max_same_operator_shadow_error"]=max(float(t["same_operator_shadow_error"]) for t in raw)
         values["max_deployment_step_norm"]=max(float(t["deployed_step_norm"]) for t in raw)
