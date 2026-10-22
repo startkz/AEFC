@@ -61,7 +61,7 @@ jobs:
         if: always()
         with:
           name: AEFC-Confirm-${{ matrix.scenario.tag }}-${{ matrix.shard.start }}-${{ github.sha }}
-          path: results/p0_native_v3_confirmation/scenario_${{ matrix.scenario.code }}/seeds_${{ matrix.shard.start }}_${{ matrix.shard.end }}/
+          path: results/p0_native_v3_confirmation/scenario_${{ matrix.scenario.code }}/
           if-no-files-found: warn
           retention-days: 90
   audit:
