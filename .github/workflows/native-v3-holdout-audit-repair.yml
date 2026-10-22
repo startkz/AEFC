@@ -1,0 +1,56 @@
+name: AEFC v3 FROZEN holdout audit-only repair (NO rerun or tuning)
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/native-v3-frozen-holdout-repair-20261022]
+    paths: ['.github/workflows/native-v3-holdout-audit-repair.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit_existing_immutable_artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate frozen v3 controller/config still match original exploration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object experiments/matlab/AEFCNativeOnlineRecoveryController.m)" = 4ba08ab5722b8eeb9cf30925a4bdffceb960d3e9
+          test "$(git hash-object configs/ieee39_joint20.json)" = 7342b5274d6d357f4c30be0c22025abc34355adc
+          test "$(git hash-object results/ieee39_r2024b/interface_mapping.json)" = f2ebdb262c872a76894f8c7408916346756186f4
+      - name: Download original 12 outputs of run 39706509883 without repeating any simulation
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 39706509883
+          github-token: ${{ github.token }}
+          pattern: AEFC-Confirm-*
+          merge-multiple: false
+          path: results/p0_confirm_download
+      - name: Verify each original shard's SHA-256 in padded seed subdirectory
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tag in clean knowledge joint; do
+            for start in 80 90 100 110; do
+              shopt -s nullglob
+              dirs=(results/p0_confirm_download/AEFC-Confirm-"$tag"-"$start"-*)
+              test "${#dirs[@]}" -eq 1
+              end=$((start+9))
+              p=$(printf "seeds_%03d_%03d" "$start" "$end")
+              d="${dirs[0]}/$p"
+              test -e "$d/raw-traces.tar.gz"
+              test -e "$d/summary.csv"
+              (cd "$d" && sha256sum -c raw-traces.sha256)
+            done
+          done
+      - name: Full-trace original 480-episode independent audit (no source data changes)
+        run: python analysis/audit_native_v3_frozen_confirmation.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AEFC-Confirm-AuditOnly-39706509883-${{ github.sha }}
+          path: results/p0_native_v3_confirmation/audit/
+          if-no-files-found: warn
+          retention-days: 90
