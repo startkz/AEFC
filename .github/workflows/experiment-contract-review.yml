@@ -1,0 +1,27 @@
+name: AEFC experiment-contract review tests (EXP-02/03/06/10)
+# Run the native-audit-compatible reduced shield wrapper tests too.
+on:
+  workflow_dispatch:
+  push:
+    branches: [review/experiment-contract-repair-20261022]
+    paths: ['.github/workflows/experiment-contract-review.yml']
+permissions:
+  contents: read
+jobs:
+  independent-validation-and-robust-execution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Verify holdout validation, independent permissions, robust-actuator intersection and input-domain guard
+        run: python -m unittest discover -s tests -p test_experiment_contracts_v5.py -v
+      - name: Verify historic main and v4 code hashes remain frozen
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object experiments/matlab/AEFCNativeOnlineRecoveryController.m)" = 4ba08ab5722b8eeb9cf30925a4bdffceb960d3e9
+          test "$(git hash-object configs/ieee39_joint20.json)" = 7342b5274d6d357f4c30be0c22025abc34355adc
+          echo "Frozen prior experimental sources unchanged."
