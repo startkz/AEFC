@@ -346,8 +346,11 @@ methods(Access=protected)
             % and both local risk gates. This is a *conditional* detector:
             % coherent collusion and provenance forgery remain outside its
             % verified guarantees; never claim cryptographic attestation.
-            reentryClear=~reportSuspicious && obj.inlierCount==nClients && ...
-                obj.teacherGate && gateAllowed;
+            reentryClear=~reportSuspicious;
+            if obj.RecoveryMode==4
+                reentryClear=reentryClear && obj.inlierCount==nClients && ...
+                    obj.teacherGate && gateAllowed;
+            end
             if ~reentryClear
                 obj.recoveryPhase=1; obj.quietRun=0;
             elseif obj.recoveryPhase==1
