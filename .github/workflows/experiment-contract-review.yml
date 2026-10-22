@@ -1,4 +1,5 @@
 name: AEFC experiment-contract review tests (EXP-02/03/06/10)
+# Run the native-audit-compatible reduced shield wrapper tests too.
 on:
   workflow_dispatch:
   push:
