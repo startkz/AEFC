@@ -1,0 +1,94 @@
+name: AEFC v4 isolated checkpoint reference verification (120-127 exploratory)
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/native-checkpoint-anchor-auth-20261022]
+    paths: ['.github/workflows/native-v4-anchor-auth.yml']
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - {code: 0, tag: clean}
+          - {code: 1, tag: joint}
+          - {code: 2, tag: collusion}
+          - {code: 3, tag: persistent_bias}
+          - {code: 4, tag: checkpoint_tamper}
+          - {code: 5, tag: joint_checkpoint_tamper}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify old frozen v3 controller and JSON preserved
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object experiments/matlab/AEFCNativeOnlineRecoveryController.m)" = 4ba08ab5722b8eeb9cf30925a4bdffceb960d3e9
+          test "$(git hash-object configs/ieee39_joint20.json)" = 7342b5274d6d357f4c30be0c22025abc34355adc
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Native MATLAB class syntax check
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('experiments/matlab'); assert(exist('AEFCNativeAnchorAuthController','class')==8); assert(exist('aefc_ieee39_anchor_auth','file')==2)
+      - name: Rebuild validated IEEE39 physical plant
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mm=jsondecode(fileread(fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'))); assert(logical(mm.validated) && strcmp(mm.selection_policy,'paired-generator-physical-speed-v2')); aefc_ieee39_build_native_model
+      - name: Run four modes and eight untouched 120-127 seeds
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_anchor_auth(${{ matrix.code }})
+      - name: Capture original raw trajectories and SHA-256
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="results/p0_native_anchor_auth/case_${{ matrix.code }}"
+          if [ -d "$d" ]; then
+            (cd "$d" && tar -czf raw-traces.tar.gz AEFC-Unprivileged AEFC-Checkpoint AEFC-ContractiveReentry AEFC-AnchorAuthenticated && sha256sum raw-traces.tar.gz > raw-traces.sha256)
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AEFC-AnchorAuth-${{ matrix.tag }}-${{ github.sha }}
+          path: results/p0_native_anchor_auth/case_${{ matrix.code }}/
+          if-no-files-found: warn
+          retention-days: 90
+  audit:
+    needs: native
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: AEFC-AnchorAuth-*
+          merge-multiple: false
+          path: results/p0_auth_download
+      - name: Require all six raw artifacts with original SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tag in clean joint collusion persistent_bias checkpoint_tamper joint_checkpoint_tamper; do
+            shopt -s nullglob
+            dirs=(results/p0_auth_download/AEFC-AnchorAuth-"$tag"-*)
+            test "${#dirs[@]}" -eq 1
+            (cd "${dirs[0]}" && sha256sum -c raw-traces.sha256)
+          done
+      - name: Recompute all 192 480-point trajectories and certify local rejection behavior
+        run: python analysis/audit_native_anchor_auth.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AEFC-AnchorAuth-audit-${{ github.sha }}
+          path: results/p0_native_anchor_auth/audit/
+          if-no-files-found: warn
+          retention-days: 90
