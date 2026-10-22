@@ -159,26 +159,21 @@ class ShieldConfig:
 
 
 class RobustBoxShield:
-    """Closed-form robust shield for the executable reduced-order test backend."""
+    """Reduced-order closed-form intersection.
+
+    This intentionally changes the NEW review-branch API: if the state and
+    the post-attack actuator domains have no common feasible command, return
+    (None, {contract_failure: True}) rather than sending an uncertified
+    fallback. Historical E1-E5 traces remain frozen and unmodified.
+    """
     def __init__(self, config: ShieldConfig):
         self.config = config
 
-    def project(self, state: np.ndarray, proposal: np.ndarray, drift: np.ndarray) -> Tuple[np.ndarray, dict]:
-        x = _asvec(state)
-        u0 = np.clip(_asvec(proposal), -self.config.action_limit, self.config.action_limit)
-        d = _asvec(drift)
-        g = self.config.dynamics_gain
-        b = self.config.post_attack_budget
-        w = self.config.state_disturbance_budget
-        L = self.config.state_limit
-        lower = (-L + w - x - d) / g + b
-        upper = ( L - w - x - d) / g - b
-        feasible = bool(np.all(lower <= upper))
-        if feasible:
-            u = np.minimum(np.maximum(u0, lower), upper)
-            u = np.clip(u, -self.config.action_limit, self.config.action_limit)
-        else:
-            u = np.clip(-(x + d) / max(g, 1e-9), -self.config.action_limit, self.config.action_limit)
-        corrected = float(np.linalg.norm(u-u0))
-        robust_margin = float(np.min(L - (np.abs(x + d + g*u) + g*b + w)))
-        return u, {"feasible": feasible, "intervention_norm": corrected, "robust_margin": robust_margin}
+    def project(self, state: np.ndarray, proposal: np.ndarray, drift: np.ndarray):
+        from .validated_interfaces import robust_box_intersection
+        return robust_box_intersection(
+            state, proposal, drift, state_limit=self.config.state_limit,
+            command_limit=self.config.action_limit,
+            post_attack_budget=self.config.post_attack_budget,
+            dynamics_gain=self.config.dynamics_gain,
+            disturbance_budget=self.config.state_disturbance_budget)
