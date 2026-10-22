@@ -1,4 +1,5 @@
 name: AEFC v3 independent adversarial stress R2024b
+# Audit explicitly accepts attack-invariant trajectories as legitimate outcomes.
 on:
   workflow_dispatch:
   push:
