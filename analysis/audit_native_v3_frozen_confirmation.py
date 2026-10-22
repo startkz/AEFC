@@ -38,6 +38,13 @@ for scene in SCENES:
     folders = {}
     seen_shards = []
     for folder in matches:
+        shard_start = int(folder.name.split("-")[-2])
+        if shard_start not in (80,90,100,110):
+            raise RuntimeError(f"Unexpected immutable seed shard name: {folder}")
+        # GitHub artifact upload root is scenario directory, so the 10-seed
+        # subfolder persists inside each artifact. The failed original audit
+        # incorrectly looked at the artifact root. No native traces changed.
+        folder = folder / f"seeds_{shard_start:03d}_{shard_start+9:03d}"
         if not (folder/"raw-traces.sha256").is_file():
             raise RuntimeError(f"Missing raw-traces SHA256 evidence {folder}")
         if not (folder/"manifest.json").is_file():
