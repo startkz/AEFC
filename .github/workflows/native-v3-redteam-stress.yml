@@ -1,0 +1,92 @@
+name: AEFC v3 independent adversarial stress R2024b
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/native-v3-stress-tests-20261022]
+    paths: ['.github/workflows/native-v3-redteam-stress.yml']
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        stress:
+          - {code: 1, tag: collusion}
+          - {code: 2, tag: persistent_bias}
+          - {code: 3, tag: checkpoint_tamper}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify untouched original v3 controller and frozen config
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object experiments/matlab/AEFCNativeOnlineRecoveryController.m)" = 4ba08ab5722b8eeb9cf30925a4bdffceb960d3e9
+          test "$(git hash-object configs/ieee39_joint20.json)" = 7342b5274d6d357f4c30be0c22025abc34355adc
+          test "$(git hash-object results/ieee39_r2024b/interface_mapping.json)" = f2ebdb262c872a76894f8c7408916346756186f4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Validate MATLAB stress class and runner exist
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('experiments/matlab'); assert(exist('AEFCNativeRecoveryStressController','class')==8); assert(exist('aefc_ieee39_stress_cases','file')==2)
+      - name: Build original validated IEEE39 physical model
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; mm=jsondecode(fileread(fullfile(pwd,'results','ieee39_r2024b','interface_mapping.json'))); assert(logical(mm.validated) && strcmp(mm.selection_policy,'paired-generator-physical-speed-v2')); aefc_ieee39_build_native_model
+      - name: Run 3 frozen methods x 8 new stress seeds x 480 native samples
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_stress_cases(${{ matrix.stress.code }})
+      - name: Archive original traces with SHA-256
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="results/p0_native_v3_stress/stress_${{ matrix.stress.code }}"
+          if [ -d "$d" ]; then
+            (cd "$d" && tar -czf raw-traces.tar.gz AEFC-Unprivileged AEFC-Checkpoint AEFC-ContractiveReentry && sha256sum raw-traces.tar.gz > raw-traces.sha256)
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AEFC-Stress-${{ matrix.stress.tag }}-${{ github.sha }}
+          path: results/p0_native_v3_stress/stress_${{ matrix.stress.code }}/
+          if-no-files-found: warn
+          retention-days: 90
+  audit:
+    if: always()
+    needs: native
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: AEFC-Stress-*
+          merge-multiple: false
+          path: results/p0_stress_download
+      - name: Enforce exactly three red-team artifacts and all SHA-256 hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tag in collusion persistent_bias checkpoint_tamper; do
+            shopt -s nullglob
+            dirs=(results/p0_stress_download/AEFC-Stress-"$tag"-*)
+            test "${#dirs[@]}" -eq 1
+            (cd "${dirs[0]}" && sha256sum -c raw-traces.sha256)
+          done
+      - name: Independently audit 72 original stress traces and preserve every failure
+        run: python analysis/audit_native_v3_stress.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AEFC-Stress-audit-${{ github.sha }}
+          path: results/p0_native_v3_stress/audit/
+          if-no-files-found: warn
+          retention-days: 90
