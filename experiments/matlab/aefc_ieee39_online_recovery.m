@@ -1,6 +1,6 @@
 function aefc_ieee39_online_recovery(scenarioCode)
 % NEW exploratory 480-step R2024b experiment; original main/checkpoint untouched.
-% New disjoint exploratory 48:55 seeds; 436 post-stop steps; do not claim G3 from proxy convergence.
+% Independent 56:63 exploratory seeds (80:119 reserved for confirmation); 436 post-stop steps; do not claim G3 from proxy convergence.
 % scenarioCode: clean(1), knowledge(2), joint(4).
 % Main Experiment results/ieee39_joint20 is read-only and never modified.
 %
@@ -13,7 +13,7 @@ function aefc_ieee39_online_recovery(scenarioCode)
 
 repo=pwd; scenarioCode=double(scenarioCode);
 assert(ismember(scenarioCode,[1 2 4]),'AEFC:Scenario','Expected scenario 1, 2 or 4');
-kind='online_proxy_consistent_v2_exploratory'; value=scenarioCode;
+kind='trusted_reentry_proximal_v3_exploratory'; value=scenarioCode;
 cfgPath=fullfile(repo,'configs','ieee39_joint20.json'); cfg=jsondecode(fileread(cfgPath));
 mapPath=fullfile(repo,cfg.mapping_path); mapping=jsondecode(fileread(mapPath));
 assert(mapping.validated,'AEFC:MappingInvalid','Supplemental native runs require validated mapping.');
@@ -21,9 +21,9 @@ assert(strcmp(mapping.selection_policy,'paired-generator-physical-speed-v2'), ..
     'AEFC:MappingPolicy','Supplemental native runs require authoritative paired mapping.');
 
 attackScale=1.0; stressAlpha=0.0; rhoOverride=-1.0; qOverride=-1.0; trustOverride=-1.0;
-methodCodes=[7 7 7];
-modeCodes=[0 2 3];
-methodNames={'AEFC-Unprivileged','AEFC-Checkpoint','AEFC-OnlineRelearn'};
+methodCodes=[7 7 7 7];
+modeCodes=[0 2 3 4];
+methodNames={'AEFC-Unprivileged','AEFC-Checkpoint','AEFC-OnlineRelearn','AEFC-ContractiveReentry'};
 assert(attackScale>=0,'AEFC:SupplementalValue','Attack scale must be nonnegative.');
 assert(stressAlpha>=0 && stressAlpha<=1,'AEFC:SupplementalValue','Gate stress alpha must be in [0,1].');
 
@@ -59,7 +59,7 @@ assert(fastRestart,'AEFC:FastRestart','Supplemental native cell requires Fast Re
 for mi=1:numel(methodCodes)
     mc=methodCodes(mi); method=methodNames{mi};
     runDir=fullfile(outRoot,method); if ~exist(runDir,'dir'), mkdir(runDir); end
-    for seed=48:55
+    for seed=56:63
         simIn=Simulink.SimulationInput(model);
         simIn=simIn.setBlockParameter(ctrl,'MethodCode',num2str(mc));
         simIn=simIn.setBlockParameter(ctrl,'RecoveryMode',num2str(modeCodes(mi)));
@@ -201,10 +201,13 @@ manifest=struct('backend','mathworks_ieee39_r2024b_native_supplemental','commit_
     'proposal_stress_alpha',stressAlpha,'rho_override',rhoOverride,'qmin_override',qOverride, ...
     'trust_region_override',trustOverride,'main_experiment_untouched',true,'sample_time_s',dt, ...
     'post_poison_steps',numel(postIdx),'epsilon',epsTarget,'hold_steps',holdSteps, ...
-    'new_seed_range','48:55 exploratory implementation test; not held-out confirmatory', ...
+    'new_seed_range','56:63 exploratory mechanism development; 80:119 untouched confirmatory', ...
     'modes',{methodNames},'detector_threshold',0.35,'checkpoint_sample',10, ...
     'relearn_description','online majority-consensus proxy; matching clean-shadow trim and historical innovation operators; no offline shadow access', ...
     'relearn_step_fraction',0.25,'relearn_step_maxnorm',0.01, ...
+    'contractive_reentry_step_fraction',1.0,'contractive_reentry_maxnorm',0.01, ...
+    'contractive_anchor_prox_gain',0.08, ...
+    'contractive_anchor_condition','pre-attack commissioning checkpoint assumed isolated, no independent attestation', ... ...
     'status','EXPLORATORY; results must undergo independent full-trace audit', ...
     'clean_streak_required',3,'rollback_factor',0.5, ...
     'checkpoint_integrity','local commissioning snapshot assumed intact, not cryptographically attested', ...
