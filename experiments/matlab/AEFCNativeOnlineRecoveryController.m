@@ -29,6 +29,7 @@ properties
     QMinOverride = -1.0
     TrustRegionOverride = -1.0
     RecoveryMode = 0
+    ProxGain = 0.08 % trusted anchor-regularized contraction coefficient; mode 4 only
 end
 
 properties(Access=private)
@@ -224,6 +225,13 @@ methods(Access=protected)
         elseif adaptAccepted
             obj.theta=candidate;
         end
+        % In v3 the newly defined proximal recovery policy is a genuine
+        % learned-policy update, not an offline reference correction. Apply
+        % the same strongly monotone regularizer to real deployment and
+        % its clean-counterfactual policy. Freeze its authenticated anchor.
+        if obj.RecoveryMode==4 && obj.checkpointValid && adaptAccepted
+            obj.theta=obj.theta-double(obj.ProxGain)*(obj.theta-obj.checkpointTheta);
+        end
         % The authorization and adaptation decision above is the ORIGINAL
         % TGOPA output; quarantine and rollback operate AFTER it.
         if any(double(obj.RecoveryMode)==[1 2]) && obj.checkpointValid && obj.alarmLatched
@@ -320,7 +328,12 @@ methods(Access=protected)
                 norm(bSafe,2)+0.08*norm(candidateSafe,2) <= ...
                 norm(bSafe,2)+0.08*norm(obj.teacherTheta,2)+ ...
                 obj.cfg.adaptation.validation_slack;
-            if acceptedSafe, obj.teacherTheta=candidateSafe; end
+            if acceptedSafe
+                obj.teacherTheta=candidateSafe;
+                if obj.RecoveryMode==4 && obj.checkpointValid
+                    obj.teacherTheta=obj.teacherTheta-double(obj.ProxGain)*(obj.teacherTheta-obj.checkpointTheta);
+                end
+            end
             obj.teacherAccepted=acceptedSafe;
             obj.teacherBelief=bSafe;
             obj.teacherLegacy=legacySafeNext;
@@ -328,8 +341,14 @@ methods(Access=protected)
             obj.teacherAccepted=false; obj.teacherGate=false;
         end
 
-        if obj.RecoveryMode==3 && obj.checkpointValid && obj.alarmLatched
-            if reportSuspicious
+        if any(double(obj.RecoveryMode)==[3 4]) && obj.checkpointValid && obj.alarmLatched
+            % Reentry requires all seven reports to pass median consistency
+            % and both local risk gates. This is a *conditional* detector:
+            % coherent collusion and provenance forgery remain outside its
+            % verified guarantees; never claim cryptographic attestation.
+            reentryClear=~reportSuspicious && obj.inlierCount==nClients && ...
+                obj.teacherGate && gateAllowed;
+            if ~reentryClear
                 obj.recoveryPhase=1; obj.quietRun=0;
             elseif obj.recoveryPhase==1
                 obj.quietRun=obj.quietRun+1;
@@ -347,7 +366,13 @@ methods(Access=protected)
                 obj.theta=thetaBefore;
                 if ~reportSuspicious && obj.teacherGate && gateAllowed
                     errSafe=obj.teacherTheta-obj.theta;
-                    dFollow=0.25*errSafe;
+                    if obj.RecoveryMode==4
+                        % Bounded catch-up removes lag to the independent
+                        % online proxy; the proxy never reads clean shadow.
+                        dFollow=errSafe;
+                    else
+                        dFollow=0.25*errSafe;
+                    end
                     dNorm=norm(dFollow,2);
                     if dNorm>0.01, dFollow=dFollow*(0.01/dNorm); end
                     obj.theta=obj.theta+dFollow;
@@ -418,6 +443,9 @@ methods(Access=protected)
             acceptedShadow=true;
         elseif acceptedShadow
             obj.thetaShadow=candidateShadow;
+        end
+        if obj.RecoveryMode==4 && obj.checkpointValid && acceptedShadow
+            obj.thetaShadow=obj.thetaShadow-double(obj.ProxGain)*(obj.thetaShadow-obj.checkpointTheta);
         end
         policyDrift=norm(obj.theta,2);
 
