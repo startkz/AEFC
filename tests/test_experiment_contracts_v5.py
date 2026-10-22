@@ -35,6 +35,19 @@ class ExperimentContractTests(unittest.TestCase):
     def test_reserve_downstream_actuator_budget(self):
         u,r=robust_box_intersection(np.zeros(4),np.ones(4)*5,np.zeros(4))
         self.assertTrue(np.all(np.abs(u)+.1<=.8+1e-9))
+    def test_real_reduced_order_shield_rejects_infeasible(self):
+        from aefc.security import RobustBoxShield,ShieldConfig
+        box=RobustBoxShield(ShieldConfig())
+        u,info=box.project(np.ones(4)*.35,np.zeros(4),np.ones(4)*.30)
+        self.assertIsNone(u)
+        self.assertTrue(info["contract_failure"])
+    def test_real_reduced_order_shield_robust_and_actual_input(self):
+        from aefc.security import RobustBoxShield,ShieldConfig
+        box=RobustBoxShield(ShieldConfig())
+        u,info=box.project(np.zeros(4),np.ones(4)*3,np.zeros(4))
+        self.assertIsNotNone(u)
+        self.assertTrue(info["feasible"])
+        self.assertGreaterEqual(info["realized_input_margin"],-1e-10)
     def test_gate_blocks_out_of_domain(self):
         self.assertFalse(authorize_proposal_domain(np.ones(4)*.06,command_limit=.05,attack_budget=.005))
     def test_gate_allows_inside_domain(self):
