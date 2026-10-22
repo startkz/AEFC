@@ -12,8 +12,8 @@ ROOT = Path("results/p0_online_download")
 OUT = Path("results/p0_native_online_recovery/audit")
 OUT.mkdir(parents=True, exist_ok=True)
 SCENES = ("clean", "knowledge", "joint")
-METHODS = ("AEFC-Unprivileged", "AEFC-Checkpoint", "AEFC-OnlineRelearn")
-SEEDS = tuple(range(48, 56))
+METHODS = ("AEFC-Unprivileged", "AEFC-Checkpoint", "AEFC-OnlineRelearn", "AEFC-ContractiveReentry")
+SEEDS = tuple(range(56, 64))
 EPS = 0.001
 HOLD = 20
 SAMPLES = 480
@@ -36,8 +36,8 @@ for scene in SCENES:
         raise RuntimeError(f"Expected exactly one {scene} source artifact, got {len(matches)}")
     folder = matches[0]
     source = list(csv.DictReader((folder/"summary.csv").open()))
-    if len(source) != 24:
-        raise RuntimeError(f"{scene}: expected 24 original summary rows; got {len(source)}")
+    if len(source) != 32:
+        raise RuntimeError(f"{scene}: expected 32 original summary rows; got {len(source)}")
     sr = {(x["method"], int(x["seed"])): x for x in source}
     if set(sr) != {(m,s) for m in METHODS for s in SEEDS}:
         raise RuntimeError(f"{scene}: missing, duplicated, or unexpected method/seed")
@@ -75,7 +75,7 @@ for scene in SCENES:
                 raise RuntimeError(f"{fp}: checkpoint error inconsistent with raw parameters")
             if max(abs(p_err[i]-float(trace[i]["online_proxy_distance"])) for i in range(SAMPLES)) > 1e-9:
                 raise RuntimeError(f"{fp}: proxy error inconsistent with raw parameters")
-            if method=="AEFC-OnlineRelearn" and scene!="clean" and max(norm(proxy[i],shadow[i]) for i in range(15,44))<1e-12:
+            if method in ("AEFC-OnlineRelearn","AEFC-ContractiveReentry") and scene!="clean" and max(norm(proxy[i],shadow[i]) for i in range(15,44))<1e-12:
                 raise RuntimeError(f"{fp}: suspicious oracle-equivalent online target")
             if abs(float(sr[(method,seed)]["theta_error_at_end"])-e[-1]) > 1e-9:
                 raise RuntimeError(f"{fp}: original CSV end error mismatch")
@@ -128,7 +128,7 @@ for scene in SCENES:
                      report_inliers_min=min(t["online_proxy_inliers"] for t in trace[POST:]))
             rows.append(row)
 
-assert len(rows)==72
+assert len(rows)==96
 with (OUT/"per_seed.csv").open("w",newline="") as f:
     w=csv.DictWriter(f,fieldnames=list(rows[0]))
     w.writeheader();w.writerows(rows)
@@ -157,15 +157,17 @@ with (OUT/"summary.csv").open("w",newline="") as f:
     w.writeheader();w.writerows(tables)
 
 result={
-  "stage":"POST-FIX EXPLORATORY, NOT G3 CERTIFICATION",
+  "stage":"CONTRACTIVE REENTRY EXPLORATORY, NOT G3 CERTIFICATION",
   "native_backend":"MathWorks R2024b IEEE39 (must verify workflow logs)",
   "source":"only original workflow-uploaded seed traces",
-  "episodes":72,"samples":72*SAMPLES,
-  "seeds":"48..55","steps_per_episode":SAMPLES,
+  "episodes":96,"samples":96*SAMPLES,
+  "seeds":"56..63","steps_per_episode":SAMPLES,
   "attack_window_inclusive":[15,43],
   "epsilon":EPS,"hold_steps":HOLD,
   "reference":"offline dynamic same-operator/same-physical-observation clean shadow",
-  "online_target":"independently computed majority-consensus clean proxy, neither oracle nor certified",
+  "online_target":"independently computed consensus proxy with conditional anchor-proximal contraction, not an oracle",
+  "clean_shadow_operator":"mode-specific clean same-plant policy update; new mode4 includes the SAME proximal regularizer",
+  "frozen_contractivity_gain":0.08,
   "meaning_of_success":"empirical post-attack re-entry to moving clean-shadow tolerance from above epsilon, 20 consecutive samples; not global contraction",
   "previous_180_runs_unchanged":True,
   "cannot_certify":["full policy-network G3", "certified fixed clean optimum",
