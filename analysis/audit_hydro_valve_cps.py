@@ -129,20 +129,20 @@ def main():
                         p=root/sc/method/f'seed_{seed}{suffix}'
                         if p.exists(): tar.add(p,arcname=str(p.relative_to(root)))
     archive_hash=sha256(archive)
-    (root/'raw-traces.sha256').write_text(f'{archive_hash}  raw-traces.tar.gz\\n',encoding='utf-8')
+    (root/'raw-traces.sha256').write_text(f'{archive_hash}  raw-traces.tar.gz\n',encoding='utf-8')
     report={'experiment':manifest['experiment'],'expected_episodes':expected,'audited_episodes':actual,
             'expected_samples':manifest['samples'],'audited_samples':total_samples,
             'raw_archive':'raw-traces.tar.gz','raw_archive_sha256':archive_hash,
             'config_sha256':cfg_hash,'all_checks_passed':not failures,'failures':failures,
             'interpretation':'SIL archive audit only; not physical hardware validation or G1/G3/G5 formal certification'}
-    (root/'audit_report.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\\n',encoding='utf-8')
+    (root/'audit_report.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
     md=['# AEFC 水力阀门流量调节 SIL 原始轨迹审计','',
         f'- 预期/复核回合：{expected}/{actual}',f'- 预期/复核采样点：{manifest["samples"]}/{total_samples}',
         f'- 配置 SHA256：`{cfg_hash}`',f'- 原始归档 SHA256：`{archive_hash}`',
         f'- 审计结果：**{"PASS" if not failures else "FAIL"}**','',
         '本审计仅验证SIL轨迹、摘要及归档完整性，不构成真实PLC/执行器实验，也不构成G1/G3/G5形式认证。']
     if failures: md+=['','## 未通过项']+['- '+x for x in failures]
-    (root/'audit_summary.md').write_text('\\n'.join(md)+'\\n',encoding='utf-8')
+    (root/'audit_summary.md').write_text('\n'.join(md)+'\n',encoding='utf-8')
     print(json.dumps(report,ensure_ascii=False,indent=2))
     if failures: raise SystemExit(2)
 
