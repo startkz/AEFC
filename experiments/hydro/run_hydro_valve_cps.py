@@ -196,7 +196,7 @@ def run_episode(seed,method,scenario,outdir,c,cfg_hash):
         med=np.median(reports,axis=0)
         disagree=float(np.linalg.norm(obs-med)/math.sqrt(6))
         spread=float(np.median(np.linalg.norm(reports-med[None,:],axis=1)))
-        risk=float(max(0,np.max(np.maximum(np.asarray(c.state_lower)-pred,pred-np.asarray(c.state_upper)))+
+        risk=float(max(0.0,np.max(np.maximum(np.asarray(c.state_lower)-pred,pred-np.asarray(c.state_upper))))+
                     c.gate_disagreement_weight*min(disagree,2)+c.gate_spread_weight*min(spread,2))
         _,be=controller(zclean,anchor,backup_integral,c); backup_integral=np.clip(backup_integral+c.dt*be,-0.25,0.25)
         backup,_=controller(zclean,anchor,backup_integral,c)
