@@ -1,0 +1,68 @@
+name: AEFC Hydro Valve-Flow CPS SIL
+
+on:
+  push:
+    branches:
+      - experiment/hydro-valve-cps-20261030
+    paths:
+      - "experiments/hydro/**"
+      - "analysis/audit_hydro_valve_cps.py"
+      - "configs/hydro_valve_cps_sil_20261030.json"
+      - "docs/P0_hydro_valve_CPS_SIL_protocol_20261030.md"
+      - ".github/workflows/aefc-hydro-valve-cps-sil.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hydro-valve-sil:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout frozen experiment branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install numerical dependency
+        run: python -m pip install --upgrade numpy
+
+      - name: Validate experiment and audit scripts
+        run: |
+          python -m py_compile experiments/hydro/run_hydro_valve_cps.py
+          python -m py_compile analysis/audit_hydro_valve_cps.py
+
+      - name: Run matched hydro valve-flow SIL matrix
+        run: |
+          python experiments/hydro/run_hydro_valve_cps.py \
+            --config configs/hydro_valve_cps_sil_20261030.json \
+            --output results/hydro_valve_cps_sil_20261030
+
+      - name: Independently audit raw trajectories and summaries
+        run: |
+          python analysis/audit_hydro_valve_cps.py \
+            --input results/hydro_valve_cps_sil_20261030
+
+      - name: Upload raw traces, hashes, summaries and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hydro-valve-cps-sil-20261030-${{ github.run_id }}
+          path: |
+            results/hydro_valve_cps_sil_20261030/raw-traces.tar.gz
+            results/hydro_valve_cps_sil_20261030/raw-traces.sha256
+            results/hydro_valve_cps_sil_20261030/frozen_config.json
+            results/hydro_valve_cps_sil_20261030/manifest.json
+            results/hydro_valve_cps_sil_20261030/summary.csv
+            results/hydro_valve_cps_sil_20261030/aggregate_by_method_scenario.csv
+            results/hydro_valve_cps_sil_20261030/per_seed_metrics.csv
+            results/hydro_valve_cps_sil_20261030/paired_effects.csv
+            results/hydro_valve_cps_sil_20261030/audit_report.json
+            results/hydro_valve_cps_sil_20261030/audit_summary.md
+          if-no-files-found: warn
+          retention-days: 90
