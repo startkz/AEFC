@@ -1,0 +1,51 @@
+name: AEFC hydroelectric dual-valve CPS SIL independent confirmation
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/hydro-valve-cps-20261030
+    paths:
+      - '.github/workflows/hydro-valve-sil-20261030.yml'
+permissions:
+  contents: read
+jobs:
+  hydro-sil-frozen-confirmation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install reproducible analysis dependencies
+        run: python -m pip install 'numpy>=1.26,<3'
+      - name: Run 4 scenarios x 7 methods x 20 predeclared seeds
+        run: |
+          python experiments/hydro_valve/run_hydro_valve_cps.py --config configs/hydro_valve_cps_sil_20261030.json --output results/hydro_valve_sil_20261030 --seed-start 220 --seeds 20
+      - name: Independently replay all 560 trace summaries
+        run: |
+          python analysis/audit_hydro_valve_cps.py --input results/hydro_valve_sil_20261030
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('results/hydro_valve_sil_20261030/audit_report.json')
+          r=json.loads(p.read_text())
+          assert r['all_checks_passed'] and r['audited_episodes']==560 and r['audited_samples']==268800
+          print('SIL auditing passed; real PLC or G5 certification NOT implied.')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hydro-valve-sil-220-239-native-traces-and-independent-audit
+          path: |
+            results/hydro_valve_sil_20261030/frozen_config.json
+            results/hydro_valve_sil_20261030/manifest.json
+            results/hydro_valve_sil_20261030/summary.csv
+            results/hydro_valve_sil_20261030/aggregate_by_method_scenario.csv
+            results/hydro_valve_sil_20261030/per_seed_metrics.csv
+            results/hydro_valve_sil_20261030/paired_effects.csv
+            results/hydro_valve_sil_20261030/audit_report.json
+            results/hydro_valve_sil_20261030/audit_summary.md
+            results/hydro_valve_sil_20261030/raw-traces.tar.gz
+            results/hydro_valve_sil_20261030/raw-traces.sha256
+          retention-days: 30
