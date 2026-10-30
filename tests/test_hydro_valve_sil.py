@@ -2,7 +2,8 @@
 import sys, unittest
 from pathlib import Path
 import numpy as np
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT / "experiments" / "hydro_valve" if (ROOT / "experiments" / "hydro_valve").exists() else ROOT))
 from run_hydro_valve_cps import (CFG, HydroPlant, make_tape, trimmed_mean, predict_next,
      robust_shield, trusted_candidate_loss, norm_state, controller_command)
 
