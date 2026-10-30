@@ -370,7 +370,9 @@ def run_episode(seed: int, method: str, scenario: str, out_dir: Path, c: Config,
             else:
                 theta=theta+delta; accepted+=1
             max_theta_drift=max(max_theta_drift,float(np.linalg.norm(theta-anchor)))
-            # The offline clean shadow follows the same method-specific update operator on the same true plant trajectory.
+            # Exploratory clean-report proxy on the same physical trajectory.
+            # Its PATBU clean weights are simplified: it is NOT a strictly
+            # same-operator counterfactual and cannot certify G1/G3.
             clean_reports=z_true[None,:]+tape["client"][t]
             clean_updates=np.asarray([local_gradient(theta_shadow,clean_reports[j],shadow_integral,c)+tape["update"][t,j]
                                       for j in range(c.clients)])
