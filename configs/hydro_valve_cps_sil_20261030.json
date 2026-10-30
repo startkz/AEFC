@@ -7,34 +7,86 @@
   "attack_end": 239,
   "clients": 5,
   "byzantine": 1,
-  "q_ref": [0.48, 0.42],
-  "q_coeff": [0.58, 0.52],
+  "q_ref": [
+    0.48,
+    0.42
+  ],
+  "q_coeff": [
+    0.58,
+    0.52
+  ],
   "q_tau": 0.35,
   "valve_tau": 0.25,
   "valve_rate": 0.7,
-  "reservoir_area": 15.0,
+  "reservoir_area": 15,
   "turbine_eta": 0.92,
   "turbine_inertia": 0.65,
   "turbine_damping": 0.45,
   "qin_nominal": 0.9,
   "load_nominal": 0.8280000000000001,
-  "observation_scales": [0.08, 0.1, 0.1, 0.03, 0.25, 0.25],
-  "state_lower": [0.92, 0.38, 0.33, 0.97, 0.0, 0.0],
-  "state_upper": [1.08, 0.58, 0.51, 1.03, 1.0, 1.0],
-  "shield_reserve": [0.005, 0.015, 0.015, 0.005, 0.02, 0.02],
+  "observation_scales": [
+    0.08,
+    0.1,
+    0.1,
+    0.03,
+    0.25,
+    0.25
+  ],
+  "state_lower": [
+    0.92,
+    0.38,
+    0.33,
+    0.97,
+    0,
+    0
+  ],
+  "state_upper": [
+    1.08,
+    0.58,
+    0.51,
+    1.03,
+    1,
+    1
+  ],
+  "shield_reserve": [
+    0.005,
+    0.015,
+    0.015,
+    0.005,
+    0.02,
+    0.02
+  ],
   "command_attack_bound": 0.08,
-  "proposal_tamper_bound": 0.12,
   "qin_uncertainty": 0.004,
   "load_uncertainty": 0.006,
   "sensor_noise_bound": 0.01,
   "client_noise_bound": 0.018,
   "update_noise_bound": 0.004,
-  "physical_observation_bias": [0.28, 0.42, -0.38, 0.24, -0.18, 0.18],
+  "physical_observation_bias": [
+    0.28,
+    0.42,
+    -0.38,
+    0.24,
+    -0.18,
+    0.18
+  ],
   "replay_delay": 4,
   "replay_weight": 0.65,
-  "byzantine_evidence_bias": [1.4, -1.1, 1.0, -0.8, 0.9, -0.9],
+  "byzantine_evidence_bias": [
+    1.4,
+    -1.1,
+    1,
+    -0.8,
+    0.9,
+    -0.9
+  ],
   "byzantine_gradient_scale": 3.5,
-  "byzantine_gradient_bias": [0.2, -0.1, -0.18, 0.09],
+  "byzantine_gradient_bias": [
+    0.2,
+    -0.1,
+    -0.18,
+    0.09
+  ],
   "patbu_prior_weight": 0.2,
   "patbu_observation_weight": 0.15,
   "patbu_evidence_weight": 0.65,
@@ -48,12 +100,24 @@
   "q_min": 0.9,
   "risk_max": 0.004,
   "validation_slack": 1e-7,
-  "belief_lambda": 0.2,
-  "evidence_scale": 0.55,
-  "proximal_lambda": 0.002,
-  "theta_initial": [0.9, 0.055, 0.9, 0.055],
-  "theta_anchor": [0.9, 0.055, 0.9, 0.055],
-  "theta_reference": [0.92, 0.06, 0.88, 0.055],
+  "theta_initial": [
+    0.9,
+    0.055,
+    0.9,
+    0.055
+  ],
+  "theta_anchor": [
+    0.9,
+    0.055,
+    0.9,
+    0.055
+  ],
+  "theta_reference": [
+    0.92,
+    0.06,
+    0.88,
+    0.055
+  ],
   "epsilon": 0.001,
   "hold_points": 20
 }
