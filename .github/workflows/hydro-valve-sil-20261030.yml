@@ -19,6 +19,8 @@ jobs:
           python-version: '3.11'
       - name: Install reproducible analysis dependencies
         run: python -m pip install 'numpy>=1.26,<3'
+      - name: Eight deterministic SIL interface regression tests
+        run: python -m unittest discover -s tests -p test_hydro_valve_sil.py -v
       - name: Run 4 scenarios x 7 methods x 20 predeclared seeds
         run: |
           python experiments/hydro_valve/run_hydro_valve_cps.py --config configs/hydro_valve_cps_sil_20261030.json --output results/hydro_valve_sil_20261030 --seed-start 220 --seeds 20
