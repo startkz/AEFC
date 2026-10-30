@@ -18,7 +18,7 @@
   "q_tau": 0.35,
   "valve_tau": 0.25,
   "valve_rate": 0.7,
-  "reservoir_area": 15,
+  "reservoir_area": 15.0,
   "turbine_eta": 0.92,
   "turbine_inertia": 0.65,
   "turbine_damping": 0.45,
@@ -37,24 +37,16 @@
     0.38,
     0.33,
     0.97,
-    0,
-    0
+    0.0,
+    0.0
   ],
   "state_upper": [
     1.08,
     0.58,
     0.51,
     1.03,
-    1,
-    1
-  ],
-  "shield_reserve": [
-    0.005,
-    0.015,
-    0.015,
-    0.005,
-    0.02,
-    0.02
+    1.0,
+    1.0
   ],
   "command_attack_bound": 0.08,
   "qin_uncertainty": 0.004,
@@ -75,7 +67,7 @@
   "byzantine_evidence_bias": [
     1.4,
     -1.1,
-    1,
+    1.0,
     -0.8,
     0.9,
     -0.9
@@ -99,7 +91,10 @@
   "trust_region": 0.005,
   "q_min": 0.9,
   "risk_max": 0.004,
-  "validation_slack": 1e-7,
+  "validation_slack": 1e-07,
+  "belief_lambda": 0.2,
+  "evidence_scale": 0.55,
+  "proximal_lambda": 0.002,
   "theta_initial": [
     0.9,
     0.055,
@@ -119,5 +114,14 @@
     0.055
   ],
   "epsilon": 0.001,
-  "hold_points": 20
+  "hold_points": 20,
+  "proposal_tamper_bound": 0.12,
+  "shield_reserve": [
+    0.005,
+    0.015,
+    0.015,
+    0.005,
+    0.02,
+    0.02
+  ]
 }
