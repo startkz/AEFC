@@ -140,12 +140,18 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
  settings=ServerSettings(max_weight=weight_cap,equal_weight=(mode=='adv_no_cw' or mode=='dense'))
  server=Server(theta,settings)
  for c in agents:c.set_global(server.theta)
- first_record=[];traffic=0;server_summaries=[]
+ first_record=[];traffic=0;server_summaries=[];train_episode_records=[]
  sync_interval=5
  rounds=math.ceil(episodes/sync_interval)
  for k in range(rounds):
   for e in range(k*sync_interval,min((k+1)*sync_interval,episodes)):
-   run_episode(env,agents,True,noise_seed=seed*100000+e)
+   episode_result=run_episode(env,agents,True,noise_seed=seed*100000+e)
+   train_episode_records.append({'episode':e+1,'average_restored_pct':episode_result['average_restored_pct'],
+       'final_restored_pct':episode_result['final_restored_pct'],
+       'safe_dwell5':episode_result['safe_dwell5'],'any_unsafe':episode_result['any_unsafe'],
+       'max_thermal_excess_pct':episode_result['max_thermal_excess_pct'],
+       'max_voltage_violation_pu':episode_result['max_voltage_violation_pu'],
+       'censored':episode_result['censored']})
   out=[]
   for i,c in enumerate(agents):
    if mode!='critic_share':c.set_global(server.theta)
@@ -185,6 +191,8 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'method':mode,'hetero':hetero,'attack':attack,'clients':clients_n,
           'malicious_clients':len(bad),'train_episodes':episodes,
           'scheduled_rounds':rounds,'completed_rounds':len(server_summaries),
+          'train_episode_records':len(train_episode_records),
+          'randomized_load_profile':'rng(seed+901), new scenario per episode',
           'eval_episodes':eval_episodes,'steps_per_episode':env.horizon,
           'fed_sync_interval':sync_interval,'batch_size':batch,'hidden_size':hidden,
           'latent_size':latent,'per_alpha':.6,'per_beta':.4,
@@ -201,7 +209,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'max_voltage_violation':max(v['max_voltage_violation_pu'] for v in test_runs),
           'uplink_bytes':traffic,
           'mean_malicious_weight':float(np.mean([x['malicious_weight'] for x in server_summaries]))}
- return summary,server_summaries,test_runs
+ return summary,server_summaries,test_runs,train_episode_records,agents,server
 
 def main():
  p=argparse.ArgumentParser()
@@ -224,11 +232,33 @@ def main():
  p.add_argument('--malicious-clients',type=int,default=1)
  p.add_argument('--out',type=Path,required=True)
  args=p.parse_args()
- result,rounds,tests=run(args.case,args.seed,args.mode,args.hetero,args.attack,
+ result,rounds,tests,train_episode_records,agents,server=run(args.case,args.seed,args.mode,args.hetero,args.attack,
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
      args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,args.malicious_clients)
  args.out.parent.mkdir(parents=True,exist_ok=True)
- args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests},
+ args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
+                                'train_episodes':train_episode_records},
                                 indent=2,allow_nan=False)+'\n')
+ import os,hashlib,sys
+ ckpt=args.out.with_suffix('.pt')
+ torch.save({'seed':args.seed,'method':args.mode,'case':args.case,
+             'server_theta':server.theta,'server_prototypes':server.prototypes,
+             'actors':[c.actor.state_dict() for c in agents],
+             'critics':[c.critic.state_dict() for c in agents],
+             'target_actors':[c.target_actor.state_dict() for c in agents],
+             'target_critics':[c.target_critic.state_dict() for c in agents],
+             'actor_adapter_optimizers':[c.adapter_opt.state_dict() for c in agents],
+             'critic_optimizers':[c.critic_opt.state_dict() for c in agents],
+             'replay_priorities':[c.replay.prior[:c.replay.n].copy() for c in agents],
+             'per_rng_states':[c.replay.rng.bit_generator.state for c in agents],
+             'commit_sha':os.getenv('GITHUB_SHA','unavailable')},ckpt)
+ digest=hashlib.sha256(ckpt.read_bytes()).hexdigest()
+ metadata={'git_commit':os.getenv('GITHUB_SHA','unavailable'),
+          'github_run_id':os.getenv('GITHUB_RUN_ID','unavailable'),
+          'python':sys.version.split()[0],
+          'torch':torch.__version__,
+          'checkpoint_sha256':digest,'checkpoint_path':ckpt.name,
+          'training_episodes_executed':result['train_episodes']}
+ args.out.with_suffix('.manifest.json').write_text(json.dumps(metadata,indent=2)+'\n')
  print(json.dumps(result))
 if __name__=='__main__':main()
