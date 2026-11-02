@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 
 def audit(root,output):
- files=sorted(root.rglob("*.json"))
+ files=sorted(p for p in root.rglob('*.json') if not p.name.endswith('.manifest.json'))
  rows=[];ids=set();bad=[]
  for f in files:
   try:
@@ -23,6 +23,21 @@ def audit(root,output):
    ids.add(identity)
    if len(rounds)!=s['completed_rounds'] or len(tests)!=s['eval_episodes']:
     raise ValueError("Count mismatch")
+   if s.get('train_episode_records') is not None:
+    train=d.get('train_episodes',[])
+    if len(train)!=s['train_episodes'] or len(train)!=s['train_episode_records']:
+     raise ValueError('Training episode record count mismatch')
+    if [t['episode'] for t in train]!=list(range(1,len(train)+1)):
+     raise ValueError('Nonconsecutive training records')
+   meta=f.with_suffix('.manifest.json')
+   checkpoint=f.with_suffix('.pt')
+   if meta.exists():
+    info=json.loads(meta.read_text())
+    if not checkpoint.exists():raise ValueError('Missing checkpoint for manifest')
+    if hashlib.sha256(checkpoint.read_bytes()).hexdigest()!=info['checkpoint_sha256']:
+     raise ValueError('Checkpoint hash mismatch')
+    if info['training_episodes_executed']!=s['train_episodes']:
+     raise ValueError('Training budget mismatch with provenance')
    if sum(x['uplink_bytes'] for x in rounds)!=s['uplink_bytes']:
     raise ValueError("Traffic accounting mismatch")
    if sum(int(x['safe_dwell5']) for x in tests)!=s['safe_dwell_successes']:
