@@ -44,7 +44,7 @@ class RecoveryGrid(Grid):
   # Honest distribution shift in the plant is not labeled malicious.
   # Sensing attack is confined to local observation and never changes the true AC solver.
   if self.attack in ('physical','joint') and 5<=self.step_idx<16:
-   target=len(o)-1
+   target=0 if self.hetero=='attackgroup' else len(o)-1
    o[target]=o[target].copy()
    if len(o[target])>1:o[target][1]+=0.12
    if len(o[target])>2:o[target][2]-=0.09
@@ -54,7 +54,8 @@ class RecoveryGrid(Grid):
   if self.hetero=='saturation':cmd[1::2]=np.minimum(cmd[1::2],.6)
   # Command corruption AFTER policy choice, evaluated against true physical state.
   if self.attack in ('physical','joint') and 5<=self.step_idx<16:
-   cmd[-1]=np.clip(cmd[-1]-.25,0,1)
+   target=0 if self.hetero=='attackgroup' else len(cmd)-1
+   cmd[target]=np.clip(cmd[target]-.25,0,1)
   old=self.served.copy()
   if self.hetero=='shift' and self.step_idx==11:
    # An unannounced legitimate 6% load demand step, preserving continuity of control.
@@ -165,7 +166,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
    for a,m in zip(agents,out):
     if m is not None:_set_flat(a.actor.backbone,_flatten(a.actor.backbone)+_torch.from_numpy(m['uncompressed']))
     _set_flat(a.critic,avg)
-   stats={'upload_bytes':sum(len(m['uncompressed'])*4 for m in out if m is not None),
+   stats={'upload_bytes':sum(_flatten(a.critic).numel()*4 for a in agents),
           'malicious_weight':0.,'accepted':len([m for m in out if m is not None])}
   else:
    stats=server.step(out,poisoned=bad,attack=atk,round_id=k)
@@ -190,6 +191,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'tau':.005,'gamma':.99,'kappa':kappa,'sharing_steps':sharing_steps,
           'local_fit_steps':steps,'weight_cap':str(weight_cap),
           'disable_proto':int(disable_proto),
+          'critic_traffic_scope':'analytic dense critic parameter payload (not serialized)' if mode=='critic_share' else 'measured application payload',
           'mean_test_load_pct':float(np.mean([v['final_restored_pct'] for v in test_runs])),
           'mean_test_load_auc_pct':float(np.mean([v['average_restored_pct'] for v in test_runs])),
           'safe_dwell_successes':sum(v['safe_dwell5'] for v in test_runs),
@@ -206,7 +208,7 @@ def main():
  p.add_argument('--case',type=int,choices=[39,118],required=True)
  p.add_argument('--seed',type=int,default=80)
  p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share'],default='adv')
- p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation'],default='dim')
+ p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation','attackgroup'],default='dim')
  p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint'],default='clean')
  p.add_argument('--episodes',type=int,default=10)
  p.add_argument('--clients',type=int,default=5)
