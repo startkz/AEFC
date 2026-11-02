@@ -8,6 +8,7 @@ TCP/IP headers, retransmissions, and downstream broadcasts are not measured.
 """
 import csv
 import json
+import struct
 from pathlib import Path
 
 import numpy as np
@@ -129,7 +130,7 @@ def aggregate_fedrl(updates, malicious=None, clip=None):
             if msg_norm > clip:
                 msg = msg * (clip / msg_norm)
         dense.append(msg)
-    return np.mean(dense, axis=0), sum(len(np.asarray(x,dtype='<f4').tobytes())+4 for x in dense)
+    return np.mean(dense, axis=0), sum(len(struct.pack('<I',len(x))+np.asarray(x,dtype='<f4').tobytes()) for x in dense)
 
 
 def aggregate_aefc(updates, scores, returns, stds, kappa=0.35, malicious=None):
@@ -159,7 +160,16 @@ def aggregate_aefc(updates, scores, returns, stds, kappa=0.35, malicious=None):
         align_gate.append(max(0.05, (cos + 1.0) / 2.0))
     creds = np.asarray(creds, dtype=float) * norm_gate * np.asarray(align_gate, dtype=float)
     creds = creds / np.sum(creds)
-    return np.sum(np.asarray(sparse) * creds[:, None], axis=0), sum(4+4*k+4*k+4+4+8 for _ in sparse)
+    # Client-side score computation selects indices before message encoding.
+    # Only indices, values, reported return and variability are transmitted;
+    # the full local score vector is intentionally NOT sent.
+    total_bytes=0
+    for i,(delta,score,ret,std) in enumerate(zip(updates,scores,returns,stds)):
+        index=np.argsort(score)[-k:].astype('<i4')
+        value=np.asarray(delta[index],dtype='<f4')
+        packet=struct.pack('<Iff',len(index),float(ret),float(std))+index.tobytes()+value.tobytes()
+        total_bytes+=len(packet)
+    return np.sum(np.asarray(sparse) * creds[:, None], axis=0), total_bytes
 
 
 def evaluate(w, rng, num_clients=5, episodes=25):
