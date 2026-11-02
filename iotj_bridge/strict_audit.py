@@ -18,7 +18,7 @@ def audit(root,output):
    s=d['summary'];rounds=d['rounds'];tests=d['tests']
    identity=(s['case'],s['seed'],s['method'],s['hetero'],s['attack'],
              s['weight_cap'],s['disable_proto'],
-             int(s['clients']),int(s['malicious_clients']))
+             int(s['clients']),int(s['malicious_clients']),int(s.get('disable_adapters',0)))
    if identity in ids:raise ValueError("Duplicate trial identity")
    ids.add(identity)
    if len(rounds)!=s['completed_rounds'] or len(tests)!=s['eval_episodes']:
@@ -64,7 +64,7 @@ def audit(root,output):
  with (output/'all_runs.csv').open('w',newline='') as f:
   w=csv.DictWriter(f,fieldnames=header);w.writeheader();w.writerows(rows)
  groups=defaultdict(list)
- for s in rows:groups[(s['case'],s['method'],s['hetero'],s['attack'],s['weight_cap'],s['disable_proto'],s['clients'],s['malicious_clients'])].append(s)
+ for s in rows:groups[(s['case'],s['method'],s['hetero'],s['attack'],s['weight_cap'],s['disable_proto'],s['clients'],s['malicious_clients'],s.get('disable_adapters',0))].append(s)
  aggregate=[]
  for key,values in sorted(groups.items(),key=str):
   recovered=np.array([x['mean_test_load_pct'] for x in values])
@@ -73,6 +73,7 @@ def audit(root,output):
   aggregate.append({'case':key[0],'method':key[1],'hetero':key[2],'attack':key[3],
     'weight_cap':key[4],'disable_proto':key[5],
     'clients':key[6],'malicious_clients':key[7],
+    'disable_adapters':key[8],
     'unique_train_seeds':len({x['seed'] for x in values}),
     'mean_final_restored_pct':float(recovered.mean()),
     'sd_final_restored_pct':float(recovered.std(ddof=1)) if len(values)>1 else None,
