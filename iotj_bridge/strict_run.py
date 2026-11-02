@@ -23,6 +23,10 @@ class RecoveryGrid(Grid):
  def reset(self):
   self.served=np.full(self.clients,.65)
   self.net.load.loc[:,'scaling']=.65
+  # Draw a new operational demand profile for each episode from a seeded RNG.
+  # Test environments have non-overlapping seeds and profiles.
+  self.demand=self.original*np.clip(self.rng.normal(1.,.025,len(self.original)),.92,1.08)
+  self.net.load.loc[:,'p_mw']=self.demand
   self.step_idx=0;self.obs_cache={};self.violations=[]
   self._solve();return self.observations()
  def observations(self):
@@ -45,8 +49,8 @@ class RecoveryGrid(Grid):
   for i,group in enumerate(self.groups):
    self.net.load.iloc[group,self.net.load.columns.get_loc('scaling')]=self.served[i]
   self.step_idx+=1;self._solve()
-  demand=np.array([self.original[g].sum() for g in self.groups])
-  restored=100*float(np.dot(demand,self.served)/self.original.sum())
+  demand=np.array([self.demand[g].sum() for g in self.groups])
+  restored=100*float(np.dot(demand,self.served)/self.demand.sum())
   safe=bool(self.valid and self.thermal_excess<=1.e-7 and self.voltage_excess<=1.e-7)
   if not self.valid:cost=10.
   else:cost=min(10.,.02*self.thermal_excess+.1*self.voltage_excess)
