@@ -258,6 +258,7 @@ def main():
           'python':sys.version.split()[0],
           'torch':torch.__version__,
           'checkpoint_sha256':digest,'checkpoint_path':ckpt.name,
+          'source_json_sha256':hashlib.sha256(args.out.read_bytes()).hexdigest(),
           'training_episodes_executed':result['train_episodes']}
  args.out.with_suffix('.manifest.json').write_text(json.dumps(metadata,indent=2)+'\n')
  print(json.dumps(result))
