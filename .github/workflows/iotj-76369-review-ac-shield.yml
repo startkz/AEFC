@@ -2,7 +2,7 @@ name: IoTJ hard pre-action AC constraint shield frozen policy
 on:
   push:
     branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
-    paths: ['.github/workflows/iotj-76369-review-ac-shield.yml']
+    paths: ['.github/workflows/iotj-76369-review-ac-shield.yml','iotj_bridge/strict_ac_shield.py']
   workflow_dispatch:
 permissions:
   contents: read
