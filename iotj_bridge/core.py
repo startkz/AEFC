@@ -124,7 +124,7 @@ def aggregate(theta,messages,previous=None,clip=.075,utility_cap=1.,eps=.001,
             if attack in ('proto','joint') and previous:
                 m['prototypes']={k:v.clone().numpy() for k,v in previous.items()}
             if attack in ('update','joint'):
-                m['val']=-np.sign(m['val']+1e-10)*np.minimum(np.abs(m['val'])*2+.01,clip/max(1,np.sqrt(len(m['val']))))
+                m['val']=np.asarray(-np.sign(m['val']+1e-10)*np.minimum(np.abs(m['val'])*2+.01,clip/max(1,np.sqrt(len(m['val'])))),dtype=np.float32)
         tx+=serialized_bytes(m)
         if np.isfinite(m['val']).all() and math.isfinite(m['utility']):packed.append((i,m))
     if not packed:return theta.clone(),previous,[0.]*len(messages),tx
