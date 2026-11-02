@@ -101,7 +101,8 @@ def run_episode(env,agents,explore,noise_seed,trace=False):
 
 def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
         clients_n=5,batch=256,hidden=128,latent=32,steps=5,
-        sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False):
+        sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False,
+        malicious_clients=1):
  torch.set_num_threads(1);torch.manual_seed(seed);np.random.seed(seed)
  env=RecoveryGrid(case,clients_n,seed,hetero,attack='physical' if attack in ('physical','joint') else 'clean')
  observations=env.reset()
@@ -127,7 +128,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
                update_after=max(16,min(batch,128)))
    out.append(c.share(server.theta,mode=mode,kappa=kappa,
                       sharing_steps=sharing_steps))
-  bad=tuple(range(max(0,clients_n-1),clients_n)) if attack in ('poison','joint','delayed_joint') else ()
+  bad=tuple(range(clients_n-min(malicious_clients,clients_n),clients_n)) if attack in ('poison','joint','delayed_joint') else ()
   atk='joint' if attack in ('poison','joint') else ('delayed_joint' if attack=='delayed_joint' else None)
   stats=server.step(out,poisoned=bad,attack=atk,round_id=k)
   traffic+=stats['upload_bytes']
@@ -180,11 +181,12 @@ def main():
  p.add_argument('--eval-episodes',type=int,default=3)
  p.add_argument('--weight-cap',type=float,default=None)
  p.add_argument('--disable-proto',action='store_true')
+ p.add_argument('--malicious-clients',type=int,default=1)
  p.add_argument('--out',type=Path,required=True)
  args=p.parse_args()
  result,rounds,tests=run(args.case,args.seed,args.mode,args.hetero,args.attack,
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
-     args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto)
+     args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,args.malicious_clients)
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests},
                                 indent=2,allow_nan=False)+'\n')
