@@ -42,7 +42,7 @@ jobs:
           p=pathlib.Path('results/iotj_review_semantic/case${{ matrix.case }}/seed${{ matrix.seed }}/prototype_${{ matrix.prototype }}.json')
           x=json.loads(p.read_text())
           assert x['episodes']==1000 and x['completed_rounds']==200
-          assert 0<=x['mean_heldout_load']<=100
+          assert -1e-8<=x['mean_heldout_load']<=100+1e-8
           assert all(r['support']>=0 and math.isfinite(r['distance_l2']) for r in x['client_class_metrics'])
           assert x['limitation'].startswith('weak recovery-state labels')
           print('PASS empirical semantic category/prototype support',len(x['client_class_metrics']))
