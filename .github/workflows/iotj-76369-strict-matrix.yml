@@ -39,7 +39,7 @@ jobs:
           mkdir -p "$root"
           common=(--case ${{ matrix.case }} --seed ${{ matrix.seed }} --episodes 30 --batch 256 --hidden 128 --latent 32 --eval-episodes 3 --clients 5 --local-steps 5 --sharing-steps 2)
           if [ "${{ matrix.study }}" = advantage ]; then
-            for method in adv ordinary random td uniform_high; do
+            for method in adv ordinary random td uniform_high dense adv_no_cw; do
               python iotj_bridge/strict_run.py "${common[@]}" --mode "$method" --hetero dim --attack clean --out "$root/${method}_dim_clean.json"
             done
           elif [ "${{ matrix.study }}" = heterogeneity ]; then
@@ -47,6 +47,7 @@ jobs:
               python iotj_bridge/strict_run.py "${common[@]}" --mode adv --hetero "$het" --out "$root/adv_${het}_clean.json"
             done
             python iotj_bridge/strict_run.py "${common[@]}" --mode adv --hetero dim --disable-proto --out "$root/adv_dim_noproto.json"
+            python iotj_bridge/strict_run.py "${common[@]}" --mode critic_share --hetero base --out "$root/critic_share_base.json"
           else
             for attack in clean poison joint delayed_joint; do
               python iotj_bridge/strict_run.py "${common[@]}" --mode adv --hetero dim --attack "$attack" --out "$root/adv_${attack}.json"
