@@ -130,7 +130,7 @@ def run_episode(env,agents,explore,noise_seed,trace=False):
 def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
         clients_n=5,batch=256,hidden=128,latent=32,steps=5,
         sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False,
-        malicious_clients=1,disable_adapters=False):
+        malicious_clients=1,disable_adapters=False,fixed_traffic=False):
  torch.set_num_threads(1);torch.manual_seed(seed);np.random.seed(seed)
  env=RecoveryGrid(case,clients_n,seed,hetero,attack='physical' if attack in ('physical','joint') else 'clean')
  observations=env.reset()
@@ -163,7 +163,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
                update_after=max(16,min(batch,128)))
    out.append(c.share(flatten(c.actor.backbone) if mode=='critic_share' else server.theta,
                       mode='adv' if mode=='adv_no_cw' else mode,kappa=kappa,
-                      sharing_steps=sharing_steps))
+                      sharing_steps=sharing_steps,fixed_traffic=fixed_traffic))
   bad=tuple(range(clients_n-min(malicious_clients,clients_n),clients_n)) if attack in ('poison','joint','delayed_joint') else ()
   atk='joint' if attack in ('poison','joint') else ('delayed_joint' if attack=='delayed_joint' else None)
   if mode=='critic_share':
@@ -203,6 +203,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'tau':.005,'gamma':.99,'kappa':kappa,'sharing_steps':sharing_steps,
           'local_fit_steps':steps,'weight_cap':str(weight_cap),
           'disable_proto':int(disable_proto),'disable_adapters':int(disable_adapters),
+          'fixed_traffic':int(fixed_traffic),
           'critic_traffic_scope':'analytic dense critic parameter payload (not serialized)' if mode=='critic_share' else 'measured application payload',
           'mean_test_load_pct':float(np.mean([v['final_restored_pct'] for v in test_runs])),
           'mean_test_load_auc_pct':float(np.mean([v['average_restored_pct'] for v in test_runs])),
@@ -234,12 +235,13 @@ def main():
  p.add_argument('--weight-cap',type=float,default=None)
  p.add_argument('--disable-proto',action='store_true')
  p.add_argument('--disable-adapters',action='store_true')
+ p.add_argument('--fixed-traffic',action='store_true')
  p.add_argument('--malicious-clients',type=int,default=1)
  p.add_argument('--out',type=Path,required=True)
  args=p.parse_args()
  result,rounds,tests,train_episode_records,agents,server=run(args.case,args.seed,args.mode,args.hetero,args.attack,
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
-     args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,args.malicious_clients,args.disable_adapters)
+     args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,args.malicious_clients,args.disable_adapters,args.fixed_traffic)
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
                                 'train_episodes':train_episode_records},
