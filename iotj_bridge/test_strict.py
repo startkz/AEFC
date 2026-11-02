@@ -4,9 +4,9 @@ import math, tempfile
 import numpy as np
 import torch
 try:
- from .strict_agent import PER,Agent,Server,ServerSettings,flatten
+ from .strict_agent import PER,Agent,Server,ServerSettings,flatten,serialized_size
 except ImportError:
- from strict_agent import PER,Agent,Server,ServerSettings,flatten
+ from strict_agent import PER,Agent,Server,ServerSettings,flatten,serialized_size
 
 def test_replay():
  p=PER(3,100,alpha=.6,seed=33)
@@ -54,8 +54,19 @@ def test_malicious_metadata():
  cc=cap.step([base,base,base,base,base],poisoned=[4],attack='joint')
  assert cc['malicious_weight']<=.3500001
  assert un['upload_bytes']==cc['upload_bytes']
+def test_fixed_byte_transport():
+ a=Agent(3,seed=88,latent=8,hidden=16,batch=16)
+ theta=flatten(a.actor.backbone)
+ empty=a._zero_sparse_message(theta,.2)
+ for j in range(60):
+  state=np.ones(3,dtype=np.float32)*j/100
+  a.replay.add(state,.5,.1,state,False,'unsafe')
+ partial=a._zero_sparse_message(theta,.2)
+ assert empty['pad_bytes']>partial['pad_bytes']
+ assert serialized_size(empty)==serialized_size(partial), 'metadata padding mismatch'
+
 def run():
  torch.set_num_threads(1)
- test_replay();test_local_and_sharing();test_malicious_metadata()
+ test_replay();test_local_and_sharing();test_malicious_metadata();test_fixed_byte_transport()
  print('PASS strict PER, optimizer boundary, serialization, capped server tests')
 if __name__=='__main__':run()
