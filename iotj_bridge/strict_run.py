@@ -100,7 +100,15 @@ def run_episode(env,agents,explore,noise_seed,trace=False):
   cat=category_label(prev,info)
   prev=max(0.,90-info['restored_pct'])/90+min(10.,info['thermal_excess_pct_sum'])/10.+info['voltage_violation_pu_sum']
   if explore:
-   for i,c in enumerate(agents):c.replay.add(obs[i],a[i],rews[i],ns[i],done,cat)
+   for i,c in enumerate(agents):
+    # Labels are computed from the client's own served-load trajectory and
+    # the public AC safety alert; neither joint trajectories nor attack IDs are used.
+    local_served=float(env.served[i])
+    prior_served=float(obs[i][0])
+    local_label=('stable' if info['safe'] and local_served>=.90
+                 else 'recovering' if local_served-prior_served>1.e-4 and info['ac_converged']
+                 else 'unsafe')
+    c.replay.add(obs[i],a[i],rews[i],ns[i],done,local_label)
   dwell=dwell+1 if info['safe'] and info['restored_pct']>=90 else 0
   if dwell>=5 and first is None:first=env.step_idx-4
   if trace:records.append({'t':env.step_idx,**info,'recovery_label':cat})
