@@ -174,7 +174,8 @@ class Agent:
             selected=torch.nonzero(advantage>zeta).flatten()
             n=int(selected.numel())
             # Non-adv selection methods have matched transition counts, independent of advantages.
-            if mode=="ordinary":selected=torch.arange(len(s))[:n]
+            if mode in ('dense','critic_share'):selected=torch.arange(len(s))
+            elif mode=="ordinary":selected=torch.arange(len(s))[:n]
             elif mode=="random":
                 selected=torch.randperm(len(s),generator=torch.Generator().manual_seed(int(self.rng.integers(2**31))))[:n]
             elif mode=="td":
@@ -198,7 +199,7 @@ class Agent:
             loss=-(weight*q).sum()
             opt.zero_grad(set_to_none=True);loss.backward();opt.step()
         delta=flatten(self.actor.backbone)-torch.as_tensor(theta)
-        k=max(1,int(math.ceil(float(kappa)*delta.numel())))
+        k=max(1,int(math.ceil((1.0 if mode in ('dense','critic_share') else float(kappa))*delta.numel())))
         # Stable magnitude sort: smaller coordinate wins ties.
         indices=torch.argsort(delta.abs(),descending=True,stable=True)[:k].sort().values
         message={'idx':indices.numpy().astype(np.int32),
@@ -234,6 +235,7 @@ class ServerSettings:
     shift_lambda:float=1.
     eta_global:float=1.
     max_weight:float|None=None
+    equal_weight:bool=False
 
 class Server:
     def __init__(self,theta,settings=None):
@@ -276,6 +278,7 @@ class Server:
             return {'weight':np.zeros(len(messages)), 'upload_bytes':traffic,'accepted':0,'drift':[]}
         w=np.asarray(scores,dtype=float)
         w=w/w.sum() if w.sum()>0 else np.ones_like(w)/len(w)
+        if config.equal_weight:w=np.ones_like(w)/len(w)
         if config.max_weight is not None:
             cap=float(config.max_weight)
             if cap<len(w)**-1 or cap>1:raise ValueError("infeasible weight cap")
