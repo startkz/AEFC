@@ -72,7 +72,7 @@ class Grid:
         return self.observations(),[reward-.05*(self.served[i]-old[i])**2
                                    for i in range(self.clients)],self.step_idx>=8 or not self.valid,info
 
-def single_run(case,mode,hetero,poison,seed,episodes,clients_n,weight_cap=None):
+def single_run(case,mode,hetero,poison,seed,episodes,clients_n,weight_cap=None,disable_proto=False):
     torch.set_num_threads(1)
     env=Grid(case,clients_n,seed,hetero)
     obs=env.reset()
@@ -98,7 +98,7 @@ def single_run(case,mode,hetero,poison,seed,episodes,clients_n,weight_cap=None):
         updates=[]
         for i,c in enumerate(learners):
             c.adapt(seed*1000+episode*10+i,previous,steps=1,batch_size=16,
-                    align=hetero!='no_proto')
+                    align=not disable_proto)
             updates.append(c.share(theta,seed*1000+episode*10+i,mode=mode,batch_size=16,
                                    ratio=.2,steps=2))
         compromised=(clients_n-1,) if poison!='none' else ()
@@ -107,7 +107,7 @@ def single_run(case,mode,hetero,poison,seed,episodes,clients_n,weight_cap=None):
         for c in learners:assign(c.backbone,theta)
         total+=bytes_this
         rows.append({'case':case,'seed':seed,'method':mode,'hetero':hetero,
-                     'attack':poison,'weight_cap':str(weight_cap),'episode':episode+1,'restored_pct':last['restored_pct'],'recovery_auc_pct':float(np.mean(load_path)),
+                     'attack':poison,'weight_cap':str(weight_cap),'disable_proto':int(disable_proto),'episode':episode+1,'restored_pct':last['restored_pct'],'recovery_auc_pct':float(np.mean(load_path)),
                      'safe_90_dwell2':int(any(load_path[j]>=90 and load_path[j+1]>=90 and safe_path[j] and safe_path[j+1] for j in range(len(load_path)-1))),
                      'safe':int(last['safe']),'ac_converged':int(last['ac_converged']),
                      'voltage_violation_pu_sum':last['voltage_violation_pu_sum'],
@@ -125,9 +125,10 @@ def main():
     p.add_argument('--episodes',type=int,default=4)
     p.add_argument('--clients',type=int,default=5)
     p.add_argument('--weight-cap',type=float,default=None)
+    p.add_argument('--disable-proto',action='store_true')
     p.add_argument('--out',type=Path,required=True)
     a=p.parse_args()
-    records=single_run(a.case,a.mode,a.hetero,a.attack,a.seed,a.episodes,a.clients,a.weight_cap)
+    records=single_run(a.case,a.mode,a.hetero,a.attack,a.seed,a.episodes,a.clients,a.weight_cap,a.disable_proto)
     a.out.parent.mkdir(parents=True,exist_ok=True)
     with a.out.open('w',newline='') as f:
         w=csv.DictWriter(f,fieldnames=records[0].keys())
