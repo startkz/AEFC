@@ -21,8 +21,8 @@ class RecoveryGrid(Grid):
   self.rng=np.random.default_rng(seed+901)
   super().__init__(case,clients,seed,hetero)
  def reset(self):
-  self.served=np.full(self.clients,.48)
-  self.net.load.loc[:,'scaling']=.48
+  self.served=np.full(self.clients,.65)
+  self.net.load.loc[:,'scaling']=.65
   self.step_idx=0;self.obs_cache={};self.violations=[]
   self._solve();return self.observations()
  def observations(self):
