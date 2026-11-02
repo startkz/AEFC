@@ -27,10 +27,21 @@ class RecoveryGrid(Grid):
   # Test environments have non-overlapping seeds and profiles.
   self.demand=self.original*np.clip(self.rng.normal(1.,.025,len(self.original)),.92,1.08)
   self.net.load.loc[:,'p_mw']=self.demand
-  self.step_idx=0;self.obs_cache={};self.violations=[]
+  self.step_idx=0;self.obs_cache={};self.violations=[];self._delay_history=[]
   self._solve();return self.observations()
  def observations(self):
-  o=super().observations()
+  if self.hetero in ('delay','shift'):
+   saved=self.hetero;self.hetero='base';o=super().observations();self.hetero=saved
+  else:o=super().observations()
+  if self.hetero=='delay':
+   # Exact 2-step stale local measurements, not fabricated constant voltage.
+   history=getattr(self,'_delay_history',[])
+   out=[x.copy() for x in o]
+   for j in range(1,len(out),2):
+    if len(history)>=2:out[j][1:4]=history[-2][j][1:4]
+   history.append([x.copy() for x in o]);self._delay_history=history[-4:]
+   o=out
+  # Honest distribution shift in the plant is not labeled malicious.
   # Sensing attack is confined to local observation and never changes the true AC solver.
   if self.attack in ('physical','joint') and 5<=self.step_idx<16:
    target=len(o)-1
@@ -45,6 +56,11 @@ class RecoveryGrid(Grid):
   if self.attack in ('physical','joint') and 5<=self.step_idx<16:
    cmd[-1]=np.clip(cmd[-1]-.25,0,1)
   old=self.served.copy()
+  if self.hetero=='shift' and self.step_idx==11:
+   # An unannounced legitimate 6% load demand step, preserving continuity of control.
+   for group in self.groups[1::2]:
+    self.demand[group]*=1.06
+   self.net.load.loc[:,'p_mw']=self.demand
   self.served=np.clip(old+.018*np.clip(cmd,0,1),0,1)
   for i,group in enumerate(self.groups):
    self.net.load.iloc[group,self.net.load.columns.get_loc('scaling')]=self.served[i]
