@@ -1,0 +1,56 @@
+name: IoTJ reviewer empirical semantic recovery prototypes
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-review-semantic.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  semantic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        case: [39,118]
+        seed: [80,81,82]
+        prototype: [on,off]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - run: python iotj_bridge/test_strict.py
+      - name: Execute full-budget trained agents and calculate semantic cluster diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--case ${{ matrix.case }} --seed ${{ matrix.seed }} --episodes 1000)
+          if [ "${{ matrix.prototype }}" = off ]; then args+=(--disable-proto); fi
+          python iotj_bridge/strict_semantic_audit.py "${args[@]}" --out "results/iotj_review_semantic/case${{ matrix.case }}/seed${{ matrix.seed }}/prototype_${{ matrix.prototype }}.json"
+      - name: Audit category support and valid distances
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,pathlib,math
+          p=pathlib.Path('results/iotj_review_semantic/case${{ matrix.case }}/seed${{ matrix.seed }}/prototype_${{ matrix.prototype }}.json')
+          x=json.loads(p.read_text())
+          assert x['episodes']==1000 and x['completed_rounds']==200
+          assert 0<=x['mean_heldout_load']<=100
+          assert all(r['support']>=0 and math.isfinite(r['distance_l2']) for r in x['client_class_metrics'])
+          assert x['limitation'].startswith('weak recovery-state labels')
+          print('PASS empirical semantic category/prototype support',len(x['client_class_metrics']))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-semantic-case${{ matrix.case }}-seed${{ matrix.seed }}-proto${{ matrix.prototype }}-${{ github.sha }}
+          path: results/iotj_review_semantic/
+          if-no-files-found: warn
+          retention-days: 90
