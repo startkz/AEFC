@@ -167,7 +167,7 @@ class Agent:
         return {m:z[categories==i].mean(0).cpu() for i,m in enumerate(CATEGORIES)
                 if np.any(categories==i)}
     def share(self,theta,mode="adv",kappa=.2,sharing_steps=2,zeta=0.,
-              fixed_batch=None):
+              fixed_batch=None,fixed_traffic=False):
         set_flat(self.actor.backbone,theta)
         if len(self.replay)<1:return None
         b=self.replay.sample(self.batch) if fixed_batch is None else fixed_batch
@@ -190,11 +190,15 @@ class Agent:
                 td=(y-qbeh).abs().flatten()
                 selected=torch.argsort(td,descending=True,stable=True)[:n]
             elif mode not in ("adv","uniform_high"):raise ValueError(mode)
-        if not len(selected):return None
+        if not len(selected):
+            if not fixed_traffic:return None
+            return self._zero_sparse_message(theta,kappa)
         # v_j*A_j normalized for advantage; compare high-set uniform and ordinary.
         if mode=="adv":raw=(isw[selected]*advantage[selected]).detach().clamp_min(0)
         else:raw=isw[selected].detach().clamp_min(0)
-        if float(raw.sum())<=0:return None
+        if float(raw.sum())<=0:
+            if not fixed_traffic:return None
+            return self._zero_sparse_message(theta,kappa)
         weight=(raw/raw.sum()).detach()
         for p in list(self.actor.encoder.parameters())+list(self.actor.head.parameters())+list(self.critic.parameters()):
             p.requires_grad_(False)
@@ -214,10 +218,32 @@ class Agent:
                  'proto':self.prototypes(),
                  'high_count':int(n),'selection_count':int(len(selected)),
                  'uncompressed':delta.numpy().copy()}
+        if fixed_traffic:self._set_fixed_padding(message)
         for p in list(self.actor.encoder.parameters())+list(self.actor.head.parameters())+list(self.critic.parameters()):
             p.requires_grad_(True)
         set_flat(self.actor.backbone,theta)
         return message
+
+    def _zero_sparse_message(self,theta,kappa):
+        theta=torch.as_tensor(theta,dtype=torch.float32)
+        k=max(1,int(math.ceil(float(kappa)*theta.numel())))
+        msg={'idx':np.arange(k,dtype=np.int32),
+             'val':np.zeros(k,dtype=np.float32),'n':theta.numel(),
+             'utility':0.,'proto':self.prototypes(),
+             'high_count':0,'selection_count':0,
+             'uncompressed':np.zeros(theta.numel(),np.float32)}
+        self._set_fixed_padding(msg)
+        return msg
+
+    def _set_fixed_padding(self,message):
+        # Fixed payload length for every federated round, even for empty
+        # positive-advantage selections or missing recovery categories.
+        # This is real serialized zero-padding, not just a numeric correction.
+        latent=int(self.actor.encoder[-1].out_features)
+        expected=sum(8+len(name.encode('utf8'))+4*latent for name in CATEGORIES)
+        present=sum(8+len(k.encode('utf8'))+4*len(vec)
+                    for k,vec in message['proto'].items())
+        message['pad_bytes']=max(0,expected-present)
 
 def serialized_size(m):
     if m is None:return 0
@@ -229,6 +255,7 @@ def serialized_size(m):
     for name,vec in sorted(m['proto'].items()):
         key=name.encode('utf8');v=np.asarray(vec,dtype='<f4')
         f.write(struct.pack('<II',len(key),len(v)));f.write(key);f.write(v.tobytes())
+    f.write(b'\\x00'*int(m.get('pad_bytes',0)))
     return len(f.getvalue())
 
 @dataclass
