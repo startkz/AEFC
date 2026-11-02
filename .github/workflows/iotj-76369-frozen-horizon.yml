@@ -1,0 +1,58 @@
+name: IoT-J independent frozen horizon physical safety sensitivity
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-frozen-horizon.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  frozen-policy-physical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install exact frozen checkpoint runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Fetch two independently completed full-budget 39-bus checkpoints
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 41388252400
+          pattern: iotj-full1000-case39-seed82-*
+          path: restored-evidence/
+          merge-multiple: true
+          github-token: ${{ github.token }}
+      - name: Verify checkout includes real 1000-episode experiment objects
+        run: |
+          test -s restored-evidence/iotj_full1000/case39/seed82/adv_dim_clean.pt
+          test -s restored-evidence/iotj_full1000/case39/seed82/ordinary_dim_clean.pt
+          python iotj_bridge/strict_audit.py \
+            --input restored-evidence/iotj_full1000/case39/seed82 \
+            --out results/independent_horizon/checkpoint_audit
+      - name: Re-evaluate the same frozen controllers, no retraining
+        shell: bash
+        run: |
+          set -euo pipefail
+          for method in adv ordinary; do
+            for horizon in 30 50; do
+              python iotj_bridge/strict_eval_frozen_horizon.py \
+                --checkpoint restored-evidence/iotj_full1000/case39/seed82/${method}_dim_clean.pt \
+                --steps "$horizon" --tests 10 \
+                --out "results/independent_horizon/${method}_horizon${horizon}.json"
+            done
+          done
+      - name: Store all independent physical outcomes and model hashes
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-independent-39-frozen-horizon-${{ github.sha }}
+          path: results/independent_horizon/
+          if-no-files-found: warn
+          retention-days: 90
