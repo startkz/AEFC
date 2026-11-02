@@ -255,7 +255,7 @@ def serialized_size(m):
     for name,vec in sorted(m['proto'].items()):
         key=name.encode('utf8');v=np.asarray(vec,dtype='<f4')
         f.write(struct.pack('<II',len(key),len(v)));f.write(key);f.write(v.tobytes())
-    f.write(b'\\x00'*int(m.get('pad_bytes',0)))
+    f.write(bytes(int(m.get('pad_bytes',0))))
     return len(f.getvalue())
 
 @dataclass
