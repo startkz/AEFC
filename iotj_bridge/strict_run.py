@@ -128,7 +128,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
   agents.append(Agent(len(obs),seed*100+i,latent=latent,hidden=hidden,
                       act_high=action_high,batch=batch))
  theta=flatten(agents[0].actor.backbone)
- settings=ServerSettings(max_weight=weight_cap)
+ settings=ServerSettings(max_weight=weight_cap,equal_weight=(mode=='adv_no_cw' or mode=='dense'))
  server=Server(theta,settings)
  for c in agents:c.set_global(server.theta)
  first_record=[];traffic=0;server_summaries=[]
@@ -139,16 +139,30 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
    run_episode(env,agents,True,noise_seed=seed*100000+e)
   out=[]
   for i,c in enumerate(agents):
-   c.set_global(server.theta)
+   if mode!='critic_share':c.set_global(server.theta)
    c.local_fit(steps=steps,prototypes=server.prototypes,disable_proto=disable_proto,
                update_after=max(16,min(batch,128)))
-   out.append(c.share(server.theta,mode=mode,kappa=kappa,
+   out.append(c.share(flatten(c.actor.backbone) if mode=='critic_share' else server.theta,
+                      mode='adv' if mode=='adv_no_cw' else mode,kappa=kappa,
                       sharing_steps=sharing_steps))
   bad=tuple(range(clients_n-min(malicious_clients,clients_n),clients_n)) if attack in ('poison','joint','delayed_joint') else ()
   atk='joint' if attack in ('poison','joint') else ('delayed_joint' if attack=='delayed_joint' else None)
-  stats=server.step(out,poisoned=bad,attack=atk,round_id=k)
+  if mode=='critic_share':
+   # A2FC-inspired architectural control: only critic weights are pooled.
+   # Local actor backbones remain personalized, unlike AEFC-FRL. This is NOT
+   # a faithful reproduction of the original A2C-specific A2FC algorithm.
+   from strict_agent import set_flat as _set_flat,flatten as _flatten
+   import torch as _torch
+   avg=_torch.stack([_flatten(a.critic) for a in agents]).mean(0)
+   for a,m in zip(agents,out):
+    if m is not None:_set_flat(a.actor.backbone,_flatten(a.actor.backbone)+_torch.from_numpy(m['uncompressed']))
+    _set_flat(a.critic,avg)
+   stats={'upload_bytes':sum(len(m['uncompressed'])*4 for m in out if m is not None),
+          'malicious_weight':0.,'accepted':len([m for m in out if m is not None])}
+  else:
+   stats=server.step(out,poisoned=bad,attack=atk,round_id=k)
+   for a in agents:a.set_global(server.theta)
   traffic+=stats['upload_bytes']
-  for a in agents:a.set_global(server.theta)
   server_summaries.append({'round':k,'uplink_bytes':stats['upload_bytes'],
                            'malicious_weight':stats['malicious_weight'],'accepted':stats['accepted'],
                            'trained_episodes':min((k+1)*sync_interval,episodes)})
@@ -183,7 +197,7 @@ def main():
  p=argparse.ArgumentParser()
  p.add_argument('--case',type=int,choices=[39,118],required=True)
  p.add_argument('--seed',type=int,default=80)
- p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high'],default='adv')
+ p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share'],default='adv')
  p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation'],default='dim')
  p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint'],default='clean')
  p.add_argument('--episodes',type=int,default=10)
