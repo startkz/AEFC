@@ -22,8 +22,8 @@ class Grid:
         self.original=self.net.load.p_mw.to_numpy(copy=True)
         self.reset()
     def reset(self):
-        self.served=np.full(self.clients,.72)
-        self.net.load.loc[:,'scaling']=.72;self.step_idx=0
+        self.served=np.full(self.clients,.55)
+        self.net.load.loc[:,'scaling']=.55;self.step_idx=0
         self._solve()
         return self.observations()
     def _solve(self):
@@ -57,7 +57,7 @@ class Grid:
         action=np.asarray(actions,float)
         if self.hetero=='saturation':action[1::2]=np.minimum(action[1::2],.25)
         old=self.served.copy()
-        self.served=np.clip(old+.1*np.clip(action,0,1),0,1)
+        self.served=np.clip(old+.08*np.clip(action,0,1),0,1)
         for i,group in enumerate(self.groups):
             self.net.load.iloc[group,self.net.load.columns.get_loc('scaling')]=self.served[i]
         self.step_idx+=1;self._solve()
@@ -81,7 +81,7 @@ def single_run(case,mode,hetero,poison,seed,episodes,clients_n):
     for c in learners:assign(c.backbone,theta)
     previous=None;rows=[];total=0
     for episode in range(episodes):
-        obs=env.reset();done=False;idx=0
+        obs=env.reset();done=False;idx=0;load_path=[];safe_path=[]
         while not done:
             action=[]
             for i,(c,o) in enumerate(zip(learners,obs)):
@@ -94,7 +94,7 @@ def single_run(case,mode,hetero,poison,seed,episodes,clients_n):
                       else 'recovering' if last['restored_pct']>=75 else 'unsafe')
             for i,c in enumerate(learners):
                 c.append(obs[i],action[i],reward[i],next_obs[i],done,category)
-            obs=next_obs;idx+=1
+            obs=next_obs;idx+=1;load_path.append(last['restored_pct']);safe_path.append(int(last['safe']))
         updates=[]
         for i,c in enumerate(learners):
             c.adapt(seed*1000+episode*10+i,previous,steps=1,batch_size=16,
@@ -107,7 +107,8 @@ def single_run(case,mode,hetero,poison,seed,episodes,clients_n):
         for c in learners:assign(c.backbone,theta)
         total+=bytes_this
         rows.append({'case':case,'seed':seed,'method':mode,'hetero':hetero,
-                     'attack':poison,'episode':episode+1,'restored_pct':last['restored_pct'],
+                     'attack':poison,'episode':episode+1,'restored_pct':last['restored_pct'],'recovery_auc_pct':float(np.mean(load_path)),
+                     'safe_90_dwell2':int(any(load_path[j]>=90 and load_path[j+1]>=90 and safe_path[j] and safe_path[j+1] for j in range(len(load_path)-1))),
                      'safe':int(last['safe']),'ac_converged':int(last['ac_converged']),
                      'voltage_violation_pu_sum':last['voltage_violation_pu_sum'],
                      'thermal_excess_pct_sum':last['thermal_excess_pct_sum'],
