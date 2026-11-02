@@ -40,6 +40,12 @@ jobs:
           python iotj_bridge/strict_physical_audit.py \
              --input results/audit_acceptance/case${{ matrix.case }}/adv_99.json \
              --out results/audit_acceptance_audit/case${{ matrix.case }}/physical.csv
+      - name: Verify the publication gate rejects a valid short smoke as incomplete
+        run: |
+          python iotj_bridge/strict_resubmission_gate.py \
+            --input results/audit_acceptance/case${{ matrix.case }} \
+            --out results/audit_acceptance_audit/case${{ matrix.case }}/gate --allow-incomplete
+          python -c 'import json,pathlib,sys; p=pathlib.Path("results/audit_acceptance_audit/case${{ matrix.case }}/gate/gate_report.json"); s=json.loads(p.read_text()); assert s["status"]=="INCOMPLETE",s'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
