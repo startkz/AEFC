@@ -63,8 +63,8 @@ class PredictiveACShield(RecoveryGrid):
                 scored.append((cmd,p,score))
             feasible=[x for x in scored if x[1]['feasible']]
             if feasible:
-                # Prefer the feasible command that serves the most demand.
-                selected,selected_result,_=max(feasible,key=lambda z:z[1]['served_pct'])
+                # Minimal intervention: project to nearest feasible candidate; use served demand only to break ties.
+                selected,selected_result,_=min(feasible,key=lambda z:(float(np.linalg.norm(z[0]-requested)), -z[1]['served_pct']))
                 found=True
             else:
                 # No false claim of hard safety: fail-closed to the best
