@@ -62,7 +62,7 @@ def test_all_updates_missing():
  assert torch.equal(x['direction'],torch.zeros(6))
  assert np.array_equal(x['weight'],np.zeros(3))
 
-def test_fixed_byte_transport();test_all_updates_missing():
+def test_fixed_byte_transport():
  a=Agent(3,seed=88,latent=8,hidden=16,batch=16)
  theta=flatten(a.actor.backbone)
  empty=a._zero_sparse_message(theta,.2)
@@ -75,6 +75,6 @@ def test_fixed_byte_transport();test_all_updates_missing():
 
 def run():
  torch.set_num_threads(1)
- test_replay();test_local_and_sharing();test_malicious_metadata();test_fixed_byte_transport()
+ test_replay();test_local_and_sharing();test_malicious_metadata();test_fixed_byte_transport();test_all_updates_missing()
  print('PASS strict PER, optimizer boundary, serialization, capped server tests')
 if __name__=='__main__':run()
