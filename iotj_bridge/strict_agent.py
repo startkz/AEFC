@@ -112,7 +112,7 @@ class Agent:
         with torch.no_grad():
             for a,b in zip(source.parameters(),target.parameters()):
                 b.mul_(1-self.tau).add_(self.tau*a)
-    def local_fit(self,steps,prototypes=None,disable_proto=False,update_after=256):
+    def local_fit(self,steps,prototypes=None,disable_proto=False,update_after=256,disable_adapter=False):
         if len(self.replay)<update_after:return {'updates':0}
         for p in self.actor.backbone.parameters():p.requires_grad_(False)
         n=0;last_td=0.;last_align=0.
@@ -127,6 +127,12 @@ class Agent:
             self.critic_opt.zero_grad(set_to_none=True)
             critic_loss.backward();self.critic_opt.step()
             self.replay.update(b['idx'],td.detach().numpy())
+            if disable_adapter:
+                # Controlled no-local-adapter comparator; only critic learns.
+                # Shared backbone remains unchanged during this local phase.
+                self.polyak(self.critic,self.target_critic)
+                n+=1;last_td=float(td.square().mean());last_align=0.
+                continue
             # Critic is fixed for the adapter step, while the actor action remains differentiable.
             for p in self.critic.parameters():p.requires_grad_(False)
             act=self.actor(s)
