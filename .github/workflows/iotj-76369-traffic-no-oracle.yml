@@ -2,7 +2,7 @@ name: IoTJ traffic without oracle signal
 on:
   push:
     branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
-    paths: ['.github/workflows/iotj-76369-traffic-no-oracle.yml']
+    paths: ['.github/workflows/iotj-76369-traffic-no-oracle.yml','iotj_bridge/traffic_no_oracle.py']
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,7 +16,17 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install 'numpy>=1.26,<3'
-      - run: python iotj_bridge/traffic_no_oracle.py
+      - run: |
+          python iotj_bridge/traffic_no_oracle.py
+          python - <<'PY'
+          import csv,pathlib
+          p=pathlib.Path('iotj_bridge/results/iotj_traffic_no_oracle/traffic_no_oracle_runs.csv')
+          records=list(csv.DictReader(p.open()))
+          assert len(records)==45
+          assert len(set(x['seed'] for x in records))==15
+          assert all(int(x['serialized_uplink_bytes'])>0 for x in records)
+          print('AUDITED 45 independent method/seed runs, explicit serialized application bytes')
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
