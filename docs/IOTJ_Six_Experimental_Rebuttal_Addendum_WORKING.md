@@ -14,7 +14,7 @@ We thank the Editor and reviewers for pointing out that restored-load percentage
 
 We removed the attack-status feature entirely from the two-phase traffic signal policy observation; attack scheduling remains known only to the simulator and evaluator. A new independent 15-training-seed experiment compares dense FedRL, FedRL-Clip and the sparse AEFC-interface control. Per-client float32/index/utility uploads are serialized to explicit byte sequences and reported as application-level bytes rather than abstract communication units.
 
-**Evidence:** [oracle-free traffic run](https://github.com/startkz/AEFC/actions/runs/41407990103). Insert run-level queue, recovery success and byte measurements when the run passes.
+**Evidence:** [oracle-free traffic run](https://github.com/startkz/AEFC/actions/runs/41407990103), execution succeeded (15 independent training seeds per method, 45 runs) and original CSV/summary were archived. AEFC-FRL PoC: mean queue 38.1120, recovery success 23.5733%, serialized uplink 14,400 bytes. FedRL: 39.5330, 36.2133%, 17,600 bytes. FedRL-Clip: 24.2781, 54.1867%, 17,600 bytes. AEFC saves application bytes but **does not outperform** the clipped dense baseline in this scenario. These figures must not be merged with the previous oracle-enabled graph.
 
 **Scope:** The traffic policy is a separate queue-control proof of concept, not the full grid PER/actor-backbone model. Wire-level TCP/IP traffic remains unmeasured.
 
