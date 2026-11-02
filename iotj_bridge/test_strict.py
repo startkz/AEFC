@@ -54,7 +54,15 @@ def test_malicious_metadata():
  cc=cap.step([base,base,base,base,base],poisoned=[4],attack='joint')
  assert cc['malicious_weight']<=.3500001
  assert un['upload_bytes']==cc['upload_bytes']
-def test_fixed_byte_transport():
+def test_all_updates_missing():
+ s=Server(torch.zeros(6),ServerSettings())
+ x=s.step([None,None,None])
+ assert x['accepted']==0 and x['upload_bytes']==0
+ assert x['malicious_weight']==0.0
+ assert torch.equal(x['direction'],torch.zeros(6))
+ assert np.array_equal(x['weight'],np.zeros(3))
+
+def test_fixed_byte_transport();test_all_updates_missing():
  a=Agent(3,seed=88,latent=8,hidden=16,batch=16)
  theta=flatten(a.actor.backbone)
  empty=a._zero_sparse_message(theta,.2)
