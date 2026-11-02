@@ -308,7 +308,8 @@ class Server:
             score=min(config.cap_utility,max(float(m['utility']),0))/(float(u.norm())+config.epsilon)*math.exp(-config.shift_lambda*drift)
             weighted.append((pos,u,pr));scores.append(score)
         if not weighted:
-            return {'weight':np.zeros(len(messages)), 'upload_bytes':traffic,'accepted':0,'drift':[]}
+            return {'weight':np.zeros(len(messages)), 'upload_bytes':traffic,'accepted':0,
+                    'drift':[],'direction':torch.zeros_like(self.theta),'malicious_weight':0.}
         w=np.asarray(scores,dtype=float)
         w=w/w.sum() if w.sum()>0 else np.ones_like(w)/len(w)
         if config.equal_weight:w=np.ones_like(w)/len(w)
