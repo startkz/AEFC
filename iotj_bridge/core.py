@@ -114,7 +114,7 @@ def serialized_bytes(m):
     return len(f.getvalue())
 
 def aggregate(theta,messages,previous=None,clip=.075,utility_cap=1.,eps=.001,
-              bad_indices=(),attack='none'):
+              bad_indices=(),attack='none',weight_cap=None):
     packed=[];tx=0
     for i,m in enumerate(messages):
         if m is None:continue
@@ -140,6 +140,20 @@ def aggregate(theta,messages,previous=None,clip=.075,utility_cap=1.,eps=.001,
         score=min(utility_cap,max(0.,m['utility']))/(float(u.norm())+eps)*math.exp(-drift)
         updates.append(u);scores.append(score);proto.append(m['prototypes'])
     weights=np.asarray(scores);weights=weights/weights.sum() if weights.sum()>0 else np.ones(len(weights))/len(weights)
+    if weight_cap is not None:
+        # Explicitly separate capped mitigation from the original AEFC rule.
+        cap=float(weight_cap)
+        if not (1./len(weights)<=cap<=1.):
+            raise ValueError('weight_cap must be feasible for active clients')
+        remainder=1.0;next_w=np.zeros(len(weights));free=set(range(len(weights)))
+        while free:
+            mass=sum(weights[j] for j in free)
+            over=[j for j in free if weights[j]/mass*remainder>cap+1e-12] if mass>0 else []
+            if not over:
+                for j in free:next_w[j]=remainder*weights[j]/mass if mass>0 else remainder/len(free)
+                break
+            for j in over:next_w[j]=cap;remainder-=cap;free.remove(j)
+        weights=next_w
     result=theta.clone();all_weights=[0.]*len(messages)
     for (i,m),w,u in zip(packed,weights,updates):
         result+=float(w)*u;all_weights[i]=float(w)
