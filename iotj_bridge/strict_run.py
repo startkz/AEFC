@@ -33,6 +33,9 @@ class RecoveryGrid(Grid):
   if self.hetero in ('delay','shift'):
    saved=self.hetero;self.hetero='base';o=super().observations();self.hetero=saved
   else:o=super().observations()
+  if self.hetero=='pad_dim':
+   # Naive same-size zero padding for an explicit no-adapter control.
+   for j in range(1,len(o),2):o[j][3:]=0.
   if self.hetero=='delay':
    # Exact 2-step stale local measurements, not fabricated constant voltage.
    history=getattr(self,'_delay_history',[])
@@ -127,7 +130,7 @@ def run_episode(env,agents,explore,noise_seed,trace=False):
 def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
         clients_n=5,batch=256,hidden=128,latent=32,steps=5,
         sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False,
-        malicious_clients=1):
+        malicious_clients=1,disable_adapters=False):
  torch.set_num_threads(1);torch.manual_seed(seed);np.random.seed(seed)
  env=RecoveryGrid(case,clients_n,seed,hetero,attack='physical' if attack in ('physical','joint') else 'clean')
  observations=env.reset()
@@ -156,6 +159,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
   for i,c in enumerate(agents):
    if mode!='critic_share':c.set_global(server.theta)
    c.local_fit(steps=steps,prototypes=server.prototypes,disable_proto=disable_proto,
+               disable_adapter=disable_adapters,
                update_after=max(16,min(batch,128)))
    out.append(c.share(flatten(c.actor.backbone) if mode=='critic_share' else server.theta,
                       mode='adv' if mode=='adv_no_cw' else mode,kappa=kappa,
@@ -198,7 +202,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'latent_size':latent,'per_alpha':.6,'per_beta':.4,
           'tau':.005,'gamma':.99,'kappa':kappa,'sharing_steps':sharing_steps,
           'local_fit_steps':steps,'weight_cap':str(weight_cap),
-          'disable_proto':int(disable_proto),
+          'disable_proto':int(disable_proto),'disable_adapters':int(disable_adapters),
           'critic_traffic_scope':'analytic dense critic parameter payload (not serialized)' if mode=='critic_share' else 'measured application payload',
           'mean_test_load_pct':float(np.mean([v['final_restored_pct'] for v in test_runs])),
           'mean_test_load_auc_pct':float(np.mean([v['average_restored_pct'] for v in test_runs])),
@@ -216,7 +220,7 @@ def main():
  p.add_argument('--case',type=int,choices=[39,118],required=True)
  p.add_argument('--seed',type=int,default=80)
  p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share'],default='adv')
- p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation','attackgroup'],default='dim')
+ p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation','attackgroup','pad_dim'],default='dim')
  p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint'],default='clean')
  p.add_argument('--episodes',type=int,default=10)
  p.add_argument('--clients',type=int,default=5)
@@ -229,12 +233,13 @@ def main():
  p.add_argument('--eval-episodes',type=int,default=3)
  p.add_argument('--weight-cap',type=float,default=None)
  p.add_argument('--disable-proto',action='store_true')
+ p.add_argument('--disable-adapters',action='store_true')
  p.add_argument('--malicious-clients',type=int,default=1)
  p.add_argument('--out',type=Path,required=True)
  args=p.parse_args()
  result,rounds,tests,train_episode_records,agents,server=run(args.case,args.seed,args.mode,args.hetero,args.attack,
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
-     args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,args.malicious_clients)
+     args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,args.malicious_clients,args.disable_adapters)
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
                                 'train_episodes':train_episode_records},
