@@ -13,7 +13,6 @@ except ImportError:
 
 def eval_saved(path,steps=50,tests=10):
  ckpt=torch.load(path,map_location='cpu',weights_only=False)
- case=int(path.as_posix().split('case39')[0].split('case118')[0].endswith('NA') if False else 39)
  # Model case is stored in the checkpoint; no inference from path.
  case=int(ckpt['case']);seed=int(ckpt['seed']);mode=ckpt['method']
  env=RecoveryGrid(case,len(ckpt['actors']),100000+seed*100,hetero='dim',
