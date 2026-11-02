@@ -34,6 +34,8 @@ def audit(root,output):
    if meta.exists():
     info=json.loads(meta.read_text())
     if not checkpoint.exists():raise ValueError('Missing checkpoint for manifest')
+    if info.get('source_json_sha256') and hashlib.sha256(f.read_bytes()).hexdigest()!=info['source_json_sha256']:
+     raise ValueError('Experiment JSON hash mismatch')
     if hashlib.sha256(checkpoint.read_bytes()).hexdigest()!=info['checkpoint_sha256']:
      raise ValueError('Checkpoint hash mismatch')
     if info['training_episodes_executed']!=s['train_episodes']:
