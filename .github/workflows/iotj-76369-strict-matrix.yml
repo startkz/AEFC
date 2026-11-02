@@ -1,0 +1,73 @@
+name: IoT-J strict PER-AEFC full reviewer pilot matrix
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-strict-matrix.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reviewer-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        case: [39,118]
+        seed: [80,81,82,83,84]
+        study: [advantage,heterogeneity,byzantine]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned scientific runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Strict PER and critical mechanism invariants
+        run: |
+          python iotj_bridge/test_strict.py
+          python -m compileall -q iotj_bridge
+      - name: Execute fixed study matrix with independent train seeds
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="results/iotj_strict_matrix/${{ matrix.study }}/case${{ matrix.case }}/seed${{ matrix.seed }}"
+          mkdir -p "$root"
+          common=(--case ${{ matrix.case }} --seed ${{ matrix.seed }} --episodes 30 --batch 256 --hidden 128 --latent 32 --eval-episodes 3 --clients 5 --local-steps 5 --sharing-steps 2)
+          if [ "${{ matrix.study }}" = advantage ]; then
+            for method in adv ordinary random td uniform_high; do
+              python iotj_bridge/strict_run.py "${common[@]}" --mode "$method" --hetero dim --attack clean --out "$root/${method}_dim_clean.json"
+            done
+          elif [ "${{ matrix.study }}" = heterogeneity ]; then
+            for het in base dim mask delay saturation shift; do
+              python iotj_bridge/strict_run.py "${common[@]}" --mode adv --hetero "$het" --out "$root/adv_${het}_clean.json"
+            done
+            python iotj_bridge/strict_run.py "${common[@]}" --mode adv --hetero dim --disable-proto --out "$root/adv_dim_noproto.json"
+          else
+            for attack in clean poison joint delayed_joint; do
+              python iotj_bridge/strict_run.py "${common[@]}" --mode adv --hetero dim --attack "$attack" --out "$root/adv_${attack}.json"
+            done
+            python iotj_bridge/strict_run.py "${common[@]}" --mode adv --hetero dim --attack joint --weight-cap 0.35 --out "$root/adv_joint_cap035.json"
+            for m in 1 2 3; do
+              python iotj_bridge/strict_run.py --case ${{ matrix.case }} --seed ${{ matrix.seed }} --episodes 30 --batch 256 --hidden 128 --latent 32 --eval-episodes 3 --clients 10 --mode adv --hetero dim --attack poison --malicious-clients "$m" --out "$root/adv_poison_M${m}_N10.json"
+            done
+          fi
+      - name: Audit actual trial format and safety outcomes
+        if: success()
+        shell: bash
+        run: |
+          python iotj_bridge/strict_audit.py --input "results/iotj_strict_matrix/${{ matrix.study }}/case${{ matrix.case }}/seed${{ matrix.seed }}" --out "results/iotj_strict_audit/${{ matrix.study }}/case${{ matrix.case }}/seed${{ matrix.seed }}"
+      - name: Archive immutable per-seed evidence even on failure
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-strict-${{ matrix.study }}-case${{ matrix.case }}-seed${{ matrix.seed }}-${{ github.sha }}
+          path: |
+            results/iotj_strict_matrix/${{ matrix.study }}/case${{ matrix.case }}/seed${{ matrix.seed }}
+            results/iotj_strict_audit/${{ matrix.study }}/case${{ matrix.case }}/seed${{ matrix.seed }}
+          if-no-files-found: warn
+          retention-days: 90
