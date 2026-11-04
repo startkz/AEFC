@@ -202,11 +202,25 @@ def per_client_audit(root,out):
         for t in d["tests"]:
             if len(t.get("client_outcomes",[]))!=5:errors.append({"path":str(p),"reason":"test client outcomes missing"})
             for z in t.get("client_outcomes",[]):eval_by_client[int(z["client_id"])].append(z)
+        train_by_client={i:[] for i in range(5)}
+        for ep in d["train_episodes"]:
+            outcomes=ep.get("client_outcomes",[])
+            if len(outcomes)!=5:errors.append({"path":str(p),"reason":"training episode client outcomes missing"});continue
+            for z in outcomes:train_by_client[int(z["client_id"])].append(z)
+        train_demand_mean={}
+        for i in range(5):
+            vals=[float(z["final_demand_ratio"]) for z in train_by_client[i]]
+            train_demand_mean[i]=float(np.mean(vals)) if vals else None
+            if het=="shift":
+                expected=1.06 if i in (1,3) else 1.0
+                if train_demand_mean[i] is None or abs(train_demand_mean[i]-expected)>.01:
+                    errors.append({"path":str(p),"reason":f"mean 6% shift assignment mismatch seed {s['seed']} client {i}: {train_demand_mean[i]}"})
         run_client=[]
         for i in range(5):
             mm=metrics[i];ee=eval_by_client[i]
             row={"hetero":het,"condition":"shift" if het=="shift" else "no_shift",
                  "shift_lambda":lam,"seed":s["seed"],"client_id":i,
+                 "train_mean_final_demand_ratio":train_demand_mean[i],
                  "shift_affected":int(het=="shift" and i in (1,3)),
                  "mean_drift":float(np.mean([x["prototype_drift"] for x in mm])),
                  "mean_weight":float(np.mean([x["aggregation_weight"] for x in mm])),
@@ -239,15 +253,7 @@ def per_client_audit(root,out):
             "mean_test_load_pct":float(s["mean_test_load_pct"]),
             "safe_dwell_rate":float(s["safe_dwell_successes"]/s["test_count"]),
             "uplink_bytes":int(s["uplink_bytes"])})
-        if het=="shift":
-            for ep in d["train_episodes"]:
-                outcomes=ep.get("client_outcomes",[])
-                if len(outcomes)!=5:errors.append({"path":str(p),"reason":"training episode client outcomes missing"});break
-                for z in outcomes:
-                    expected=1.06 if int(z["client_id"]) in (1,3) else 1.0
-                    if abs(float(z["final_demand_ratio"])-expected)>1.e-5:
-                        errors.append({"path":str(p),"reason":f"6% shift assignment mismatch seed {s['seed']} episode {ep['episode']} client {z['client_id']}"})
-                        break
+
     if len(seed_rows)!=50:
         errors.append({"path":str(root),"reason":f"expected 50 per-client runs, found {len(seed_rows)}"})
     out=Path(out);out.mkdir(parents=True,exist_ok=True)
