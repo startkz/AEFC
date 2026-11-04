@@ -257,7 +257,7 @@ def main():
  p.add_argument('--seed',type=int,default=80)
  p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share'],default='adv')
  p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation','attackgroup','pad_dim'],default='dim')
- p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint'],default='clean')
+ p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint','immediate_metadata','delayed_metadata','immediate_credibility','delayed_credibility','temporal_credibility'],default='clean')
  p.add_argument('--episodes',type=int,default=10)
  p.add_argument('--clients',type=int,default=5)
  p.add_argument('--batch',type=int,default=256)
