@@ -106,16 +106,25 @@ def timing_audit(root,out):
         start=int(onset or 0)
         detect=None
         if condition=="temporal_credibility":
+            # This is a weight-suppression diagnostic, NOT an authenticated attack detector.
             for j in range(start,len(ratios)-2):
                 if all(ratios[k]<=.25 for k in (j,j+1,j+2)):
                     detect=j;break
+            pre_suppression=[j for j in range(0,max(0,start-2))
+                             if all(ratios[k]<=.25 for k in (j,j+1,j+2))]
             post=np.asarray(weights[start:],float);post_ratio=np.asarray(ratios[start:],float)
+            pre=np.asarray(weights[max(0,start-10):start],float)
             detection.append({"seed":s["seed"],"attack_onset_round":start+1,
-                "detected":int(detect is not None),
-                "detection_start_round":None if detect is None else detect+1,
-                "lag_rounds":None if detect is None else detect-start,
-                "confirmation_exposure_episodes":250 if detect is None else (detect-start+3)*5,
-                "right_censored_rounds":50 if detect is None else 0,
+                "sustained_weight_suppression":int(detect is not None),
+                "suppression_start_round":None if detect is None else detect+1,
+                "suppression_lag_rounds":None if detect is None else detect-start,
+                "observed_suppression_pre_attack_windows":len(pre_suppression),
+                "first_pre_attack_suppression_round":None if not pre_suppression else pre_suppression[0]+1,
+                "postonset_exposure_episodes_until_confirmation":250 if detect is None else (detect-start+3)*5,
+                "right_censored_postattack_rounds":50 if detect is None else 0,
+                "pre_last10_mean_malicious_weight":float(pre.mean()),
+                "post_first10_mean_malicious_weight":float(post[:10].mean()),
+                "first10_weight_change_pp":float(100*(post[:10].mean()-pre.mean())),
                 "mean_post_attack_malicious_weight":float(post.mean()),
                 "mean_post_attack_weight_ratio":float(post_ratio.mean()),
                 "first3_attack_round_mean_weight":float(post[:3].mean()),
@@ -147,9 +156,10 @@ def timing_audit(root,out):
     write_csv(out/"timing_summary.csv",summary)
     report={"study":"IEEE39, N=5, M=1, 500 episodes, 100 federation rounds, 10 held-out episodes",
             "attack_modes":sorted(allowed),"expected_runs":50,"valid_runs":len(run_rows),
-            "independent_unit":"training seed","detection_rule":
-            "malicious weight / mean honest-client weight <= 0.25 for three consecutive post-onset rounds",
-            "damage_window_episodes":"(detection lag rounds + 3 confirmation rounds) * 5 episodes; 250 episodes right-censored if never detected",
+            "independent_unit":"training seed","weight_suppression_rule":
+            "malicious weight / mean honest-client weight <= 0.25 for three consecutive rounds; not an attack detector",
+            "exposure_window_episodes":"(suppression lag + 3 confirmation rounds) * 5 episodes; 250 episodes right-censored if not suppressed",
+            "interpretation":"Report pre-attack suppression false positives and malicious weight mass, not detection accuracy or verified learning damage.",
             "errors":errors}
     (out/"timing_audit.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
     if per_round:
