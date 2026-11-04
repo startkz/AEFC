@@ -275,21 +275,56 @@ class Server:
         self.theta=torch.as_tensor(theta,dtype=torch.float32).clone()
         self.prototypes={}
         self.settings=settings or ServerSettings()
-    def step(self,messages,poisoned=None,attack=None,round_id=0):
-        config=self.settings;weighted=[];scores=[];payload=[]
-        seen=set();traffic=0
+    def step(self,messages,poisoned=None,attack=None,round_id=0,attack_start_round=None):
+        config=self.settings;weighted=[];scores=[];traffic=0
+        per_client=[{'client_id':i,'accepted':False,'attack_active':False,
+                     'raw_utility':None,'reported_utility':None,
+                     'update_norm_raw':None,'update_norm_reported':None,
+                     'update_norm_clipped':None,'prototype_drift':None,
+                     'drift_by_category':{},'drift_penalty':None,
+                     'credibility_score':None,'aggregation_weight':0.,
+                     'weight_ratio_to_equal':0.}
+                    for i in range(len(messages))]
+        poisoned=set(poisoned or ())
+        if attack_start_round is None:
+            default_starts={'immediate_metadata':0,'delayed_metadata':5,
+                            'immediate_credibility':0,'delayed_credibility':5,
+                            'temporal_credibility':50,'delayed_joint':5}
+            onset=default_starts.get(attack,0)
+        else:
+            onset=int(attack_start_round)
+        if onset<0:raise ValueError("attack_start_round must be nonnegative")
         for pos,original in enumerate(messages):
-            if original is None:continue
+            if original is None:
+                continue
             m={**original,'idx':np.asarray(original['idx']).copy(),
                'val':np.asarray(original['val'],dtype=np.float32).copy(),
                'proto':{k:torch.as_tensor(v).clone() for k,v in original['proto'].items()}}
-            if pos in (poisoned or ()) and attack:
+            raw_utility=float(m['utility'])
+            raw_update_norm=float(np.linalg.norm(m['val']))
+            active=pos in poisoned and bool(attack) and round_id>=onset
+            prototype_imitation=False;update_forgery=False
+            if active:
                 if attack in ('joint','utility','delayed_joint'):
-                    if attack!='delayed_joint' or round_id>=5:m['utility']=config.cap_utility
+                    m['utility']=config.cap_utility
                 if attack in ('joint','proto','delayed_joint') and self.prototypes:
-                    if attack!='delayed_joint' or round_id>=5:m['proto']={k:v.clone() for k,v in self.prototypes.items()}
-                if attack in ('joint','update','delayed_joint') and (attack!='delayed_joint' or round_id>=5):
+                    m['proto']={k:v.clone() for k,v in self.prototypes.items()}
+                    prototype_imitation=True
+                if attack in ('joint','update','delayed_joint'):
                     m['val']=np.asarray(-np.sign(m['val']+1.e-12)*(np.abs(m['val'])*2+.01),dtype=np.float32)
+                    update_forgery=True
+                if attack in ('immediate_metadata','delayed_metadata'):
+                    m['utility']=min(config.cap_utility,max(0.,raw_utility)*2.)
+                    if self.prototypes:
+                        m['proto']={k:v.clone() for k,v in self.prototypes.items()}
+                        prototype_imitation=True
+                if attack in ('immediate_credibility','delayed_credibility','temporal_credibility'):
+                    m['utility']=min(config.cap_utility,max(0.,raw_utility)*2.)
+                    if self.prototypes:
+                        m['proto']={k:v.clone() for k,v in self.prototypes.items()}
+                        prototype_imitation=True
+                    m['val']=np.asarray(-np.sign(m['val']+1.e-12)*(np.abs(m['val'])*2+.01),dtype=np.float32)
+                    update_forgery=True
             traffic+=serialized_size(m)
             idx=np.asarray(m['idx'],dtype=np.int64)
             val=np.asarray(m['val'],dtype=np.float32)
@@ -297,19 +332,45 @@ class Server:
                 or len(set(idx.tolist()))!=len(idx) or m['n']!=len(self.theta)
                 or not np.isfinite(val).all() or not np.isfinite(float(m['utility']))
                 or any(k not in CATEGORIES or not torch.isfinite(p).all() or p.ndim!=1
-                       for k,p in m['proto'].items())):continue
+                       for k,p in m['proto'].items())):
+                per_client[pos].update({'attack_active':bool(active),'rejected_reason':'invalid_message',
+                    'raw_utility':raw_utility,'reported_utility':float(m['utility']),
+                    'update_norm_raw':raw_update_norm,'update_norm_reported':float(np.linalg.norm(m['val'])),
+                    'prototype_imitation':prototype_imitation,'update_forgery':update_forgery})
+                continue
             u=torch.zeros_like(self.theta);u[torch.from_numpy(idx)]=torch.from_numpy(val)
+            update_norm_reported=float(u.norm())
             u=norm_clip(u,config.clip_update)
+            update_norm_clipped=float(u.norm())
             pr={k:norm_clip(x.float(),config.clip_proto) for k,x in m['proto'].items()}
-            common=set(pr).intersection(self.prototypes)
-            drift=float(np.mean([1-F.cosine_similarity(pr[k][None,:],
-                                            self.prototypes[k][None,:],dim=1,eps=config.epsilon_proto).item()
-                                 for k in common])) if common else 0.
-            score=min(config.cap_utility,max(float(m['utility']),0))/(float(u.norm())+config.epsilon)*math.exp(-config.shift_lambda*drift)
+            common=sorted(set(pr).intersection(self.prototypes))
+            drift_by_category={k:float(1-F.cosine_similarity(pr[k][None,:],
+                    self.prototypes[k][None,:],dim=1,eps=config.epsilon_proto).item())
+                    for k in common}
+            drift=float(np.mean(list(drift_by_category.values()))) if drift_by_category else 0.
+            penalty=math.exp(-config.shift_lambda*drift)
+            utility_used=min(config.cap_utility,max(float(m['utility']),0))
+            score=utility_used/(update_norm_clipped+config.epsilon)*penalty
+            metric={'client_id':pos,'accepted':True,'attack_active':bool(active),
+                    'raw_utility':raw_utility,'reported_utility':float(m['utility']),
+                    'utility_used':utility_used,'utility_multiplier_observed':
+                        (float(m['utility'])/raw_utility if abs(raw_utility)>1.e-12 else None),
+                    'update_norm_raw':raw_update_norm,
+                    'update_norm_reported':float(np.linalg.norm(m['val'])),
+                    'update_norm_clipped':update_norm_clipped,
+                    'prototype_imitation':bool(prototype_imitation),
+                    'update_forgery':bool(update_forgery),
+                    'prototype_drift':drift,'drift_by_category':drift_by_category,
+                    'drift_penalty':penalty,'credibility_score':float(score),
+                    'aggregation_weight':0.,'weight_ratio_to_equal':0.}
+            per_client[pos]=metric
             weighted.append((pos,u,pr));scores.append(score)
         if not weighted:
-            return {'weight':np.zeros(len(messages)), 'upload_bytes':traffic,'accepted':0,
-                    'drift':[],'direction':torch.zeros_like(self.theta),'malicious_weight':0.}
+            return {'weight':np.zeros(len(messages)),'upload_bytes':traffic,'accepted':0,
+                    'drift':[],'direction':torch.zeros_like(self.theta),'direction_norm':0.,
+                    'malicious_weight':0.,'per_client':per_client,
+                    'attack_active':bool(any(x['attack_active'] for x in per_client)),
+                    'attack_start_round':onset}
         w=np.asarray(scores,dtype=float)
         w=w/w.sum() if w.sum()>0 else np.ones_like(w)/len(w)
         if config.equal_weight:w=np.ones_like(w)/len(w)
@@ -326,12 +387,20 @@ class Server:
                 for j in overflow:fixed[j]=cap;remain-=cap;free.remove(j)
             w=fixed
         direction=torch.zeros_like(self.theta);fullweights=np.zeros(len(messages))
+        equal=1./len(weighted)
         for weight,(pos,u,p) in zip(w,weighted):
             direction+=float(weight)*u;fullweights[pos]=weight
+            per_client[pos]['aggregation_weight']=float(weight)
+            per_client[pos]['weight_ratio_to_equal']=float(weight/equal)
+            per_client[pos]['weighted_update_norm']=float(weight*per_client[pos]['update_norm_clipped'])
         self.theta=self.theta+config.eta_global*direction
         for name in CATEGORIES:
             eligible=[(float(wgt),p[name]) for wgt,(_,_,p) in zip(w,weighted) if name in p]
             s=sum(weight for weight,_ in eligible)
             if s>0:self.prototypes[name]=sum(weight*p for weight,p in eligible)/s
         return {'weight':fullweights,'upload_bytes':traffic,'accepted':len(weighted),
-                'direction':direction,'malicious_weight':sum(fullweights[j] for j in (poisoned or ()))}
+                'direction':direction,'direction_norm':float(direction.norm()),
+                'malicious_weight':sum(fullweights[j] for j in poisoned if j<len(fullweights)),
+                'per_client':per_client,'drift':[x['prototype_drift'] for x in per_client if x['accepted']],
+                'attack_active':bool(any(x['attack_active'] for x in per_client)),
+                'attack_start_round':onset}
