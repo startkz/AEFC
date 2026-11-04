@@ -137,8 +137,11 @@ def timing_audit(root,out):
             "mean_test_load_pct":s["mean_test_load_pct"],
             "safe_dwell_rate":s["safe_dwell_successes"]/s["test_count"],
             "uplink_bytes":s["uplink_bytes"]})
-    # Before the attack onset, the prospective attacker is genuinely honest.
-    # Compare complete clean/control records, not merely an attack_active flag.
+    # The true internal causal control is each run's unchanged honest protocol.
+    # Different GH Actions hardware can accumulate floating-point differences
+    # across separately trained jobs even with equal seed identifiers.
+    # Record between-run divergence, but never falsely claim bitwise equality.
+    prephase_comparison=[]
     by_condition_seed={(d["summary"]["attack"],int(d["summary"]["seed"])):d
                        for _,d in runs if d["summary"]["attack"] in allowed}
     for seed in range(80,90):
@@ -148,23 +151,32 @@ def timing_audit(root,out):
                                  ("delayed_metadata",5),("temporal_credibility",50)):
             run=by_condition_seed.get((condition,seed))
             if run is None:continue
+            max_weight_diff=0.;max_load_diff=0.
             for k in range(onset):
                 a=run["rounds"][k];b=clean["rounds"][k]
                 for ca,cb in zip(a["per_client"],b["per_client"]):
-                    if abs(float(ca["aggregation_weight"])-float(cb["aggregation_weight"]))>1e-9:
-                        errors.append({"seed":seed,"condition":condition,
-                            "round":k+1,"reason":"pre-attack client weights differ from clean control"})
-                    if abs(float(ca["prototype_drift"])-float(cb["prototype_drift"]))>1e-9:
-                        errors.append({"seed":seed,"condition":condition,
-                            "round":k+1,"reason":"pre-attack prototype drift differs from clean control"})
+                    max_weight_diff=max(max_weight_diff,abs(float(ca["aggregation_weight"])-float(cb["aggregation_weight"])))
+                    if ca["attack_active"] or ca["prototype_imitation"] or ca["update_forgery"]:
+                        errors.append({"seed":seed,"condition":condition,"round":k+1,
+                                       "reason":"forgery in supposed honest phase"})
+                    if abs(float(ca["raw_utility"])-float(ca["reported_utility"]))>1e-8:
+                        errors.append({"seed":seed,"condition":condition,"round":k+1,
+                                       "reason":"forged utility before attack onset"})
+                    if abs(float(ca["update_norm_raw"])-float(ca["update_norm_reported"]))>1e-6:
+                        errors.append({"seed":seed,"condition":condition,"round":k+1,
+                                       "reason":"forged update before attack onset"})
                 if a["uplink_bytes"]!=b["uplink_bytes"]:
                     errors.append({"seed":seed,"condition":condition,"round":k+1,
-                                   "reason":"pre-attack serialized application bytes differ"})
+                                   "reason":"pre-onset application bytes differ"})
             for e in range(onset*5):
                 a=run["train_episodes"][e];b=clean["train_episodes"][e]
-                if abs(float(a["final_restored_pct"])-float(b["final_restored_pct"]))>1e-8:
-                    errors.append({"seed":seed,"condition":condition,"episode":e+1,
-                                   "reason":"pre-attack physical recovery trace differs from clean control"})
+                max_load_diff=max(max_load_diff,abs(float(a["final_restored_pct"])-float(b["final_restored_pct"])))
+            prephase_comparison.append({"seed":seed,"condition":condition,
+                "honest_rounds":onset,"max_between_run_weight_difference":max_weight_diff,
+                "max_between_run_load_percentage_point_difference":max_load_diff,
+                "exact_common_random_trajectory":int(max_weight_diff<1.e-10 and max_load_diff<1.e-10)})
+    # Paired training seeds are analysis units; equality of their stochastic
+    # paths is not a premise unless this explicitly reported check passes.
     if len(run_rows)!=50:
         errors.append({"path":str(root),"reason":f"expected 50 timing runs, found {len(run_rows)}"})
     # Summaries use training seeds, not rounds or test episodes, as the independent unit.
@@ -180,11 +192,16 @@ def timing_audit(root,out):
     out=Path(out);out.mkdir(parents=True,exist_ok=True)
     write_csv(out/"timing_per_round.csv",per_round)
     write_csv(out/"timing_per_seed.csv",run_rows)
+    write_csv(out/"timing_preattack_cross_run_divergence.csv",prephase_comparison)
     write_csv(out/"temporal_detection_lag.csv",detection)
     write_csv(out/"timing_summary.csv",summary)
     report={"study":"IEEE39, N=5, M=1, 500 episodes, 100 federation rounds, 10 held-out episodes",
             "attack_modes":sorted(allowed),"expected_runs":50,"valid_runs":len(run_rows),
-            "independent_unit":"training seed","weight_suppression_rule":
+            "independent_unit":"training seed",
+            "cross_run_common_random_numbers":"equal PRNG seed IDs; bitwise equality checked separately and not assumed",
+            "pre_attack_cross_run_exact_pairs":sum(x["exact_common_random_trajectory"] for x in prephase_comparison),
+            "pre_attack_cross_run_pairs":len(prephase_comparison),
+            "weight_suppression_rule":
             "malicious weight / mean honest-client weight <= 0.25 for three consecutive rounds; not an attack detector",
             "exposure_window_episodes":"(suppression lag + 3 confirmation rounds) * 5 episodes; 250 episodes right-censored if not suppressed",
             "interpretation":"Report pre-attack suppression false positives and malicious weight mass, not detection accuracy or verified learning damage.",
