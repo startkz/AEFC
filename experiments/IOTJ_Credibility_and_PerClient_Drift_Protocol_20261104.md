@@ -55,7 +55,7 @@ Ten training seeds are the independent statistical units. Rounds are repeated me
 - All remaining model, optimization, traffic, and evaluation settings are unchanged.
 
 ### Per-client observables
-Every round logs the prototype drift (d_i^t), drift penalty (exp(-\lambda_s d_i^t)), raw credibility score, aggregation weight (w_i^t), equal-share weight ratio, update norm, and client ID. Every training and held-out episode logs each client's mean/final served fraction, first step reaching 90% served fraction (or -1 if censored), and actual demand ratio. The demand ratio is independently checked against 1.06 for clients 1/3 and 1.00 for clients 0/2/4.
+Every round logs the prototype drift (d_i^t), drift penalty (exp(-\lambda_s d_i^t)), raw credibility score, aggregation weight (w_i^t), equal-share weight ratio, update norm, and client ID. Every training and held-out episode logs each client's mean/final served fraction, first step reaching 90% served fraction (or -1 if censored), and actual demand ratio. The physical shift multiplier is exactly 1.06 for clients 1/3 and 1.00 for clients 0/2/4 relative to that episode's randomized pre-shift demand profile. The released client demand ratio is measured against the nominal load profile, so the audit checks its mean across all 1,000 training episodes (not each noisy episode) against the expected 1.06/1.00 values.
 
 The 90% local served-fraction time is a per-client service-restoration diagnostic; it is not an independent local AC safety certificate. AC safety remains a system-level property evaluated by the existing voltage and line/transformer thermal constraints.
 
