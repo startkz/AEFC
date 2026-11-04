@@ -1,5 +1,5 @@
 name: IoTJ credibility and per-client telemetry unit checks
-# Re-run after CLI exposure and fixed-payload preservation updates.
+# Re-run after CLI, fixed-payload, and seed-mean demand-shift audit updates.
 on:
   push:
     branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
