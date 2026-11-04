@@ -174,6 +174,7 @@ def timing_audit(root,out):
             ax.grid(alpha=.25);ax.legend(fontsize=8)
         axs[0].set_ylabel("Malicious client's aggregation weight")
         fig.tight_layout();fig.savefig(out/"Fig_Temporal_Credibility.png",dpi=300,bbox_inches="tight");plt.close(fig)
+    if errors:raise SystemExit(2)
     return report
 
 def per_client_audit(root,out):
@@ -220,6 +221,8 @@ def per_client_audit(root,out):
             client_rows.append(row);run_client.append(row)
         shifted=[x for x in run_client if x["shift_affected"]]
         stable=[x for x in run_client if not x["shift_affected"]]
+        client13=[x for x in run_client if x["client_id"] in (1,3)]
+        client024=[x for x in run_client if x["client_id"] in (0,2,4)]
         seed_rows.append({"hetero":het,"shift_lambda":lam,"seed":s["seed"],
             "shifted_mean_drift":float(np.mean([x["mean_drift"] for x in shifted])) if shifted else None,
             "unshifted_mean_drift":float(np.mean([x["mean_drift"] for x in stable])),
@@ -227,6 +230,12 @@ def per_client_audit(root,out):
             "unshifted_mean_weight":float(np.mean([x["mean_weight"] for x in stable])),
             "shifted_mean_served":float(np.mean([x["eval_mean_served_fraction"] for x in shifted])) if shifted else None,
             "unshifted_mean_served":float(np.mean([x["eval_mean_served_fraction"] for x in stable])),
+            "client13_mean_drift":float(np.mean([x["mean_drift"] for x in client13])),
+            "client024_mean_drift":float(np.mean([x["mean_drift"] for x in client024])),
+            "client13_mean_weight":float(np.mean([x["mean_weight"] for x in client13])),
+            "client024_mean_weight":float(np.mean([x["mean_weight"] for x in client024])),
+            "client13_mean_served":float(np.mean([x["eval_mean_served_fraction"] for x in client13])),
+            "client024_mean_served":float(np.mean([x["eval_mean_served_fraction"] for x in client024])),
             "mean_test_load_pct":float(s["mean_test_load_pct"]),
             "safe_dwell_rate":float(s["safe_dwell_successes"]/s["test_count"]),
             "uplink_bytes":int(s["uplink_bytes"])})
@@ -263,16 +272,11 @@ def per_client_audit(root,out):
     paired=[]
     base={int(x["seed"]):x for x in seed_rows if x["hetero"]=="dim" and x["shift_lambda"]==1.}
     shift={int(x["seed"]):x for x in seed_rows if x["hetero"]=="shift" and x["shift_lambda"]==1.}
-    for metric in ("shifted_mean_drift","unshifted_mean_drift","shifted_mean_weight",
-                   "unshifted_mean_weight","shifted_mean_served","unshifted_mean_served",
+    for metric in ("client13_mean_drift","client024_mean_drift",
+                   "client13_mean_weight","client024_mean_weight",
+                   "client13_mean_served","client024_mean_served",
                    "mean_test_load_pct","safe_dwell_rate"):
-        dif=[]
-        for seed in sorted(set(base)&set(shift)):
-            if metric.startswith("shifted_"):
-                # For the no-shift baseline, clients 1 and 3 form the same index group.
-                bm=metric.replace("shifted_","unshifted_")
-                dif.append(shift[seed][metric]-base[seed][bm])
-            else:dif.append(shift[seed][metric]-base[seed][metric])
+        dif=[shift[seed][metric]-base[seed][metric] for seed in sorted(set(base)&set(shift))]
         if dif:
             m,lo,hi=mean_ci(dif,seed=20261106+len(paired))
             paired.append({"metric":"shift_minus_no_shift_"+metric,"n_pairs":len(dif),
@@ -315,6 +319,7 @@ def per_client_audit(root,out):
         axs[1].set_xlabel("Federation round")
         for ax in axs:ax.grid(alpha=.25);ax.legend(ncol=2,fontsize=8)
         fig.tight_layout();fig.savefig(out/"Fig_PerClient_Drift_Weight.png",dpi=300,bbox_inches="tight");plt.close(fig)
+    if errors:raise SystemExit(2)
     return report
 
 def main():
