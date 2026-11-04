@@ -65,8 +65,8 @@ def timing_audit(root,out):
     runs,errors=load_runs(root);allowed={"clean","immediate_metadata","delayed_metadata",
         "immediate_credibility","temporal_credibility"}
     per_round=[];run_rows=[];detection=[]
-    expected_onset={"clean":None,"immediate_metadata":0,"delayed_metadata":5,
-                    "immediate_credibility":0,"temporal_credibility":50}
+    expected_onset={"clean":None,"immediate_metadata":1,"delayed_metadata":5,
+                    "immediate_credibility":1,"temporal_credibility":50}
     for p,d in runs:
         s=d["summary"];condition=s["attack"]
         if condition not in allowed:continue
