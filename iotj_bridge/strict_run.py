@@ -77,11 +77,16 @@ class RecoveryGrid(Grid):
   # Per-client rewards only use local served fraction and public operator safety alert.
   reward=[float(self.served[i] + 2*(self.served[i]-old[i])-cost-.004*cmd[i]**2)
           for i in range(self.clients)]
+  client_demand=np.array([self.demand[g].sum() for g in self.groups],dtype=float)
+  client_reference=np.array([self.original[g].sum() for g in self.groups],dtype=float)
   info={'restored_pct':restored,'safe':safe,'ac_converged':int(self.valid),
         'voltage_violation_pu_sum':self.voltage_excess,
         'thermal_excess_pct_sum':self.thermal_excess,
         'actuator_saturation':int(any((cmd<0)|(cmd>1))),
-        'actual_steps':self.step_idx}
+        'actual_steps':self.step_idx,
+        'client_served_fraction':self.served.astype(float).tolist(),
+        'client_demand_mw':client_demand.tolist(),
+        'client_demand_ratio':(client_demand/client_reference).tolist()}
   self.violations.append(info)
   return self.observations(),reward,self.step_idx>=self.horizon or not self.valid,info
 
@@ -97,10 +102,15 @@ def category_label(previous,now,eps_safe=.005,eps_progress=.0001):
 
 def run_episode(env,agents,explore,noise_seed,trace=False):
  obs=env.reset();prev=None;records=[];dwell=0;first=None;done=False
+ local_served_paths=[[] for _ in agents]
+ local_demand_ratios=[[] for _ in agents]
  rng=np.random.default_rng(noise_seed)
  while not done:
   a=[c.act(x,explore=explore,sigma=.15) for c,x in zip(agents,obs)]
   ns,rews,done,info=env.step(a)
+  for i in range(len(agents)):
+   local_served_paths[i].append(float(env.served[i]))
+   local_demand_ratios[i].append(float(info['client_demand_ratio'][i]))
   cat=category_label(prev,info)
   prev=max(0.,90-info['restored_pct'])/90+min(10.,info['thermal_excess_pct_sum'])/10.+info['voltage_violation_pu_sum']
   if explore:
@@ -118,6 +128,16 @@ def run_episode(env,agents,explore,noise_seed,trace=False):
   if trace:records.append({'t':env.step_idx,**info,'recovery_label':cat})
   obs=ns
  end=env.violations[-1]
+ client_outcomes=[]
+ for i,path in enumerate(local_served_paths):
+  values=np.asarray(path,dtype=float)
+  reach=np.flatnonzero(values>=.90)
+  client_outcomes.append({'client_id':i,
+      'mean_served_fraction':float(values.mean()),
+      'final_served_fraction':float(values[-1]),
+      'first_90pct_step':int(reach[0]+1) if len(reach) else -1,
+      'mean_demand_ratio':float(np.mean(local_demand_ratios[i])),
+      'final_demand_ratio':float(local_demand_ratios[i][-1])})
  return {'final_restored_pct':end['restored_pct'],
          'average_restored_pct':float(np.mean([z['restored_pct'] for z in env.violations])),
          'safe_dwell5':int(first is not None),
@@ -125,12 +145,13 @@ def run_episode(env,agents,explore,noise_seed,trace=False):
          'max_thermal_excess_pct':max(z['thermal_excess_pct_sum'] for z in env.violations),
          'max_voltage_violation_pu':max(z['voltage_violation_pu_sum'] for z in env.violations),
          'any_unsafe':int(any(not z['safe'] for z in env.violations)),
-         'censored':int(first is None),'trace':records}
+         'censored':int(first is None),'client_outcomes':client_outcomes,'trace':records}
 
 def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
         clients_n=5,batch=256,hidden=128,latent=32,steps=5,
         sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False,
-        malicious_clients=1,disable_adapters=False,fixed_traffic=False):
+        malicious_clients=1,disable_adapters=False,fixed_traffic=False,
+        shift_lambda=1.0,attack_start_round=None):
  torch.set_num_threads(1);torch.manual_seed(seed);np.random.seed(seed)
  env=RecoveryGrid(case,clients_n,seed,hetero,attack='physical' if attack in ('physical','joint') else 'clean')
  observations=env.reset()
@@ -140,7 +161,8 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
   agents.append(Agent(len(obs),seed*100+i,latent=latent,hidden=hidden,
                       act_high=action_high,batch=batch))
  theta=flatten(agents[0].actor.backbone)
- settings=ServerSettings(max_weight=weight_cap,equal_weight=(mode=='adv_no_cw' or mode=='dense'))
+ settings=ServerSettings(max_weight=weight_cap,equal_weight=(mode=='adv_no_cw' or mode=='dense'),
+                         shift_lambda=float(shift_lambda))
  server=Server(theta,settings)
  for c in agents:c.set_global(server.theta)
  first_record=[];traffic=0;server_summaries=[];train_episode_records=[]
@@ -154,7 +176,8 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
        'safe_dwell5':episode_result['safe_dwell5'],'any_unsafe':episode_result['any_unsafe'],
        'max_thermal_excess_pct':episode_result['max_thermal_excess_pct'],
        'max_voltage_violation_pu':episode_result['max_voltage_violation_pu'],
-       'censored':episode_result['censored']})
+       'censored':episode_result['censored'],
+       'client_outcomes':episode_result['client_outcomes']})
   out=[]
   for i,c in enumerate(agents):
    if mode!='critic_share':c.set_global(server.theta)
@@ -164,8 +187,12 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
    out.append(c.share(flatten(c.actor.backbone) if mode=='critic_share' else server.theta,
                       mode='adv' if mode=='adv_no_cw' else mode,kappa=kappa,
                       sharing_steps=sharing_steps,fixed_traffic=fixed_traffic))
-  bad=tuple(range(clients_n-min(malicious_clients,clients_n),clients_n)) if attack in ('poison','joint','delayed_joint') else ()
-  atk='joint' if attack in ('poison','joint') else ('delayed_joint' if attack=='delayed_joint' else None)
+  attack_modes=('poison','joint','delayed_joint','immediate_metadata','delayed_metadata',
+                'immediate_credibility','delayed_credibility','temporal_credibility')
+  bad=tuple(range(clients_n-min(malicious_clients,clients_n),clients_n)) if attack in attack_modes else ()
+  atk='joint' if attack in ('poison','joint') else (attack if attack in (
+      'delayed_joint','immediate_metadata','delayed_metadata',
+      'immediate_credibility','delayed_credibility','temporal_credibility') else None)
   if mode=='critic_share':
    # A2FC-inspired architectural control: only critic weights are pooled.
    # Local actor backbones remain personalized, unlike AEFC-FRL. This is NOT
@@ -179,12 +206,17 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
    stats={'upload_bytes':sum(_flatten(a.critic).numel()*4 for a in agents),
           'malicious_weight':0.,'accepted':len([m for m in out if m is not None])}
   else:
-   stats=server.step(out,poisoned=bad,attack=atk,round_id=k)
+   stats=server.step(out,poisoned=bad,attack=atk,round_id=k,
+                     attack_start_round=attack_start_round)
    for a in agents:a.set_global(server.theta)
   traffic+=stats['upload_bytes']
-  server_summaries.append({'round':k,'uplink_bytes':stats['upload_bytes'],
+  server_summaries.append({'round':k,'round_1based':k+1,'uplink_bytes':stats['upload_bytes'],
                            'malicious_weight':stats['malicious_weight'],'accepted':stats['accepted'],
-                           'trained_episodes':min((k+1)*sync_interval,episodes)})
+                           'direction_norm':stats.get('direction_norm',0.),
+                           'attack_active':stats.get('attack_active',False),
+                           'attack_start_round_0based':stats.get('attack_start_round'),
+                           'trained_episodes':min((k+1)*sync_interval,episodes),
+                           'per_client':stats.get('per_client',[])})
  test_runs=[]
  for e in range(eval_episodes):
   # Fixed independent evaluation seeds are kept separate from training.
@@ -193,7 +225,10 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
   test_runs.append(run_episode(test,agents,False,noise_seed=1000000+seed*100+e,trace=True))
  summary={'backend':'pandapower AC quasi-static','case':case,'seed':seed,
           'method':mode,'hetero':hetero,'attack':attack,'clients':clients_n,
-          'malicious_clients':len(bad),'train_episodes':episodes,
+          'malicious_clients':len(bad),'malicious_client_ids':list(bad),
+          'attack_start_round_0based':attack_start_round,
+          'attack_start_round_1based':None if attack_start_round is None else int(attack_start_round)+1,
+          'shift_lambda':float(shift_lambda),'train_episodes':episodes,
           'scheduled_rounds':rounds,'completed_rounds':len(server_summaries),
           'train_episode_records':len(train_episode_records),
           'randomized_load_profile':'rng(seed+901), new scenario per episode',
@@ -237,11 +272,15 @@ def main():
  p.add_argument('--disable-adapters',action='store_true')
  p.add_argument('--fixed-traffic',action='store_true')
  p.add_argument('--malicious-clients',type=int,default=1)
+ p.add_argument('--shift-lambda',type=float,default=1.0)
+ p.add_argument('--attack-start-round',type=int,default=None)
  p.add_argument('--out',type=Path,required=True)
  args=p.parse_args()
  result,rounds,tests,train_episode_records,agents,server=run(args.case,args.seed,args.mode,args.hetero,args.attack,
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
-     args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,args.malicious_clients,args.disable_adapters,args.fixed_traffic)
+     args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,
+     args.malicious_clients,args.disable_adapters,args.fixed_traffic,args.shift_lambda,
+     args.attack_start_round)
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
                                 'train_episodes':train_episode_records},
