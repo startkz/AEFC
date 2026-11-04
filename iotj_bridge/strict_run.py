@@ -60,7 +60,7 @@ class RecoveryGrid(Grid):
    target=0 if self.hetero=='attackgroup' else len(cmd)-1
    cmd[target]=np.clip(cmd[target]-.25,0,1)
   old=self.served.copy()
-  if self.hetero=='shift' and self.step_idx==11:
+  if self.hetero=='shift' and self.step_idx==11 and getattr(self,'demand_shift_enabled',True):
    # An unannounced legitimate 6% load demand step, preserving continuity of control.
    for group in self.groups[1::2]:
     self.demand[group]*=1.06
@@ -151,7 +151,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
         clients_n=5,batch=256,hidden=128,latent=32,steps=5,
         sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False,
         malicious_clients=1,disable_adapters=False,fixed_traffic=False,
-        shift_lambda=1.0,attack_start_round=None):
+        shift_lambda=1.0,attack_start_round=None,shift_onset_round=None):
  torch.set_num_threads(1);torch.manual_seed(seed);np.random.seed(seed)
  env=RecoveryGrid(case,clients_n,seed,hetero,attack='physical' if attack in ('physical','joint') else 'clean')
  observations=env.reset()
@@ -168,7 +168,11 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
  first_record=[];traffic=0;server_summaries=[];train_episode_records=[]
  sync_interval=5
  rounds=math.ceil(episodes/sync_interval)
+ if shift_onset_round is not None and (hetero!='shift' or int(shift_onset_round)<0 or int(shift_onset_round)>rounds):
+  raise ValueError('shift_onset_round only permits 0..scheduled_rounds with hetero=shift')
  for k in range(rounds):
+  # Identity-preserving clean phase: observation and actor dimensions never change.
+  env.demand_shift_enabled=bool(shift_onset_round is None or k>=int(shift_onset_round))
   for e in range(k*sync_interval,min((k+1)*sync_interval,episodes)):
    episode_result=run_episode(env,agents,True,noise_seed=seed*100000+e)
    train_episode_records.append({'episode':e+1,'average_restored_pct':episode_result['average_restored_pct'],
@@ -177,6 +181,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
        'max_thermal_excess_pct':episode_result['max_thermal_excess_pct'],
        'max_voltage_violation_pu':episode_result['max_voltage_violation_pu'],
        'censored':episode_result['censored'],
+       'shift_active':int(hetero=='shift' and env.demand_shift_enabled),
        'client_outcomes':episode_result['client_outcomes']})
   out=[]
   for i,c in enumerate(agents):
@@ -214,6 +219,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
                            'malicious_weight':stats['malicious_weight'],'accepted':stats['accepted'],
                            'direction_norm':stats.get('direction_norm',0.),
                            'attack_active':stats.get('attack_active',False),
+                           'shift_active':int(hetero=='shift' and env.demand_shift_enabled),
                            'attack_start_round_0based':stats.get('attack_start_round'),
                            'trained_episodes':min((k+1)*sync_interval,episodes),
                            'per_client':stats.get('per_client',[])})
@@ -228,7 +234,10 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'malicious_clients':len(bad),'malicious_client_ids':list(bad),
           'attack_start_round_0based':attack_start_round,
           'attack_start_round_1based':None if attack_start_round is None else int(attack_start_round)+1,
-          'shift_lambda':float(shift_lambda),'train_episodes':episodes,
+          'shift_lambda':float(shift_lambda),
+          'shift_onset_round_0based':shift_onset_round,
+          'shift_onset_round_1based':None if shift_onset_round is None else shift_onset_round+1,
+          'train_episodes':episodes,
           'scheduled_rounds':rounds,'completed_rounds':len(server_summaries),
           'train_episode_records':len(train_episode_records),
           'randomized_load_profile':'rng(seed+901), new scenario per episode',
@@ -274,13 +283,14 @@ def main():
  p.add_argument('--malicious-clients',type=int,default=1)
  p.add_argument('--shift-lambda',type=float,default=1.0)
  p.add_argument('--attack-start-round',type=int,default=None)
+ p.add_argument('--shift-onset-round',type=int,default=None)
  p.add_argument('--out',type=Path,required=True)
  args=p.parse_args()
  result,rounds,tests,train_episode_records,agents,server=run(args.case,args.seed,args.mode,args.hetero,args.attack,
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
      args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,
      args.malicious_clients,args.disable_adapters,args.fixed_traffic,args.shift_lambda,
-     args.attack_start_round)
+     args.attack_start_round,args.shift_onset_round)
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
                                 'train_episodes':train_episode_records},
