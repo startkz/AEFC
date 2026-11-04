@@ -137,6 +137,34 @@ def timing_audit(root,out):
             "mean_test_load_pct":s["mean_test_load_pct"],
             "safe_dwell_rate":s["safe_dwell_successes"]/s["test_count"],
             "uplink_bytes":s["uplink_bytes"]})
+    # Before the attack onset, the prospective attacker is genuinely honest.
+    # Compare complete clean/control records, not merely an attack_active flag.
+    by_condition_seed={(d["summary"]["attack"],int(d["summary"]["seed"])):d
+                       for _,d in runs if d["summary"]["attack"] in allowed}
+    for seed in range(80,90):
+        clean=by_condition_seed.get(("clean",seed))
+        if clean is None:continue
+        for condition,onset in (("immediate_metadata",1),("immediate_credibility",1),
+                                 ("delayed_metadata",5),("temporal_credibility",50)):
+            run=by_condition_seed.get((condition,seed))
+            if run is None:continue
+            for k in range(onset):
+                a=run["rounds"][k];b=clean["rounds"][k]
+                for ca,cb in zip(a["per_client"],b["per_client"]):
+                    if abs(float(ca["aggregation_weight"])-float(cb["aggregation_weight"]))>1e-9:
+                        errors.append({"seed":seed,"condition":condition,
+                            "round":k+1,"reason":"pre-attack client weights differ from clean control"})
+                    if abs(float(ca["prototype_drift"])-float(cb["prototype_drift"]))>1e-9:
+                        errors.append({"seed":seed,"condition":condition,
+                            "round":k+1,"reason":"pre-attack prototype drift differs from clean control"})
+                if a["uplink_bytes"]!=b["uplink_bytes"]:
+                    errors.append({"seed":seed,"condition":condition,"round":k+1,
+                                   "reason":"pre-attack serialized application bytes differ"})
+            for e in range(onset*5):
+                a=run["train_episodes"][e];b=clean["train_episodes"][e]
+                if abs(float(a["final_restored_pct"])-float(b["final_restored_pct"]))>1e-8:
+                    errors.append({"seed":seed,"condition":condition,"episode":e+1,
+                                   "reason":"pre-attack physical recovery trace differs from clean control"})
     if len(run_rows)!=50:
         errors.append({"path":str(root),"reason":f"expected 50 timing runs, found {len(run_rows)}"})
     # Summaries use training seeds, not rounds or test episodes, as the independent unit.
