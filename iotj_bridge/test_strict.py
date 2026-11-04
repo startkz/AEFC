@@ -76,24 +76,25 @@ def test_fixed_byte_transport():
 
 def test_temporal_attacks_and_client_telemetry():
     base={'idx':np.array([0,2],np.int32),'val':np.array([.01,.02],np.float32),
-          'n':4,'utility':.2,'proto':{'stable':torch.zeros(2)}}
+          'n':4,'utility':.2,'proto':{'stable':torch.zeros(2)},'pad_bytes':48}
 
     # Delayed metadata forgery is inactive for rounds 1--5 and starts at round 6.
     clean_server=Server(torch.zeros(4),ServerSettings(clip_update=.5,shift_lambda=1.))
-    clean_server.prototypes={'stable':torch.ones(2)}
+    clean_server.prototypes={'stable':torch.ones(2),'recovering':torch.ones(2),'unsafe':torch.ones(2)}
     before=clean_server.step([base],poisoned=[0],attack='delayed_metadata',round_id=4)
     b=before['per_client'][0]
     assert not b['attack_active'] and abs(b['reported_utility']-.2)<1.e-8
     assert not b['prototype_imitation'] and not b['update_forgery']
 
     attack_server=Server(torch.zeros(4),ServerSettings(clip_update=.5,shift_lambda=1.))
-    attack_server.prototypes={'stable':torch.ones(2)}
+    attack_server.prototypes={'stable':torch.ones(2),'recovering':torch.ones(2),'unsafe':torch.ones(2)}
     after=attack_server.step([base],poisoned=[0],attack='delayed_metadata',round_id=5)
     a=after['per_client'][0]
     assert a['attack_active'] and abs(a['reported_utility']-.4)<1.e-8
     assert a['prototype_imitation'] and not a['update_forgery']
     assert abs(a['prototype_drift'])<1.e-7
     assert abs(sum(after['weight'])-1.)<1.e-7
+    assert after['upload_bytes']==serialized_size(base), 'prototype imitation changed fixed payload length'
 
     # Temporal credibility attack is inactive through round 50 and begins at round 51.
     pre=Server(torch.zeros(4),ServerSettings(clip_update=.5))
