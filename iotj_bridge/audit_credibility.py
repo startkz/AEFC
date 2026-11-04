@@ -302,25 +302,15 @@ def per_client_audit(root,out):
             table.append({"shift_lambda":lam,"metric":metric,"n_seeds":len(vals),
                           "mean":m,"bootstrap95_low":lo,"bootstrap95_high":hi})
     write_csv(out/"Table_PerClient_Drift_Lambda_Sensitivity.csv",table)
-    # Paired seed comparison of shifted operating point against no-shift baseline at lambda=1.
-    paired=[]
-    base={int(x["seed"]):x for x in seed_rows if x["hetero"]=="dim" and x["shift_lambda"]==1.}
-    shift={int(x["seed"]):x for x in seed_rows if x["hetero"]=="shift" and x["shift_lambda"]==1.}
-    for metric in ("client13_mean_drift","client024_mean_drift",
-                   "client13_mean_weight","client024_mean_weight",
-                   "client13_mean_counterfactual_weight_lambda0","client024_mean_counterfactual_weight_lambda0",
-                   "client13_mean_drift_induced_weight_change","client024_mean_drift_induced_weight_change",
-                   "client13_mean_served","client024_mean_served",
-                   "mean_test_load_pct","safe_dwell_rate"):
-        dif=[shift[seed][metric]-base[seed][metric] for seed in sorted(set(base)&set(shift))]
-        if dif:
-            m,lo,hi=mean_ci(dif,seed=20261106+len(paired))
-            paired.append({"metric":"shift_minus_no_shift_"+metric,"n_pairs":len(dif),
-                           "mean_delta":m,"bootstrap95_low":lo,"bootstrap95_high":hi})
-    write_csv(out/"Table_Shift_vs_NoShift_Paired.csv",paired)
+    # The historical hetero=dim controls have fewer observation coordinates on
+    # odd clients than hetero=shift. Their contrast is NOT a shift-only causal test.
+    # Do not emit the confounded paired difference table. The separate
+    # audit_phase_shift.py uses hetero=base and hetero=shift with identical
+    # adapter dimensions and a round-51 intervention.
     report={"study":"IEEE39, N=5 honest clients, 1000 episodes, 200 rounds, 10 held-out episodes",
             "shift":"6% legitimate load demand increase at local control step 12 in each episode for clients 1 and 3",
-            "lambda_grid":[0.,.5,1.,2.],"no_shift_control":"hetero=dim, lambda=1",
+            "lambda_grid":[0.,.5,1.,2.],"historical_no_shift_diagnostic":"hetero=dim, lambda=1 (observation dimensions differ; no causal cross-scenario comparison)",
+            "valid_causal_control":"Run audit_phase_shift.py on same-dimension base versus staged-shift pairs",
             "expected_runs":50,"valid_runs":len(seed_rows),
             "independent_unit":"training seed; client and round are repeated measurements",
             "errors":errors}
