@@ -211,10 +211,9 @@ def per_client_audit(root,out):
         for i in range(5):
             vals=[float(z["final_demand_ratio"]) for z in train_by_client[i]]
             train_demand_mean[i]=float(np.mean(vals)) if vals else None
-            if het=="shift":
-                expected=1.06 if i in (1,3) else 1.0
-                if train_demand_mean[i] is None or abs(train_demand_mean[i]-expected)>.01:
-                    errors.append({"path":str(p),"reason":f"mean 6% shift assignment mismatch seed {s['seed']} client {i}: {train_demand_mean[i]}"})
+            expected=(1.06 if i in (1,3) else 1.0) if het=="shift" else 1.0
+            if train_demand_mean[i] is None or abs(train_demand_mean[i]-expected)>.01:
+                errors.append({"path":str(p),"reason":f"mean demand assignment mismatch seed {s['seed']} client {i}: observed {train_demand_mean[i]}, expected {expected}"})
         run_client=[]
         for i in range(5):
             mm=metrics[i];ee=eval_by_client[i]
@@ -250,6 +249,8 @@ def per_client_audit(root,out):
             "client024_mean_weight":float(np.mean([x["mean_weight"] for x in client024])),
             "client13_mean_served":float(np.mean([x["eval_mean_served_fraction"] for x in client13])),
             "client024_mean_served":float(np.mean([x["eval_mean_served_fraction"] for x in client024])),
+            "client13_mean_final_demand_ratio":float(np.mean([train_demand_mean[i] for i in (1,3)])),
+            "client024_mean_final_demand_ratio":float(np.mean([train_demand_mean[i] for i in (0,2,4)])),
             "mean_test_load_pct":float(s["mean_test_load_pct"]),
             "safe_dwell_rate":float(s["safe_dwell_successes"]/s["test_count"]),
             "uplink_bytes":int(s["uplink_bytes"])})
