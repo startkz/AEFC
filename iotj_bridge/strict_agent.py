@@ -287,8 +287,8 @@ class Server:
                     for i in range(len(messages))]
         poisoned=set(poisoned or ())
         if attack_start_round is None:
-            default_starts={'immediate_metadata':0,'delayed_metadata':5,
-                            'immediate_credibility':0,'delayed_credibility':5,
+            default_starts={'immediate_metadata':1,'delayed_metadata':5,
+                            'immediate_credibility':1,'delayed_credibility':5,
                             'temporal_credibility':50,'delayed_joint':5}
             onset=default_starts.get(attack,0)
         else:
