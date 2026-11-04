@@ -189,12 +189,21 @@ def per_client_audit(root,out):
         # Aggregate client telemetry across federation rounds for each run.
         metrics={i:[] for i in range(5)}
         for r in d["rounds"]:
+            accepted=[m for m in r["per_client"] if m["accepted"]]
+            no_drift_scores=[float(m["credibility_score"])/max(float(m["drift_penalty"]),1.e-12) for m in accepted]
+            denom=float(sum(no_drift_scores))
+            cf={int(m["client_id"]):(no_drift_scores[j]/denom if denom>0 else 1./len(accepted))
+                for j,m in enumerate(accepted)}
             for m in r["per_client"]:
-                metrics[int(m["client_id"])].append(m)
+                i=int(m["client_id"])
+                enriched={**m,"counterfactual_weight_lambda0":float(cf.get(i,0.))}
+                metrics[i].append(enriched)
                 round_rows.append({"hetero":het,"shift_lambda":lam,"seed":s["seed"],
-                    "round":int(r["round"])+1,"client_id":m["client_id"],
+                    "round":int(r["round"])+1,"client_id":i,
                     "prototype_drift":m["prototype_drift"],
                     "aggregation_weight":m["aggregation_weight"],
+                    "counterfactual_weight_lambda0":float(cf.get(i,0.)),
+                    "drift_induced_weight_change":float(m["aggregation_weight"])-float(cf.get(i,0.)),
                     "weight_ratio_to_equal":m["weight_ratio_to_equal"],
                     "drift_penalty":m["drift_penalty"],
                     "credibility_score":m["credibility_score"]})
@@ -223,6 +232,8 @@ def per_client_audit(root,out):
                  "shift_affected":int(het=="shift" and i in (1,3)),
                  "mean_drift":float(np.mean([x["prototype_drift"] for x in mm])),
                  "mean_weight":float(np.mean([x["aggregation_weight"] for x in mm])),
+                 "mean_counterfactual_weight_lambda0":float(np.mean([x["counterfactual_weight_lambda0"] for x in mm])),
+                 "mean_drift_induced_weight_change":float(np.mean([x["aggregation_weight"]-x["counterfactual_weight_lambda0"] for x in mm])),
                  "mean_weight_ratio_to_equal":float(np.mean([x["weight_ratio_to_equal"] for x in mm])),
                  "mean_drift_penalty":float(np.mean([x["drift_penalty"] for x in mm])),
                  "mean_credibility_score":float(np.mean([x["credibility_score"] for x in mm])),
@@ -247,6 +258,10 @@ def per_client_audit(root,out):
             "client024_mean_drift":float(np.mean([x["mean_drift"] for x in client024])),
             "client13_mean_weight":float(np.mean([x["mean_weight"] for x in client13])),
             "client024_mean_weight":float(np.mean([x["mean_weight"] for x in client024])),
+            "client13_mean_counterfactual_weight_lambda0":float(np.mean([x["mean_counterfactual_weight_lambda0"] for x in client13])),
+            "client024_mean_counterfactual_weight_lambda0":float(np.mean([x["mean_counterfactual_weight_lambda0"] for x in client024])),
+            "client13_mean_drift_induced_weight_change":float(np.mean([x["mean_drift_induced_weight_change"] for x in client13])),
+            "client024_mean_drift_induced_weight_change":float(np.mean([x["mean_drift_induced_weight_change"] for x in client024])),
             "client13_mean_served":float(np.mean([x["eval_mean_served_fraction"] for x in client13])),
             "client024_mean_served":float(np.mean([x["eval_mean_served_fraction"] for x in client024])),
             "client13_mean_final_demand_ratio":float(np.mean([train_demand_mean[i] for i in (1,3)])),
@@ -268,6 +283,8 @@ def per_client_audit(root,out):
         if len(z)!=10:continue
         for metric in ("shifted_mean_drift","unshifted_mean_drift",
                        "shifted_mean_weight","unshifted_mean_weight",
+                       "client13_mean_counterfactual_weight_lambda0","client024_mean_counterfactual_weight_lambda0",
+                       "client13_mean_drift_induced_weight_change","client024_mean_drift_induced_weight_change",
                        "shifted_mean_served","unshifted_mean_served",
                        "mean_test_load_pct","safe_dwell_rate"):
             vals=[x[metric] for x in z if x[metric] is not None]
@@ -281,6 +298,8 @@ def per_client_audit(root,out):
     shift={int(x["seed"]):x for x in seed_rows if x["hetero"]=="shift" and x["shift_lambda"]==1.}
     for metric in ("client13_mean_drift","client024_mean_drift",
                    "client13_mean_weight","client024_mean_weight",
+                   "client13_mean_counterfactual_weight_lambda0","client024_mean_counterfactual_weight_lambda0",
+                   "client13_mean_drift_induced_weight_change","client024_mean_drift_induced_weight_change",
                    "client13_mean_served","client024_mean_served",
                    "mean_test_load_pct","safe_dwell_rate"):
         dif=[shift[seed][metric]-base[seed][metric] for seed in sorted(set(base)&set(shift))]
