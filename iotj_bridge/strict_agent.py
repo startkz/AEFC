@@ -325,6 +325,13 @@ class Server:
                         prototype_imitation=True
                     m['val']=np.asarray(-np.sign(m['val']+1.e-12)*(np.abs(m['val'])*2+.01),dtype=np.float32)
                     update_forgery=True
+            # Preserve the fixed application payload size after server-side prototype imitation.
+            if prototype_imitation and 'pad_bytes' in m:
+                latent_dim=(len(next(iter(self.prototypes.values()))) if self.prototypes
+                            else len(next(iter(original['proto'].values()))))
+                expected=sum(8+len(name.encode('utf8'))+4*latent_dim for name in CATEGORIES)
+                present=sum(8+len(name.encode('utf8'))+4*len(vec) for name,vec in m['proto'].items())
+                m['pad_bytes']=max(0,expected-present)
             traffic+=serialized_size(m)
             idx=np.asarray(m['idx'],dtype=np.int64)
             val=np.asarray(m['val'],dtype=np.float32)
