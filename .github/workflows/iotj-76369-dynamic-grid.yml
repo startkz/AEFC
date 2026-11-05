@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: iotj-ieee39-dynamic-transient
+  cancel-in-progress: true
 jobs:
   simulate:
     runs-on: ubuntu-latest
