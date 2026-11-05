@@ -49,7 +49,7 @@ for i=1:4
     % rate-limited to 0.02 p.u./s before it is added to the native Pref.
     % Each channel receives one non-overlapping 0.5-s pulse before the
     % documented Bus-16 fault at 5 s.
-    t0=0.2+0.9*(i-1); t1=t0+0.5;
+    t0=0.2+1.1*(i-1); t1=t0+0.7;
     base=sprintf('AEFC_DYN_ACT_%02d_',i);
     pos=get_param(src,'Position'); x=pos(3)+70; y=pos(2);
     up=[parent base 'STEP_UP']; down=[parent base 'STEP_DOWN'];
@@ -91,10 +91,10 @@ for i=1:4
     wBlock=findGenBlock(blocks,model,key,'/Governor/w');
     assert(~isempty(deltaBlock) && ~isempty(tmBlock) && ~isempty(wBlock), ...
         'AEFC:ActuatorSignalMissing','Missing delta_y/Tm/w signal for %s.',key);
-    deltaSrc=sourceForOutportBlock(deltaBlock);
-    tmSrc=sourceForOutportBlock(tmBlock);
     deltaParent=get_param(deltaBlock,'Parent'); tmParent=get_param(tmBlock,'Parent');
     makeEditable(deltaParent); makeEditable(tmParent);
+    deltaSrc=sourceForOutportBlock(deltaBlock);
+    tmSrc=sourceForOutportBlock(tmBlock);
     wPH=get_param(wBlock,'PortHandles'); wSrc=wPH.Outport(1);
 
     names=struct('raw',sprintf('AEFC_ACT_RAW_%02d',i), ...
@@ -143,8 +143,9 @@ faultInfo.external_fault_visibility_test=probeFaultExternalPorts(model,fault{1})
 
 load16=find_system(model,'LookUnderMasks','all','FollowLinks','on','Name','Load16');
 assert(numel(load16)==1,'AEFC:Load16','Expected one Load16 block.');
-loadInfo=struct('path',load16{1},'mask',maskInfo(load16{1}), ...
-    'port_handles',portSummary(load16{1}),'physical_neighbors',physicalNeighbors(load16{1}));
+loadInfo=struct; loadInfo.path=load16{1}; loadInfo.mask=maskInfo(load16{1});
+loadInfo.port_handles=portSummary(load16{1});
+loadInfo.physical_neighbors=physicalNeighbors(load16{1});
 
 libraryInfo=discoverProtectionLibrary;
 existingProtection=find_system(model,'LookUnderMasks','all','FollowLinks','on', ...
@@ -178,7 +179,7 @@ for i=1:4
     [t5,dy]=getTimeseries(simOut,c.delta_y_workspace);
     [t6,tm]=getTimeseries(simOut,c.tm_workspace);
     [t7,w]=getTimeseries(simOut,c.w_workspace);
-    assertAligned(t,t2,t3,t4,t5,t6,t7,c.generator_key);
+    assertAligned(t,t2,t3,t4,t5,t6,t7);
     if isempty(tRef), tRef=t; else
         assert(numel(tRef)==numel(t) && max(abs(tRef-t))<1e-8, ...
             'AEFC:ActuatorTimeAlignment','Actuator traces not aligned.');
@@ -262,7 +263,7 @@ for i=1:numel(blocks)
     if ~contains(b,[model '/Generators/Gen']) || ~contains(safeget(b,'MaskType'),'Machine Mechanical')
         continue;
     end
-    key=generatorKey(b); m=maskInfo(b).values;
+    key=generatorKey(b); mi=maskInfo(b); m=mi.values;
     if ~isfield(m,'H') || ~isfield(m,'SRated'), continue; end
     h=str2double(m.H); s=str2double(m.SRated);
     info(end+1,1)=struct('generator_key',key,'H_s',h,'S_rated_MW',s, ...
