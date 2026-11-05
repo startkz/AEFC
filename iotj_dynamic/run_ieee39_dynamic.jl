@@ -95,6 +95,16 @@ include_string(Main, source, "ieee39_part1_rate_limited.jl")
 formula = @initformula :ZIPLoad₊Vset = sqrt(:busbar₊u_r^2 + :busbar₊u_i^2)
 set_initformula!(nw[VIndex(31)], formula)
 set_initformula!(nw[VIndex(39)], formula)
+# A slew-limited governor has a flat derivative residual whenever the
+# reference error exceeds its rate cap. At equilibrium the valve derivative
+# must be zero *and* the governor must have zero tracking error; otherwise
+# the initial reference power is not identifiable from the saturated ODE.
+# This initialization-only constraint restores the physical steady-state
+# relation without changing the dynamic rate limiter or any model parameter.
+for row in eachrow(gov_df)
+    set_initconstraint!(nw[VIndex(Int(row.bus))],
+        @initconstraint :ctrld_gen₊gov₊ref_sig - :ctrld_gen₊gov₊xg1)
+end
 s0 = initialize_from_pf!(nw; verbose=true, subverbose=true)
 check_base_consistency(s0)
 
