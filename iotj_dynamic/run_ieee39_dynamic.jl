@@ -95,7 +95,7 @@ include_string(Main, source, "ieee39_part1_rate_limited.jl")
 formula = @initformula :ZIPLoad₊Vset = sqrt(:busbar₊u_r^2 + :busbar₊u_i^2)
 set_initformula!(nw[VIndex(31)], formula)
 set_initformula!(nw[VIndex(39)], formula)
-s0 = initialize_from_pf!(nw; verbose=false)
+s0 = initialize_from_pf!(nw; verbose=true, subverbose=true)
 check_base_consistency(s0)
 
 events = NamedTuple[]
@@ -224,6 +224,7 @@ actuator_df = DataFrame(actuator_rows)
 CSV.write(joinpath(outdir, "feeder_pickup_actuator_trace.csv"), actuator_df)
 CSV.write(joinpath(outdir, "protection_events.csv"), DataFrame(events))
 
+valve_all = reduce(vcat, governor_valves)
 valve_rate_max = maximum(maximum(abs.(diff(v))) / dt for v in governor_valves)
 actuator_rate_max = maximum(abs.(actuator_df.actuator_rate_pu_per_s))
 report = Dict(
