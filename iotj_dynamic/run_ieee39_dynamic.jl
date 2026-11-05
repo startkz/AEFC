@@ -118,7 +118,8 @@ function applied_multiplier(t, scenario)
     elseif scenario == "step"
         return 1.0 + pickup_increment
     else
-        return 1.0 + min(pickup_increment, max(0.0, t - pickup_start) * pickup_rate_limit)
+        elapsed = floor(max(0.0, t - pickup_start) / pickup_sample + 1e-9) * pickup_sample
+        return 1.0 + min(pickup_increment, elapsed * pickup_rate_limit)
     end
 end
 function command_multiplier(t, scenario)
@@ -195,16 +196,17 @@ for row in eachrow(gov_df)
 end
 CSV.write(joinpath(outdir, "governor_actuator_trace.csv"), DataFrame(governor_rows))
 
+actuator_times = collect(0.0:pickup_sample:15.0)
 actuator_rows = NamedTuple[]
-for k in eachindex(sample_times)
-    t = sample_times[k]
+for k in eachindex(actuator_times)
+    t = actuator_times[k]
     applied = applied_multiplier(t, scenario)
     push!(actuator_rows, (
         time_s=t,
         command_multiplier=command_multiplier(t, scenario),
         applied_multiplier=applied,
         actuator_rate_pu_per_s=k == 1 ? 0.0 :
-            (applied - applied_multiplier(sample_times[k-1], scenario)) / dt,
+            (applied - applied_multiplier(actuator_times[k-1], scenario)) / pickup_sample,
         actuator_rate_limit_pu_per_s=pickup_rate_limit,
         actuator_min_pu=1.0,
         actuator_max_pu=1.0 + pickup_increment))
@@ -213,8 +215,7 @@ actuator_df = DataFrame(actuator_rows)
 CSV.write(joinpath(outdir, "feeder_pickup_actuator_trace.csv"), actuator_df)
 CSV.write(joinpath(outdir, "protection_events.csv"), DataFrame(events))
 
-valve_all = reduce(vcat, governor_valves)
-valve_rate_max = maximum(abs.(diff(valve_all, dims=1))) / dt
+valve_rate_max = maximum(maximum(abs.(diff(v))) / dt for v in governor_valves)
 actuator_rate_max = maximum(abs.(actuator_df.actuator_rate_pu_per_s))
 report = Dict(
     "study" => "IEEE39 full-order electromechanical transient simulation",
