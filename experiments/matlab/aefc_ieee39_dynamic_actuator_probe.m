@@ -196,7 +196,7 @@ for i=1:4
             'governor_actuator_delta_y_pu',dy(k),'turbine_torque_tm_pu',tm(k), ...
             'rotor_speed_pu',w(k),'derived_mechanical_power_pu',pm(k)); %#ok<AGROW>
     end
-    win=t>=c.test_pulse_start_s & t<=c.test_pulse_end_s+1.0;
+    win=t>=c.test_pulse_start_s & t<=c.test_pulse_end_s+0.5;
     metrics(i).generator_key=c.generator_key;
     metrics(i).pulse_start_s=c.test_pulse_start_s;
     metrics(i).pulse_end_s=c.test_pulse_end_s;
