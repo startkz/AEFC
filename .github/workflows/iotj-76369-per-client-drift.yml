@@ -73,7 +73,7 @@ jobs:
         with:
           pattern: iotj-perclient-case39-*
           path: perclient-artifacts/
-          merge-multiple: true
+          merge-multiple: false
       - name: Independent per-client, demand assignment and checkpoint audit; generate Figure B and Table Z
         run: |
           python iotj_bridge/audit_credibility.py --shift-root perclient-artifacts --out results/iotj_per_client_audit
