@@ -16,6 +16,9 @@ using JSON
 # The custom component is defined in Main (unlike PowerDynamics.Library),
 # so declare the independent variable in this module before @cached_component.
 @variables t
+# The component is built in Main, where PowerDynamics.Library's internal Dt
+# is not in scope. Bind the same time derivative operator explicitly.
+Dt = Differential(t)
 
 # Preserve the IEEE39 TGOV1 data and add explicit continuous valve slew limits.
 @cached_component function TGOV1RateLimited(; name, ω_ref_input=false, p_ref_input=false)
