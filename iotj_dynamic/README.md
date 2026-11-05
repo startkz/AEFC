@@ -48,3 +48,5 @@ Workflow execution is serialized across the three scenarios so the pinned Julia 
 The Julia workflow declares the ModelingToolkit and SciML packages used directly by the experiment script.
 
 Only the latest dynamic workflow run is retained as active; superseded dependency-resolution attempts are cancelled to avoid duplicate installations.
+
+Dependency installation is performed in one Pkg transaction with automatic intermediate precompilation disabled, followed by one explicit precompile.
