@@ -20,11 +20,22 @@ jobs:
           version: '1.10'
       - name: Install pinned PowerDynamics and solver stack once
         run: |
+          export JULIA_PKG_PRECOMPILE_AUTO=0
           julia --project=iotj_dynamic -e '
             using Pkg
-            Pkg.add(url="https://github.com/JuliaDynamics/NetworkDynamics.jl", rev="9d0f71d0c898c07164d8b89404e1c885a2b18543")
-            Pkg.add(url="https://github.com/JuliaEnergy/PowerDynamics.jl", rev="47d8034f8764a128da1549a87b5302c29b5b13f9")
-            Pkg.add(["OrdinaryDiffEqRosenbrock", "OrdinaryDiffEqNonlinearSolve", "ModelingToolkitBase", "ModelingToolkitStandardLibrary", "SciMLBase", "CSV", "DataFrames", "JSON"])
+            specs = [
+              Pkg.PackageSpec(url="https://github.com/JuliaDynamics/NetworkDynamics.jl", rev="9d0f71d0c898c07164d8b89404e1c885a2b18543"),
+              Pkg.PackageSpec(url="https://github.com/JuliaEnergy/PowerDynamics.jl", rev="47d8034f8764a128da1549a87b5302c29b5b13f9"),
+              Pkg.PackageSpec(name="OrdinaryDiffEqRosenbrock"),
+              Pkg.PackageSpec(name="OrdinaryDiffEqNonlinearSolve"),
+              Pkg.PackageSpec(name="ModelingToolkitBase"),
+              Pkg.PackageSpec(name="ModelingToolkitStandardLibrary"),
+              Pkg.PackageSpec(name="SciMLBase"),
+              Pkg.PackageSpec(name="CSV"),
+              Pkg.PackageSpec(name="DataFrames"),
+              Pkg.PackageSpec(name="JSON")
+            ]
+            Pkg.add(specs)
             Pkg.precompile()
           '
       - name: Run hold, rate-limited and unconstrained diagnostic cases
