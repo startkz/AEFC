@@ -51,7 +51,7 @@ def extract_native_inertia(inventory: dict) -> dict:
 def settling_time(t: np.ndarray, f: np.ndarray, baseline: float,
                   start: float, band: float = 0.1, dwell_s: float = 1.0):
     dt = float(np.median(np.diff(t)))
-    n = max(2, int(round(dwell_s / dt)))
+    n = max(2, int(round(dwell_s / dt)) + 1)
     for i in np.where(t >= start)[0]:
         j = i + n
         if j <= len(t) and np.all(np.abs(f[i:j] - baseline) <= band):
@@ -62,7 +62,7 @@ def settling_time(t: np.ndarray, f: np.ndarray, baseline: float,
 def moving_rocof(f: np.ndarray, t: np.ndarray, window_s: float = 0.1):
     raw = np.gradient(f, t)
     dt = float(np.median(np.diff(t)))
-    n = max(1, int(round(window_s / dt)))
+    n = max(1, int(round(window_s / dt)) + 1)
     return pd.Series(raw).rolling(n, center=True, min_periods=1).mean().to_numpy()
 
 
