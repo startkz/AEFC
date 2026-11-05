@@ -73,7 +73,7 @@ jobs:
         with:
           pattern: iotj-credibility-case39-*
           path: credibility-artifacts/
-          merge-multiple: true
+          merge-multiple: false
       - name: Independent run and attack-phase audit; generate Figure A
         run: |
           python iotj_bridge/audit_credibility.py --timing-root credibility-artifacts --out results/iotj_credibility_audit
