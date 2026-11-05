@@ -4,6 +4,8 @@ using PowerDynamics
 using PowerDynamics.Library
 using ModelingToolkitBase
 using NetworkDynamics
+using NetworkDynamics: @cached_component
+using ModelingToolkitStandardLibrary.Blocks: RealInput, RealOutput
 using OrdinaryDiffEqRosenbrock
 using OrdinaryDiffEqNonlinearSolve
 using SciMLBase
