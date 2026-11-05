@@ -63,11 +63,16 @@ jobs:
           pattern: iotj-ieee39-dynamic-*
           path: dynamic-artifacts/
           merge-multiple: false
-      - name: Audit dynamic traces
+      - name: Audit dynamic traces when simulation artifacts exist
         run: |
+          mkdir -p dynamic-artifacts
           d=$(find dynamic-artifacts -mindepth 1 -maxdepth 1 -type d | head -n 1)
-          test -n "$d"
-          python iotj_dynamic/audit_dynamic.py "$d"
+          if [ -z "$d" ]; then
+            printf '%s\n' '{"valid":false,"reason":"Simulation job produced no artifacts; inspect the simulation job failure before interpreting dynamic evidence."}' > dynamic-artifacts/dynamic_audit_report.json
+            echo "::warning::No simulation artifacts were produced; independent numerical audit was not run."
+          else
+            python iotj_dynamic/audit_dynamic.py "$d"
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
