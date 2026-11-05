@@ -22,8 +22,13 @@ for scenario in SCENARIOS:
     summaries[scenario] = s
     freq, gov, act, events = [read_csv(folder / n) for n in required]
     if not s.get("solver_success"): errors.append(f"{scenario}: solver unsuccessful")
-    if len(freq) < 1000 or len(gov) < 1000 or len(act) < 1000:
-        errors.append(f"{scenario}: incomplete time series")
+    # Frequency and governor traces are sampled every 10 ms (0..15 s: 1501
+    # points); the aggregate feeder actuator is sampled every 50 ms (301
+    # points). Do not apply the 1000-row threshold to this lower-rate trace.
+    if len(freq) < 1000 or len(gov) < 1000:
+        errors.append(f"{scenario}: incomplete frequency/governor time series")
+    if len(act) != 301:
+        errors.append(f"{scenario}: feeder actuator trace should contain 301 samples at 50-ms intervals")
     if s.get("machine_count") != 10 or s.get("governor_count") != 9:
         errors.append(f"{scenario}: expected 10 machines and 9 governors")
     for key in ("coi_frequency_hz", "coi_frequency_deviation_hz", "coi_rocof_hz_per_s"):
