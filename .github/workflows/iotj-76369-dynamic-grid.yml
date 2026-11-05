@@ -9,17 +9,13 @@ permissions:
 jobs:
   simulate:
     runs-on: ubuntu-latest
-    timeout-minutes: 240
-    strategy:
-      fail-fast: false
-      matrix:
-        scenario: [hold, rate_limited, step]
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1.10'
-      - name: Install pinned PowerDynamics and solver stack
+      - name: Install pinned PowerDynamics and solver stack once
         run: |
           julia --project=iotj_dynamic -e '
             using Pkg
@@ -28,15 +24,18 @@ jobs:
             Pkg.add(["OrdinaryDiffEqRosenbrock", "OrdinaryDiffEqNonlinearSolve", "CSV", "DataFrames", "JSON"])
             Pkg.precompile()
           '
-      - name: Run full IEEE39 electromechanical transient simulation
+      - name: Run hold, rate-limited and unconstrained diagnostic cases
         run: |
-          julia --project=iotj_dynamic iotj_dynamic/run_ieee39_dynamic.jl --scenario '${{ matrix.scenario }}' --out 'results/iotj_dynamic/${{ matrix.scenario }}'
+          set -euo pipefail
+          for s in hold rate_limited step; do
+            julia --project=iotj_dynamic iotj_dynamic/run_ieee39_dynamic.jl --scenario "$s" --out "results/iotj_dynamic/$s"
+          done
       - name: Upload raw frequency, actuator, governor and protection traces
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: iotj-ieee39-dynamic-${{ matrix.scenario }}-${{ github.sha }}
-          path: results/iotj_dynamic/${{ matrix.scenario }}/
+          name: iotj-ieee39-dynamic-${{ github.sha }}
+          path: results/iotj_dynamic/
           if-no-files-found: warn
           retention-days: 90
   independent-audit:
@@ -50,20 +49,15 @@ jobs:
           pattern: iotj-ieee39-dynamic-*
           path: dynamic-artifacts/
           merge-multiple: false
-      - name: Normalize artifacts and independently audit dynamic traces
+      - name: Audit dynamic traces
         run: |
-          mkdir -p results/iotj_dynamic
-          for s in hold rate_limited step; do
-            d=$(find dynamic-artifacts -maxdepth 1 -type d -name "iotj-ieee39-dynamic-$s-*" | head -n 1)
-            test -n "$d"
-            mkdir -p "results/iotj_dynamic/$s"
-            cp "$d"/* "results/iotj_dynamic/$s/"
-          done
-          python iotj_dynamic/audit_dynamic.py results/iotj_dynamic
+          d=$(find dynamic-artifacts -mindepth 1 -maxdepth 1 -type d | head -n 1)
+          test -n "$d"
+          python iotj_dynamic/audit_dynamic.py "$d"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: iotj-ieee39-dynamic-independent-audit-${{ github.sha }}
-          path: results/iotj_dynamic/
+          path: dynamic-artifacts/
           if-no-files-found: warn
           retention-days: 90
