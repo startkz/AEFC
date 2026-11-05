@@ -44,3 +44,5 @@ The IEEE39 test system is synthetic. This experiment supplies electromechanical 
 - TGOV1 model documentation: https://build.openmodelica.org/Documentation/Dynawo.Electrical.Controls.Machines.Governors.Standard.Steam.TGov1.html
 
 Workflow execution is serialized across the three scenarios so the pinned Julia dependency graph is installed once per run.
+
+The Julia workflow declares the ModelingToolkit and SciML packages used directly by the experiment script.
