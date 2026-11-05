@@ -46,3 +46,5 @@ The IEEE39 test system is synthetic. This experiment supplies electromechanical 
 Workflow execution is serialized across the three scenarios so the pinned Julia dependency graph is installed once per run.
 
 The Julia workflow declares the ModelingToolkit and SciML packages used directly by the experiment script.
+
+Only the latest dynamic workflow run is retained as active; superseded dependency-resolution attempts are cancelled to avoid duplicate installations.
