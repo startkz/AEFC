@@ -103,13 +103,13 @@ pickup_increment, pickup_rate_limit, pickup_sample = 0.10, 0.02, 0.05
 governor_rate_limit = 0.10
 
 # Fault and time-coordinated line-clearing action on branch 11 (buses 5-8).
-fault_affect = ComponentAffect([], [:piline₊shortcircuit]) do u, p, ctx
-    p[:piline₊shortcircuit] = 1
+fault_affect = ComponentAffect([:piline₊shortcircuit]) do u, ctx
+    u[:piline₊shortcircuit] = 1
     push!(events, (time_s=Float64(ctx.t), event="three_phase_fault",
                    component="branch_11", detail="fault applied"))
 end
-trip_affect = ComponentAffect([], [:piline₊active]) do u, p, ctx
-    p[:piline₊active] = 0
+trip_affect = ComponentAffect([:piline₊active]) do u, ctx
+    u[:piline₊active] = 0
     push!(events, (time_s=Float64(ctx.t), event="protection_line_trip",
                    component="branch_11", detail="100-ms fault-clearing trip"))
 end
@@ -138,10 +138,10 @@ if scenario != "hold"
     times = scenario == "step" ? [pickup_start] : collect(pickup_start:pickup_sample:pickup_end)
     for row in eachrow(load_df)
         bus, p0, q0 = Int(row.bus), Float64(row.Pset), Float64(row.Qset)
-        affect = ComponentAffect([], [:ZIPLoad₊Pset, :ZIPLoad₊Qset]) do u, p, ctx
+        affect = ComponentAffect([:ZIPLoad₊Pset, :ZIPLoad₊Qset]) do u, ctx
             alpha = applied_multiplier(Float64(ctx.t), scenario)
-            p[:ZIPLoad₊Pset] = p0 * alpha
-            p[:ZIPLoad₊Qset] = q0 * alpha
+            u[:ZIPLoad₊Pset] = p0 * alpha
+            u[:ZIPLoad₊Qset] = q0 * alpha
             push!(events, (time_s=Float64(ctx.t), event="load_pickup_update",
                            component="bus_$(bus)", detail="load_multiplier=$(alpha)"))
         end
