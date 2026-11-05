@@ -42,3 +42,5 @@ The IEEE39 test system is synthetic. This experiment supplies electromechanical 
 - PowerDynamics.jl IEEE39 transient simulation tutorial: https://juliaenergy.github.io/PowerDynamics.jl/stable/generated/ieee39_part3/
 - Texas A&M IEEE 39-bus system description: https://electricgrids.engr.tamu.edu/electric-grid-test-cases/ieee-39-bus-system/
 - TGOV1 model documentation: https://build.openmodelica.org/Documentation/Dynawo.Electrical.Controls.Machines.Governors.Standard.Steam.TGov1.html
+
+Workflow execution is serialized across the three scenarios so the pinned Julia dependency graph is installed once per run.
