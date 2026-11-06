@@ -1,0 +1,147 @@
+name: IoTJ R1 controlled shared actor vs critic architecture experiment
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths:
+      - '.github/workflows/iotj-76369-shared-object.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: iotj-76369-shared-object
+  cancel-in-progress: false
+jobs:
+  architecture-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Pin AC solver and local PER-DDPG implementation
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Validate both sharing-object branches and original local-learner contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q iotj_bridge
+          python iotj_bridge/test_strict.py
+          for arch in actor critic; do
+            root="results/iotj_shared_smoke/case39/joint/full/seed80/$arch"
+            python iotj_bridge/shared_object_ablation.py \
+              --architecture "$arch" --component full --attack joint --case 39 \
+              --seed 80 --hetero dim --clients 5 --episodes 25 --eval-episodes 2 \
+              --batch 256 --hidden 128 --latent 32 --local-steps 5 \
+              --sharing-steps 2 --kappa 0.2 --fixed-traffic --out "$root/run.json"
+            python iotj_bridge/audit_shared_object.py \
+              --input "$root" --out "$root/audit" --episodes 25 --tests 2
+          done
+          python - <<'PY'
+          import json,pathlib
+          root=pathlib.Path('results/iotj_shared_smoke/case39/joint/full/seed80')
+          a=json.loads((root/'actor/run.json').read_text())
+          c=json.loads((root/'critic/run.json').read_text())
+          assert a['summary']['k_coordinates_equal_across_arms']==c['summary']['k_coordinates_equal_across_arms']
+          aa=[x['uplink_bytes'] for x in a['rounds']]
+          cc=[x['uplink_bytes'] for x in c['rounds']]
+          assert aa==cc,(aa,cc)
+          assert len(aa)==5
+          print('PASS: matched 5-round serialized application payloads for both shared objects')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-shared-object-smoke-${{ github.sha }}
+          path: results/iotj_shared_smoke/
+          if-no-files-found: warn
+          retention-days: 14
+
+  full-budget:
+    needs: architecture-smoke
+    if: success()
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        seed: [80,81,82,83,84,85,86,87,88,89]
+        architecture: [actor,critic]
+        component: [full,no_adv,no_proto,no_cred]
+        attack: [clean,joint]
+        exclude:
+          - {attack: clean, component: no_adv}
+          - {attack: clean, component: no_proto}
+          - {attack: clean, component: no_cred}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install identical pinned AC and local learner dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Train and test frozen shared-actor or shared-critic configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="results/iotj_shared_full/case39/${{ matrix.attack }}/${{ matrix.component }}/seed${{ matrix.seed }}/${{ matrix.architecture }}"
+          python iotj_bridge/shared_object_ablation.py \
+            --architecture '${{ matrix.architecture }}' --component '${{ matrix.component }}' \
+            --attack '${{ matrix.attack }}' --case 39 --seed ${{ matrix.seed }} \
+            --hetero dim --clients 5 --episodes 1000 --eval-episodes 10 \
+            --batch 256 --hidden 128 --latent 32 --local-steps 5 \
+            --sharing-steps 2 --kappa 0.2 --fixed-traffic --out "$root/run.json"
+      - name: Independently audit learning, physical traces, checkpoints and measured uplink bytes
+        if: success()
+        shell: bash
+        run: |
+          root="results/iotj_shared_full/case39/${{ matrix.attack }}/${{ matrix.component }}/seed${{ matrix.seed }}/${{ matrix.architecture }}"
+          python iotj_bridge/audit_shared_object.py --input "$root" \
+            --out "$root/audit" --episodes 1000 --tests 10
+      - name: Preserve original per-run data, checkpoint and independent audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iotj-shared-case39-${{ matrix.attack }}-${{ matrix.component }}-seed${{ matrix.seed }}-${{ matrix.architecture }}-${{ github.sha }}
+          path: results/iotj_shared_full/case39/${{ matrix.attack }}/${{ matrix.component }}/seed${{ matrix.seed }}/${{ matrix.architecture }}/
+          retention-days: 90
+          if-no-files-found: warn
+
+  aggregate:
+    needs: [architecture-smoke,full-budget]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numeric audit dependency
+        run: python -m pip install 'numpy>=1.26,<3'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iotj-shared-case39-*
+          path: original_per_run_artifacts/
+          merge-multiple: false
+      - name: Verify all 100 full-budget seed/method configurations and matched bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python iotj_bridge/aggregate_shared_object.py \
+            --input original_per_run_artifacts/ \
+            --out results/iotj_shared_object_aggregate/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-shared-object-independent-aggregate-${{ github.sha }}
+          path: results/iotj_shared_object_aggregate/
+          retention-days: 90
+          if-no-files-found: warn
