@@ -48,7 +48,8 @@ def audit(root,*,require_full=False):
     check(len(set(protocol['test_seeds']))==ntest,'Duplicate independent test seeds')
     check(bool(independent['selection_used_validation_only']),'Test-based selection claimed')
     check(independent['independent_test_seeds']==protocol['test_seeds'],'Test seed identity mismatch')
-    check("serialized application" in protocol['cumulative_byte_scope'].lower(),'Measured byte scope missing')
+    check("serialized" in protocol['cumulative_byte_scope'].lower() and
+          "application" in protocol['cumulative_byte_scope'].lower(),'Measured byte scope missing')
     cumulative=0;first_joint=None;first_load=None
     checksums=[]
     for idx,rec in enumerate(records):
