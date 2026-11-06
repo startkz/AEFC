@@ -36,7 +36,7 @@ def main():
             errors.append(f"incomplete budget: {key}")
         if not s["fixed_traffic"]:
             errors.append(f"fixed application payload not enabled: {key}")
-        audits=list(r.parent.rglob("audit_summary.json"))
+        audits=list(r.rglob("audit_summary.json"))
         if len(audits)!=1 or not json.loads(audits[0].read_text()).get("valid",False):
             errors.append(f"missing/failing independent audit: {key}")
         raw=list(r.glob("run.json"))
