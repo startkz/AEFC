@@ -1,0 +1,86 @@
+name: IoTJ honest per-client drift and weight sensitivity full runs
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-per-client-drift.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: iotj-per-client-drift
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        seed: [80,81,82,83,84,85,86,87,88,89]
+        variant: [no_shift_l1,shift_l0,shift_l05,shift_l1,shift_l2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install fixed runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Run full 1000-episode H3 demand-shift and lambda-sensitivity experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          variant='${{ matrix.variant }}'
+          case "$variant" in
+            no_shift_l1) hetero=dim; lambda_s=1.0;;
+            shift_l0) hetero=shift; lambda_s=0.0;;
+            shift_l05) hetero=shift; lambda_s=0.5;;
+            shift_l1) hetero=shift; lambda_s=1.0;;
+            shift_l2) hetero=shift; lambda_s=2.0;;
+            *) exit 3;;
+          esac
+          out="results/iotj_per_client_drift/case39/seed${{ matrix.seed }}/${variant}.json"
+          python iotj_bridge/strict_run.py \
+            --case 39 --seed ${{ matrix.seed }} --mode adv --hetero "$hetero" --attack clean \
+            --episodes 1000 --clients 5 --malicious-clients 1 --batch 256 --hidden 128 --latent 32 \
+            --local-steps 5 --sharing-steps 2 --kappa 0.2 --eval-episodes 10 \
+            --fixed-traffic --shift-lambda "$lambda_s" --attack-start-round 0 --out "$out"
+      - name: Upload immutable run JSON, checkpoint and manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iotj-perclient-case39-seed${{ matrix.seed }}-${{ matrix.variant }}-${{ github.sha }}
+          path: results/iotj_per_client_drift/case39/seed${{ matrix.seed }}/${{ matrix.variant }}.*
+          if-no-files-found: warn
+          retention-days: 90
+  audit:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install audit and plotting dependencies
+        run: |
+          python -m pip install numpy matplotlib==3.9.2
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iotj-perclient-case39-*
+          path: perclient-artifacts/
+          merge-multiple: false
+      - name: Independent per-client, demand assignment and checkpoint audit; generate Figure B and Table Z
+        run: |
+          python iotj_bridge/audit_credibility.py --shift-root perclient-artifacts --out results/iotj_per_client_audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-perclient-drift-audit-${{ github.sha }}
+          path: results/iotj_per_client_audit/per_client/
+          if-no-files-found: warn
+          retention-days: 90

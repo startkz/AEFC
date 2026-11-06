@@ -1,0 +1,83 @@
+name: IoTJ IEEE39 dynamic transient safety evidence
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['iotj_dynamic/**', '.github/workflows/iotj-76369-dynamic-grid.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: iotj-ieee39-dynamic-transient
+  cancel-in-progress: true
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.10'
+      - name: Install pinned PowerDynamics and solver stack once
+        run: |
+          export JULIA_PKG_PRECOMPILE_AUTO=0
+          julia --project=iotj_dynamic -e '
+            using Pkg
+            specs = [
+              Pkg.PackageSpec(url="https://github.com/JuliaDynamics/NetworkDynamics.jl", rev="9d0f71d0c898c07164d8b89404e1c885a2b18543"),
+              Pkg.PackageSpec(url="https://github.com/JuliaEnergy/PowerDynamics.jl", rev="47d8034f8764a128da1549a87b5302c29b5b13f9"),
+              Pkg.PackageSpec(name="OrdinaryDiffEqRosenbrock"),
+              Pkg.PackageSpec(name="OrdinaryDiffEqNonlinearSolve"),
+              Pkg.PackageSpec(name="ModelingToolkitBase"),
+              Pkg.PackageSpec(name="ModelingToolkitStandardLibrary"),
+              Pkg.PackageSpec(name="SciMLBase"),
+              Pkg.PackageSpec(name="CSV"),
+              Pkg.PackageSpec(name="DataFrames"),
+              Pkg.PackageSpec(name="JSON")
+            ]
+            Pkg.add(specs)
+            Pkg.precompile()
+          '
+      - name: Run hold, rate-limited and unconstrained diagnostic cases
+        run: |
+          set -euo pipefail
+          for s in hold rate_limited step; do
+            julia --project=iotj_dynamic iotj_dynamic/run_ieee39_dynamic.jl --scenario "$s" --out "results/iotj_dynamic/$s"
+          done
+      - name: Upload raw frequency, actuator, governor and protection traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iotj-ieee39-dynamic-${{ github.sha }}
+          path: results/iotj_dynamic/
+          if-no-files-found: warn
+          retention-days: 90
+  independent-audit:
+    needs: simulate
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iotj-ieee39-dynamic-*
+          path: dynamic-artifacts/
+          merge-multiple: false
+      - name: Audit dynamic traces when simulation artifacts exist
+        run: |
+          mkdir -p dynamic-artifacts
+          d=$(find dynamic-artifacts -mindepth 1 -maxdepth 1 -type d | head -n 1)
+          if [ -z "$d" ]; then
+            printf '%s\n' '{"valid":false,"reason":"Simulation job produced no artifacts; inspect the simulation job failure before interpreting dynamic evidence."}' > dynamic-artifacts/dynamic_audit_report.json
+            echo "::error::No simulation artifacts were produced; independent numerical audit cannot pass."
+            exit 1
+          else
+            python iotj_dynamic/audit_dynamic.py "$d"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-ieee39-dynamic-independent-audit-${{ github.sha }}
+          path: dynamic-artifacts/
+          if-no-files-found: warn
+          retention-days: 90

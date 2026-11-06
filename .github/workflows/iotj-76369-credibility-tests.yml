@@ -1,0 +1,40 @@
+name: IoTJ credibility and per-client telemetry unit checks
+# Re-run after CLI, fixed-payload, and seed-mean demand-shift audit updates.
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-credibility-tests.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mechanism-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install fixed CPU runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Unit tests for delayed metadata, 50-round credibility and client telemetry
+        run: python iotj_bridge/test_strict.py
+      - name: Compile experiment and independent audit modules
+        run: python -m py_compile iotj_bridge/strict_agent.py iotj_bridge/strict_run.py iotj_bridge/audit_credibility.py
+      - name: End-to-end ten-episode smoke (engineering only, not paper evidence)
+        run: |
+          python iotj_bridge/strict_run.py --case 39 --seed 80 --mode adv --hetero shift --attack temporal_credibility --attack-start-round 1 --episodes 10 --clients 5 --batch 256 --hidden 128 --latent 32 --eval-episodes 1 --local-steps 5 --sharing-steps 2 --fixed-traffic --shift-lambda 1.0 --out /tmp/credibility-smoke.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/credibility-smoke.json'))
+          assert x['summary']['completed_rounds']==2
+          assert len(x['rounds'][0]['per_client'])==5
+          assert len(x['train_episodes'][0]['client_outcomes'])==5
+          assert x['rounds'][0]['attack_active'] is False
+          assert x['rounds'][1]['attack_active'] is True
+          print('PASS end-to-end per-client telemetry and attack phase boundary')
+          PY

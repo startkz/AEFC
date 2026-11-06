@@ -1,0 +1,53 @@
+name: IoTJ independent white-box membership inference 1000 episodes
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-review-mia.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  membership-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        case: [39,118]
+        seed: [90,91,92,93,94]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1' 'scikit-learn==1.6.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Execute independent 1000 episode learning and shadow-client membership attack
+        run: |
+          python iotj_bridge/strict_mia.py --case ${{ matrix.case }} --seed ${{ matrix.seed }} --episodes 1000 --out results/iotj_review_mia/case${{ matrix.case }}/seed${{ matrix.seed }}/attack.json
+      - name: Verify member labels, prediction scores, independent attack seeds
+        run: |
+          python - <<'PY'
+          import csv,json,pathlib,os
+          base=pathlib.Path('results/iotj_review_mia/case${{ matrix.case }}/seed${{ matrix.seed }}')
+          d=json.loads((base/'attack.json').read_text())
+          rows=list(csv.DictReader((base/'attack.predictions.csv').open()))
+          assert len(d['summary'])==3
+          assert len({x['attack_seed'] for x in rows})==3
+          assert set(x['member_label'] for x in rows)=={'0','1'}
+          assert all(0<=float(x['prediction_score'])<=1 for x in rows)
+          assert len(rows)>300
+          assert all(0<=x['auc']<=1 for x in d['summary'])
+          assert 'white-box' in d['protocol']['claim_scope']
+          print('PASS: independent training seed, 3 attack seeds, observed labels/scores and AUC')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-mia-case${{ matrix.case }}-seed${{ matrix.seed }}-${{ github.sha }}
+          path: results/iotj_review_mia/
+          if-no-files-found: warn
+          retention-days: 90

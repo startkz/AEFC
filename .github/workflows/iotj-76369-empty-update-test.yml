@@ -1,0 +1,51 @@
+name: IoT-J empty-update and no-prototype regression acceptance
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-empty-update-test.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  empty-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [39,118]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Run zero-message, PER, and serialization tests
+        run: python iotj_bridge/test_strict.py
+      - name: Run actual no-prototype and no-adapter paired scenarios
+        run: |
+          python iotj_bridge/strict_run.py --case ${{ matrix.case }} --seed 80 \
+            --episodes 10 --batch 32 --hidden 32 --latent 16 --eval-episodes 3 \
+            --hetero dim --disable-proto \
+            --out results/empty_update_test/case${{ matrix.case }}/no_proto.json
+          python iotj_bridge/strict_run.py --case ${{ matrix.case }} --seed 80 \
+            --episodes 10 --batch 32 --hidden 32 --latent 16 --eval-episodes 3 \
+            --hetero pad_dim --disable-adapters \
+            --out results/empty_update_test/case${{ matrix.case }}/no_adapter.json
+      - name: Verify both runs and checkpoint integrity independently
+        run: |
+          python iotj_bridge/strict_audit.py \
+            --input results/empty_update_test/case${{ matrix.case }} \
+            --out results/empty_update_test_audit/case${{ matrix.case }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-empty-noadapter-case${{ matrix.case }}-${{ github.sha }}
+          path: |
+            results/empty_update_test/
+            results/empty_update_test_audit/
+          if-no-files-found: warn
+          retention-days: 90

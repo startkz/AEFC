@@ -1,0 +1,35 @@
+name: IoTJ immutable semantic prototype artifacts independent re-audit
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-review-semantic-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verified-semantic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41408245276
+          pattern: iotj-semantic-case*
+          path: reviewed-semantic/
+          merge-multiple: true
+          github-token: ${{ github.token }}
+      - name: Audit all 12 original results with correct IEEE118 floating-point tolerance
+        run: |
+          python iotj_bridge/audit_semantic_artifacts.py --input reviewed-semantic --out results/verified_semantic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-semantic-immutable-12-reverified-${{ github.sha }}
+          path: results/verified_semantic/
+          if-no-files-found: warn
+          retention-days: 90

@@ -1,0 +1,59 @@
+name: IoT-J fixed-byte strict Top-k communication acceptance
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-fixed-traffic.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matched-traffic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [39,118]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Validate exact serialized payload padding
+        run: python iotj_bridge/test_strict.py
+      - name: Execute both sharing methods on identical frozen seed under fixed traffic
+        run: |
+          python iotj_bridge/strict_run.py --case ${{ matrix.case }} --seed 90 \
+            --mode adv --episodes 5 --batch 32 --hidden 32 --latent 16 \
+            --eval-episodes 3 --fixed-traffic \
+            --out results/fixed_traffic/case${{ matrix.case }}/adv.json
+          python iotj_bridge/strict_run.py --case ${{ matrix.case }} --seed 90 \
+            --mode ordinary --episodes 5 --batch 32 --hidden 32 --latent 16 \
+            --eval-episodes 3 --fixed-traffic \
+            --out results/fixed_traffic/case${{ matrix.case }}/ordinary.json
+      - name: Require literal equality of real application payload bytes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,pathlib
+          root=pathlib.Path('results/fixed_traffic/case${{ matrix.case }}')
+          a=json.loads((root/'adv.json').read_text())['summary']['uplink_bytes']
+          b=json.loads((root/'ordinary.json').read_text())['summary']['uplink_bytes']
+          print('AEFC bytes=',a,'Ordinary Top-k bytes=',b)
+          if a!=b:raise SystemExit('not an equal-byte comparison')
+          PY
+          python iotj_bridge/strict_audit.py --input results/fixed_traffic/case${{ matrix.case }} --out results/fixed_traffic_audit/case${{ matrix.case }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-fixed-traffic-case${{ matrix.case }}-${{ github.sha }}
+          path: |
+            results/fixed_traffic/
+            results/fixed_traffic_audit/
+          retention-days: 90
+          if-no-files-found: warn

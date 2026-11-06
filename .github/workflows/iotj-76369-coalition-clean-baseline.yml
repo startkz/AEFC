@@ -1,0 +1,41 @@
+name: IoTJ 76369 coalition 0 of 10 clean matched baseline
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-coalition-clean-baseline.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  clean-ten-clients:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [39,118]
+        seed: [80,81,82,83,84]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - run: python iotj_bridge/test_strict.py
+      - name: Full-budget 0/10 baseline with identical architecture and physical scenario
+        run: |
+          python iotj_bridge/strict_run.py --case ${{ matrix.case }} --seed ${{ matrix.seed }} --mode adv --hetero dim --attack clean --clients 10 --malicious-clients 0 --episodes 1000 --batch 256 --hidden 128 --latent 32 --eval-episodes 10 --local-steps 5 --sharing-steps 2 --kappa 0.2 --fixed-traffic --out results/iotj_review_coalition_clean/case${{ matrix.case }}/seed${{ matrix.seed }}/M0_N10.json
+      - run: |
+          python iotj_bridge/strict_audit.py --input results/iotj_review_coalition_clean/case${{ matrix.case }}/seed${{ matrix.seed }} --out results/iotj_review_coalition_clean_audit/case${{ matrix.case }}/seed${{ matrix.seed }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-clean-ten-case${{ matrix.case }}-seed${{ matrix.seed }}-${{ github.sha }}
+          path: |
+            results/iotj_review_coalition_clean/
+            results/iotj_review_coalition_clean_audit/
+          if-no-files-found: warn
+          retention-days: 90

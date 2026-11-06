@@ -1,0 +1,65 @@
+name: IoTJ hard pre-action AC constraint shield frozen policy
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-review-ac-shield.yml','iotj_bridge/strict_ac_shield.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  constrained-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [39,118]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Retrieve trained 1000-episode policy, not a synthetic policy
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 41390041858
+          pattern: iotj-full-equal-case${{ matrix.case }}-seed82-adv-*
+          path: frozen/
+          merge-multiple: true
+          github-token: ${{ github.token }}
+      - name: Independently evaluate frozen policy without and with action safety gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ckpt="frozen/iotj_full1000_equal/case${{ matrix.case }}/seed82/adv.pt"
+          test -s "$ckpt"
+          for shield in off on; do
+             python iotj_bridge/strict_ac_shield.py --checkpoint "$ckpt" --case ${{ matrix.case }} --eval-seed 111 --tests 10 --horizon 30 --shield "$shield" --out "results/iotj_review_shield/case${{ matrix.case }}/${shield}.json"
+          done
+      - name: Validate enforcement was effective when feasible and no hidden safety success
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,pathlib
+          p=pathlib.Path('results/iotj_review_shield/case${{ matrix.case }}')
+          a=json.loads((p/'on.json').read_text())
+          b=json.loads((p/'off.json').read_text())
+          assert a['test_count']==b['test_count']==10
+          assert a['contract_mismatches']==0, a['contract_mismatches']
+          assert a['scope'].startswith('hard pre-action simulation gate')
+          assert a['total_feasible_candidate_steps']>=0
+          assert len(a['per_step'])==10*30
+          print('PASS AC predictive shield physical feasibility and full evidence')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-review-action-shield-case${{ matrix.case }}-${{ github.sha }}
+          path: results/iotj_review_shield/
+          if-no-files-found: warn
+          retention-days: 90

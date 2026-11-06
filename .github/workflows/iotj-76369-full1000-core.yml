@@ -1,0 +1,65 @@
+name: IoT-J full budget 1000 episodes paired core methods
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths: ['.github/workflows/iotj-76369-full1000-core.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: iotj-full1000-core
+  cancel-in-progress: false
+jobs:
+  full-budget:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        case: [39,118]
+        seed: [80,81,82,83,84,85,86,87,88,89]
+        method: [adv,ordinary]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install fixed AC and learning environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Validate strict local PER and safety-audit contracts
+        run: |
+          python -m compileall -q iotj_bridge
+          python iotj_bridge/test_strict.py
+      - name: 1000 episodes / 200 rounds / frozen unseen 10 evaluation episodes
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="results/iotj_full1000/case${{ matrix.case }}/seed${{ matrix.seed }}/${{ matrix.method }}_dim_clean.json"
+          python iotj_bridge/strict_run.py --case ${{ matrix.case }} \
+              --seed ${{ matrix.seed }} \
+              --mode ${{ matrix.method }} \
+              --hetero dim --attack clean \
+              --episodes 1000 --batch 256 --hidden 128 --latent 32 \
+              --eval-episodes 10 --clients 5 --local-steps 5 \
+              --sharing-steps 2 --kappa 0.2 --out "$out"
+      - name: Independent audit of episodes, physical traces and checkpoint provenance
+        shell: bash
+        if: success()
+        run: |
+          python iotj_bridge/strict_audit.py \
+             --input results/iotj_full1000/case${{ matrix.case }}/seed${{ matrix.seed }} \
+             --out results/iotj_full1000_audit/case${{ matrix.case }}/seed${{ matrix.seed }}
+      - name: Preserve evidence regardless of task success
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iotj-full1000-case${{ matrix.case }}-seed${{ matrix.seed }}-${{ matrix.method }}-${{ github.sha }}
+          path: |
+            results/iotj_full1000/case${{ matrix.case }}/seed${{ matrix.seed }}/
+            results/iotj_full1000_audit/case${{ matrix.case }}/seed${{ matrix.seed }}/
+          if-no-files-found: warn
+          retention-days: 90
