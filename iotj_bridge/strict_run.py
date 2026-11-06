@@ -151,7 +151,8 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
         clients_n=5,batch=256,hidden=128,latent=32,steps=5,
         sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False,
         malicious_clients=1,disable_adapters=False,fixed_traffic=False,
-        shift_lambda=1.0,attack_start_round=None,shift_onset_round=None):
+        shift_lambda=1.0,attack_start_round=None,shift_onset_round=None,
+        bytes_to_target_dir=None):
  torch.set_num_threads(1);torch.manual_seed(seed);np.random.seed(seed)
  env=RecoveryGrid(case,clients_n,seed,hetero,attack='physical' if attack in ('physical','joint') else 'clean')
  observations=env.reset()
@@ -168,6 +169,17 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
  first_record=[];traffic=0;server_summaries=[];train_episode_records=[]
  sync_interval=5
  rounds=math.ceil(episodes/sync_interval)
+ btt=None
+ if bytes_to_target_dir is not None:
+  if mode=='critic_share':
+   raise ValueError('Analytical critic_share byte estimates cannot be labeled measured bytes-to-target')
+  try:
+   from .bytes_to_target import ByteTargetTracker
+  except ImportError:
+   from bytes_to_target import ByteTargetTracker
+  btt=ByteTargetTracker(bytes_to_target_dir,case,seed,mode,hetero,attack,clients_n,
+      rounds,[len(x) for x in observations],fixed_traffic)
+  btt.snapshot(0,agents,0,0)
  if shift_onset_round is not None and (hetero!='shift' or int(shift_onset_round)<0 or int(shift_onset_round)>rounds):
   raise ValueError('shift_onset_round only permits 0..scheduled_rounds with hetero=shift')
  for k in range(rounds):
@@ -223,6 +235,9 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
                            'attack_start_round_0based':stats.get('attack_start_round'),
                            'trained_episodes':min((k+1)*sync_interval,episodes),
                            'per_client':stats.get('per_client',[])})
+  if btt is not None:
+   btt.snapshot(k+1,agents,traffic,int(stats['upload_bytes']))
+ btt_report=btt.finalize(agents,server_summaries) if btt is not None else None
  test_runs=[]
  for e in range(eval_episodes):
   # Fixed independent evaluation seeds are kept separate from training.
@@ -258,6 +273,11 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'max_voltage_violation':max(v['max_voltage_violation_pu'] for v in test_runs),
           'uplink_bytes':traffic,
           'mean_malicious_weight':float(np.mean([x['malicious_weight'] for x in server_summaries]))}
+ if btt_report is not None:
+  summary['bytes_to_target_protocol']=btt_report['protocol_id']
+  summary['bytes_to_target_joint_event_observed']=btt_report['joint_target']['event_observed']
+  summary['bytes_to_target_joint_bytes']=btt_report['joint_target']['bytes_to_target']
+  summary['bytes_to_target_load_only_bytes']=btt_report['load_only_target']['bytes_to_target']
  return summary,server_summaries,test_runs,train_episode_records,agents,server
 
 def main():
@@ -285,12 +305,14 @@ def main():
  p.add_argument('--attack-start-round',type=int,default=None)
  p.add_argument('--shift-onset-round',type=int,default=None)
  p.add_argument('--out',type=Path,required=True)
+ p.add_argument('--bytes-to-target-dir',type=Path,default=None,
+                help='Optional per-round frozen actor checkpoints, fixed validation and independent test')
  args=p.parse_args()
  result,rounds,tests,train_episode_records,agents,server=run(args.case,args.seed,args.mode,args.hetero,args.attack,
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
      args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,
      args.malicious_clients,args.disable_adapters,args.fixed_traffic,args.shift_lambda,
-     args.attack_start_round,args.shift_onset_round)
+     args.attack_start_round,args.shift_onset_round,args.bytes_to_target_dir)
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
                                 'train_episodes':train_episode_records},
