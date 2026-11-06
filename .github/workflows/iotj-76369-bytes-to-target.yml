@@ -1,0 +1,130 @@
+name: IoTJ R1 IEEE39 frozen bytes-to-target full-budget experiment
+on:
+  push:
+    branches: [experiment/iotj-76369-ac-grid-bridge-20261102]
+    paths:
+      - '.github/workflows/iotj-76369-bytes-to-target.yml'
+      - 'iotj_bridge/bytes_to_target.py'
+      - 'iotj_bridge/audit_bytes_to_target.py'
+      - 'iotj_bridge/aggregate_bytes_to_target.py'
+      - 'iotj_bridge/strict_run.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: iotj-76369-bytes-to-target
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Pinned scientific Python and CPU Torch
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Frozen validation / checkpoint / byte-integrity smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="results/iotj_btt_smoke/case39/joint/seed80/adv"
+          python iotj_bridge/strict_run.py --case 39 --seed 80 \
+            --mode adv --hetero dim --attack joint --episodes 25 \
+            --batch 256 --hidden 128 --latent 32 --eval-episodes 10 \
+            --clients 5 --local-steps 5 --sharing-steps 2 --kappa 0.2 \
+            --malicious-clients 1 --fixed-traffic \
+            --out "$root/run.json" --bytes-to-target-dir "$root/btt"
+          python iotj_bridge/audit_bytes_to_target.py --input "$root" --out "$root/audit"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-btt-smoke-${{ github.sha }}
+          path: results/iotj_btt_smoke/
+          retention-days: 14
+          if-no-files-found: warn
+  full:
+    needs: smoke
+    if: success()
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        seed: [80,81,82,83,84,85,86,87,88,89]
+        method: [adv,ordinary]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Pinned scientific Python and CPU Torch
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Full 1000 episode / 200 round frozen checkpoint experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="results/iotj_btt_full/case39/joint/seed${{ matrix.seed }}/${{ matrix.method }}"
+          python iotj_bridge/strict_run.py --case 39 --seed ${{ matrix.seed }} \
+            --mode '${{ matrix.method }}' --hetero dim --attack joint --episodes 1000 \
+            --batch 256 --hidden 128 --latent 32 --eval-episodes 10 \
+            --clients 5 --local-steps 5 --sharing-steps 2 --kappa 0.2 \
+            --malicious-clients 1 --fixed-traffic \
+            --out "$root/run.json" --bytes-to-target-dir "$root/btt"
+          python iotj_bridge/audit_bytes_to_target.py --input "$root" --out "$root/audit" --require-full
+      - name: Upload per-round measurement and independent audit without checkpoints
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iotj-btt-metadata-case39-joint-seed${{ matrix.seed }}-${{ matrix.method }}-${{ github.sha }}
+          path: |
+            results/iotj_btt_full/case39/joint/seed${{ matrix.seed }}/${{ matrix.method }}/run.json
+            results/iotj_btt_full/case39/joint/seed${{ matrix.seed }}/${{ matrix.method }}/run.manifest.json
+            results/iotj_btt_full/case39/joint/seed${{ matrix.seed }}/${{ matrix.method }}/btt/*.json
+            results/iotj_btt_full/case39/joint/seed${{ matrix.seed }}/${{ matrix.method }}/btt/*.jsonl
+            results/iotj_btt_full/case39/joint/seed${{ matrix.seed }}/${{ matrix.method }}/audit/*.json
+            results/iotj_btt_full/case39/joint/seed${{ matrix.seed }}/${{ matrix.method }}/audit/*.csv
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Upload lossless frozen policy checkpoints (201 snapshots)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iotj-btt-checkpoints-case39-joint-seed${{ matrix.seed }}-${{ matrix.method }}-${{ github.sha }}
+          path: results/iotj_btt_full/case39/joint/seed${{ matrix.seed }}/${{ matrix.method }}/btt/frozen_checkpoints/
+          retention-days: 90
+          compression-level: 4
+          if-no-files-found: warn
+  aggregate:
+    needs: [smoke,full]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iotj-btt-metadata-*
+          path: downloaded_metadata/
+          merge-multiple: false
+      - name: Audit exact 10-seed paired 20-run matrix and right censoring
+        shell: bash
+        run: |
+          set -euo pipefail
+          python iotj_bridge/aggregate_bytes_to_target.py \
+            --input downloaded_metadata/ --out results/iotj_btt_aggregate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-btt-independent-aggregate-${{ github.sha }}
+          path: results/iotj_btt_aggregate/
+          retention-days: 90
+          if-no-files-found: warn
