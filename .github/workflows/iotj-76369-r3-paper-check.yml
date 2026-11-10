@@ -19,7 +19,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -F '\\input{results/iotj_r3_adaptive_strength/AdaptiveStrengthResults.tex}' Experimental-RRDRQL.tex
+          grep -F '\input{results/iotj_r3_adaptive_strength/AdaptiveStrengthResults.tex}' Experimental-RRDRQL.tex
           python3 - <<'PY'
           import json, pathlib
           p = pathlib.Path('results/iotj_r3_adaptive_strength')
