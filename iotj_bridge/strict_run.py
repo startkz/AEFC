@@ -11,9 +11,11 @@ import torch
 try:
  from .run_experiment import Grid
  from .strict_agent import Agent, Server, ServerSettings, flatten
+ from .adaptive_attack import AdaptiveServer, ADAPTIVE_MODES
 except ImportError:
  from run_experiment import Grid
  from strict_agent import Agent, Server, ServerSettings, flatten
+ from adaptive_attack import AdaptiveServer, ADAPTIVE_MODES
 
 class RecoveryGrid(Grid):
  def __init__(self,case,clients,seed,hetero,attack='clean',horizon=30):
@@ -152,7 +154,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
         sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False,
         malicious_clients=1,disable_adapters=False,fixed_traffic=False,
         shift_lambda=1.0,attack_start_round=None,shift_onset_round=None,
-        bytes_to_target_dir=None):
+        bytes_to_target_dir=None,attack_strength=1.0):
  torch.set_num_threads(1);torch.manual_seed(seed);np.random.seed(seed)
  env=RecoveryGrid(case,clients_n,seed,hetero,attack='physical' if attack in ('physical','joint') else 'clean')
  observations=env.reset()
@@ -164,7 +166,8 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
  theta=flatten(agents[0].actor.backbone)
  settings=ServerSettings(max_weight=weight_cap,equal_weight=(mode=='adv_no_cw' or mode=='dense'),
                          shift_lambda=float(shift_lambda))
- server=Server(theta,settings)
+ server=(AdaptiveServer(theta,settings,strength=attack_strength)
+         if attack in ADAPTIVE_MODES else Server(theta,settings))
  for c in agents:c.set_global(server.theta)
  first_record=[];traffic=0;server_summaries=[];train_episode_records=[]
  sync_interval=5
@@ -205,11 +208,11 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
                       mode='adv' if mode=='adv_no_cw' else mode,kappa=kappa,
                       sharing_steps=sharing_steps,fixed_traffic=fixed_traffic))
   attack_modes=('poison','joint','delayed_joint','immediate_metadata','delayed_metadata',
-                'immediate_credibility','delayed_credibility','temporal_credibility')
+                'immediate_credibility','delayed_credibility','temporal_credibility')+ADAPTIVE_MODES
   bad=tuple(range(clients_n-min(malicious_clients,clients_n),clients_n)) if attack in attack_modes else ()
   atk='joint' if attack in ('poison','joint') else (attack if attack in (
       'delayed_joint','immediate_metadata','delayed_metadata',
-      'immediate_credibility','delayed_credibility','temporal_credibility') else None)
+      'immediate_credibility','delayed_credibility','temporal_credibility')+ADAPTIVE_MODES else None)
   if mode=='critic_share':
    # A2FC-inspired architectural control: only critic weights are pooled.
    # Local actor backbones remain personalized, unlike AEFC-FRL. This is NOT
@@ -234,7 +237,10 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
                            'shift_active':int(hetero=='shift' and env.demand_shift_enabled),
                            'attack_start_round_0based':stats.get('attack_start_round'),
                            'trained_episodes':min((k+1)*sync_interval,episodes),
-                           'per_client':stats.get('per_client',[])})
+                           'per_client':stats.get('per_client',[]),
+                           'attack_strength':stats.get('attack_strength',0.),
+                           'attack_mode':stats.get('attack_mode',None),
+                           'malicious_accepted_count':stats.get('malicious_accepted_count',0)})
   if btt is not None:
    btt.snapshot(k+1,agents,traffic,int(stats['upload_bytes']))
  btt_report=btt.finalize(agents,server_summaries) if btt is not None else None
@@ -245,7 +251,10 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
                     attack='joint' if attack=='joint' else 'physical' if attack=='physical' else 'clean')
   test_runs.append(run_episode(test,agents,False,noise_seed=1000000+seed*100+e,trace=True))
  summary={'backend':'pandapower AC quasi-static','case':case,'seed':seed,
-          'method':mode,'hetero':hetero,'attack':attack,'clients':clients_n,
+          'method':mode,'hetero':hetero,'attack':attack,
+          'attack_strength':float(attack_strength) if attack in ADAPTIVE_MODES else None,
+          'attack_search_visibility':'prior model increments and prototypes, own preceding public weight only' if attack in ADAPTIVE_MODES else None,
+          'clients':clients_n,
           'malicious_clients':len(bad),'malicious_client_ids':list(bad),
           'attack_start_round_0based':attack_start_round,
           'attack_start_round_1based':None if attack_start_round is None else int(attack_start_round)+1,
@@ -286,7 +295,8 @@ def main():
  p.add_argument('--seed',type=int,default=80)
  p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share'],default='adv')
  p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation','attackgroup','pad_dim'],default='dim')
- p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint','immediate_metadata','delayed_metadata','immediate_credibility','delayed_credibility','temporal_credibility'],default='clean')
+ p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint','immediate_metadata','delayed_metadata','immediate_credibility','delayed_credibility','temporal_credibility',*ADAPTIVE_MODES],default='clean')
+ p.add_argument('--attack-strength',type=float,default=1.,help='Adaptive manipulation budget in [0,2]')
  p.add_argument('--episodes',type=int,default=10)
  p.add_argument('--clients',type=int,default=5)
  p.add_argument('--batch',type=int,default=256)
@@ -312,7 +322,7 @@ def main():
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
      args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,
      args.malicious_clients,args.disable_adapters,args.fixed_traffic,args.shift_lambda,
-     args.attack_start_round,args.shift_onset_round,args.bytes_to_target_dir)
+     args.attack_start_round,args.shift_onset_round,args.bytes_to_target_dir,args.attack_strength)
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
                                 'train_episodes':train_episode_records},
