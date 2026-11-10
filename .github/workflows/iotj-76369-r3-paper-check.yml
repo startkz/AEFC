@@ -12,6 +12,9 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Remove stale tracked LaTeX auxiliary caches
+        run: |
+          rm -f main.aux main.bbl main.blg main.fls main.fdb_latexmk main.log main.out main.toc
       - name: Compile current LaTeX source and BibTeX references
         uses: xu-cheng/latex-action@v3
         with:
