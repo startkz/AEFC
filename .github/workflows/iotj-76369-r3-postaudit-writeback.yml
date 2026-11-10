@@ -31,9 +31,9 @@ jobs:
       - name: Fetch raw data and completed full-matrix audit artifact
         uses: actions/download-artifact@v4
         with:
-          run-id: \${{ inputs.source_run_id || '42744329117' }}
+          run-id: ${{ inputs.source_run_id || '42744329117' }}
           name: iotj-r3-adaptive-full-evidence-76ec2343b180687d9dee633f19510939230205a9
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: r3-import/
       - name: Verify provenance and rerun complete independent SHA256 audit
         shell: bash
@@ -80,7 +80,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iotj-r3-postaudit-writeback-\${{ github.sha }}
+          name: iotj-r3-postaudit-writeback-${{ github.sha }}
           path: |
             results/iotj_r3_adaptive_strength/
             docs/IOTJ_R3_Reviewer_Adaptive_EN_VERIFIED.md
