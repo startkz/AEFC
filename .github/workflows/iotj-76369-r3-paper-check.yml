@@ -1,8 +1,8 @@
-name: IoTJ R3 manuscript source compilation check (pre-results)
+name: IoTJ R3 final post-writeback manuscript compilation check
 on:
   push:
     branches: [experiment/iotj-76369-r3-adaptive-strength-20261110]
-    paths: ['.github/workflows/iotj-76369-r3-paper-check.yml']
+    paths: ['.github/workflows/iotj-76369-r3-paper-check.yml', 'results/iotj_r3_adaptive_strength/**', 'Experimental-RRDRQL.tex', 'Introduction.tex']
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,6 +15,22 @@ jobs:
       - name: Remove stale tracked LaTeX auxiliary caches
         run: |
           rm -f main.aux main.bbl main.blg main.fls main.fdb_latexmk main.log main.out main.toc
+      - name: Verify audited R3 results are integrated
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F '\\input{results/iotj_r3_adaptive_strength/AdaptiveStrengthResults.tex}' Experimental-RRDRQL.tex
+          python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path('results/iotj_r3_adaptive_strength')
+          report = json.loads((p/'audit_report.json').read_text())
+          assert report['passed'] is True and report['audited_runs'] == 130
+          assert report['training_seeds'] == [90, 91, 92, 93, 94]
+          assert report['episodes_per_seed'] == 1000
+          assert report['held_out_episodes_per_seed'] == 10
+          for f in ('adaptive_per_seed.csv','adaptive_per_round.csv','adaptive_summary.csv','AdaptiveStrengthResults.tex'):
+              assert (p/f).stat().st_size > 0, f
+          PY
       - name: Compile current LaTeX source and BibTeX references
         uses: xu-cheng/latex-action@v3
         with:
@@ -31,11 +47,11 @@ jobs:
             grep -F "$citation" main.bbl >/dev/null || (echo "Missing bibliography key $citation" >&2; exit 2)
           done
           if grep -Eiq 'undefined citations?|undefined references?|Citation .* undefined|Reference .* undefined' main.log; then exit 3; fi
-      - name: Retain source-matched PDF and compilation logs (not R3 final results)
+      - name: Retain final R3 PDF and compilation logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iotj-r3-pre-results-latex-check-${{ github.sha }}
+          name: iotj-r3-final-latex-check-${{ github.sha }}
           path: |
             main.pdf
             main.log
