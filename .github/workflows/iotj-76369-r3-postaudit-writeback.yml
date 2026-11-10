@@ -1,0 +1,84 @@
+name: IoTJ R3 audit-verified result integration (no experiment rerun)
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: 'Full 130-cell experiment workflow run id'
+        required: true
+        default: '42744329117'
+        type: string
+permissions:
+  contents: write
+  actions: read
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/iotj-76369-r3-adaptive-strength-20261110
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent audit dependency
+        run: python -m pip install 'numpy==2.2.6'
+      - name: Fetch raw data and completed full-matrix audit artifact
+        uses: actions/download-artifact@v4
+        with:
+          run-id: \${{ inputs.source_run_id }}
+          name: iotj-r3-adaptive-full-evidence-76ec2343b180687d9dee633f19510939230205a9
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: r3-import/
+      - name: Verify provenance and rerun complete independent SHA256 audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s r3-import/results/iotj_r3_adaptive_strength/audit_report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("r3-import/results/iotj_r3_adaptive_strength/audit_report.json")
+          d=json.loads(p.read_text())
+          assert d["passed"] is True and d["audited_runs"] == 130 and d["expected_runs"] == 130, d
+          print("Upstream full-budget audit: PASS, 130/130")
+          PY
+          python iotj_bridge/audit_adaptive_strength.py \
+            --root r3-import/r3-raw-artifacts \
+            --out results/iotj_r3_adaptive_strength/
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("results/iotj_r3_adaptive_strength/audit_report.json")
+          d=json.loads(p.read_text())
+          assert d["passed"] and d["audited_runs"] == 130
+          print("Independent writeback audit: PASS, 130/130")
+          PY
+      - name: Integrate actual paper table and evidence-based bilingual responses
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp results/iotj_r3_adaptive_strength/Reviewer_Adaptive_EN.md docs/IOTJ_R3_Reviewer_Adaptive_EN_VERIFIED.md
+          cp results/iotj_r3_adaptive_strength/Reviewer_Adaptive_ZH.md docs/IOTJ_R3_Reviewer_Adaptive_ZH_VERIFIED.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/iotj_r3_adaptive_strength/ docs/IOTJ_R3_Reviewer_Adaptive_EN_VERIFIED.md docs/IOTJ_R3_Reviewer_Adaptive_ZH_VERIFIED.md
+          if git diff --cached --quiet; then
+            echo 'Evidence already committed at branch head'
+            exit 0
+          fi
+          git commit -m 'IoT-J R3: integrate fully SHA256-verified adaptive-strength outcomes and responses [skip ci]'
+          git fetch origin experiment/iotj-76369-r3-adaptive-strength-20261110
+          git rebase FETCH_HEAD
+          git push origin HEAD:refs/heads/experiment/iotj-76369-r3-adaptive-strength-20261110
+      - name: Upload merged paper table and bilingual replies
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r3-postaudit-writeback-\${{ github.sha }}
+          path: |
+            results/iotj_r3_adaptive_strength/
+            docs/IOTJ_R3_Reviewer_Adaptive_EN_VERIFIED.md
+            docs/IOTJ_R3_Reviewer_Adaptive_ZH_VERIFIED.md
+          if-no-files-found: warn
+          retention-days: 90
