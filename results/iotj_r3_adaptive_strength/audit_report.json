@@ -1,0 +1,29 @@
+{
+  "protocol": "IOTJ-R3-rule-aware-v1",
+  "expected_runs": 130,
+  "audited_runs": 130,
+  "passed": true,
+  "training_seeds": [
+    90,
+    91,
+    92,
+    93,
+    94
+  ],
+  "episodes_per_seed": 1000,
+  "held_out_episodes_per_seed": 10,
+  "clients": 10,
+  "malicious_clients": 2,
+  "attack_start_round_zero_based": 1,
+  "independent_unit": "training seed",
+  "backend": "pandapower quasi-static AC",
+  "not_demonstrated": "worst-case Byzantine robustness or dynamic physical invariance",
+  "artifacts": [
+    "adaptive_per_round.csv",
+    "Reviewer_Adaptive_EN.md",
+    "AdaptiveStrengthResults.tex",
+    "adaptive_per_seed.csv",
+    "Reviewer_Adaptive_ZH.md",
+    "adaptive_summary.csv"
+  ]
+}

@@ -1,0 +1,41 @@
+% GENERATED ONLY AFTER COMPLETE R3 EXPERIMENT AND INDEPENDENT AUDIT.
+\begin{table*}[t]
+\centering\small
+\caption{Adaptive utility--prototype--sparse-update manipulation on IEEE 39-bus, ten clients and two colluding Byzantine clients. Each cell uses five independent training seeds, 1000 episodes per seed, and ten held-out episodes. Weight is the sum of accepted malicious weights, averaged over attack-active rounds; load degradation is paired with the same-defense clean control. This measures the original utility--drift weighting rule, not a Byzantine security guarantee.}
+\label{tab:r3-adaptive-strength}
+\begin{tabular}{llrrrr}
+\hline
+Defense & Attack / strength & Load (\%) & Safe dwell (\%) & Malicious weight & Load loss (pp)\\
+\hline
+uncapped & clean & 84.19 & 0.0 & 0.000 & +0.00\\
+uncapped & joint & 81.96 & 0.0 & 0.616 & +2.23\\
+uncapped & adaptive\_weight\_025 & 83.35 & 0.0 & 0.996 & +0.83\\
+uncapped & adaptive\_weight\_050 & 81.37 & 0.0 & 0.998 & +2.82\\
+uncapped & adaptive\_weight\_100 & 84.59 & 20.0 & 0.999 & -0.41\\
+uncapped & adaptive\_weight\_200 & 83.36 & 20.0 & 0.999 & +0.82\\
+uncapped & adaptive\_damage\_025 & 85.42 & 0.0 & 0.941 & -1.24\\
+uncapped & adaptive\_damage\_050 & 86.96 & 20.0 & 0.940 & -2.77\\
+uncapped & adaptive\_damage\_100 & 85.84 & 20.0 & 0.940 & -1.65\\
+uncapped & adaptive\_damage\_200 & 86.74 & 20.0 & 0.940 & -2.56\\
+uncapped & adaptive\_meta\_100 & 83.80 & 0.0 & 0.931 & +0.38\\
+uncapped & adaptive\_update\_100 & 83.48 & 0.0 & 0.185 & +0.71\\
+uncapped & adaptive\_proto\_100 & 84.78 & 0.0 & 0.166 & -0.59\\
+\hline
+capped & clean & 84.63 & 0.0 & 0.000 & +0.00\\
+capped & joint & 83.26 & 0.0 & 0.400 & +1.37\\
+capped & adaptive\_weight\_025 & 86.38 & 20.0 & 0.400 & -1.75\\
+capped & adaptive\_weight\_050 & 84.73 & 0.0 & 0.400 & -0.10\\
+capped & adaptive\_weight\_100 & 85.64 & 20.0 & 0.400 & -1.01\\
+capped & adaptive\_weight\_200 & 85.32 & 20.0 & 0.400 & -0.69\\
+capped & adaptive\_damage\_025 & 85.87 & 20.0 & 0.400 & -1.24\\
+capped & adaptive\_damage\_050 & 85.43 & 20.0 & 0.400 & -0.80\\
+capped & adaptive\_damage\_100 & 87.07 & 20.0 & 0.400 & -2.44\\
+capped & adaptive\_damage\_200 & 86.15 & 20.0 & 0.400 & -1.52\\
+capped & adaptive\_meta\_100 & 84.20 & 0.0 & 0.400 & +0.43\\
+capped & adaptive\_update\_100 & 84.75 & 0.0 & 0.188 & -0.12\\
+capped & adaptive\_proto\_100 & 85.39 & 20.0 & 0.167 & -0.76\\
+\hline
+\end{tabular}
+\vspace{1mm}
+\parbox{0.96\textwidth}{\footnotesize The detailed per-seed 95\% bootstrap confidence intervals, accepted malicious-client fractions, roundwise weight trajectories, checkpoint checksums and original JSON logs accompany the audit archive.}
+\end{table*}
