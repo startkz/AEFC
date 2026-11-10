@@ -1,0 +1,41 @@
+name: IoTJ R3 manuscript source compilation check (pre-results)
+on:
+  push:
+    branches: [experiment/iotj-76369-r3-adaptive-strength-20261110]
+    paths: ['.github/workflows/iotj-76369-r3-paper-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile current LaTeX source and BibTeX references
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          latexmk_use_xelatex: false
+          args: -pdf -interaction=nonstopmode -halt-on-error -file-line-error
+      - name: Check current build and all four new citations
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s main.pdf
+          test -s main.bbl
+          for citation in Cao2022IoTSGFNOMA Cao2021UplinkNOMAJammer Dai2025VFLPlus Zhang2026BRPPFL; do
+            grep -F "$citation" main.bbl >/dev/null || (echo "Missing bibliography key $citation" >&2; exit 2)
+          done
+          if grep -Eiq 'undefined citations?|undefined references?|Citation .* undefined|Reference .* undefined' main.log; then exit 3; fi
+      - name: Retain source-matched PDF and compilation logs (not R3 final results)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r3-pre-results-latex-check-${{ github.sha }}
+          path: |
+            main.pdf
+            main.log
+            main.bbl
+          if-no-files-found: warn
+          retention-days: 90
