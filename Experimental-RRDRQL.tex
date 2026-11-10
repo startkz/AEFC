@@ -120,3 +120,15 @@ The mechanism-level and native result sections below are imported directly from 
 
 % Independent held-out three-arm native checkpoint recovery evidence, audited 180 episodes.
 \input{results/p0_native_checkpoint/Results-Checkpoint-Audit.tex}
+
+
+% IoT-J R3: the following subsection is included only after the independent
+% 130-trial audit has generated the cited numbers from SHA256-verified raw runs.
+\IfFileExists{results/iotj_r3_adaptive_strength/AdaptiveStrengthResults.tex}{%
+\subsection{Rule-Aware Adaptive Manipulation of the Legacy Credibility Scorer}
+This supplementary experiment targets the original utility--drift sparse-aggregation rule rather than the certificate-supported, trimmed-aggregation component analyzed in Section~III. It tests an identified vulnerability and must not be interpreted as a Byzantine resilience guarantee of either rule. In the IEEE 39-bus quasi-static AC environment, ten heterogeneous clients participate and the last two collude. Each malicious client can alter its sparse coordinate values and support, reported recovery utility, and the content of its recovery-state prototypes, while the server's message validation, clipping, and credibility formula remain unchanged. The adversary uses only its own uploads, previously broadcast global model changes and prototypes, and its own previously observed aggregation weight. It cannot query held-out recovery accuracy or the honest clients' private same-round submissions.
+
+We compare fixed joint spoofing with a discrete score-aware attack maximizing the accepted malicious weight and a separate weight--damage attack selecting updates opposed to the previous global direction. Manipulation strength is scanned at $0.25$, $0.50$, $1$, and $2$ with the number of malicious clients fixed; metadata-only, update-only, and prototype-only ablations are examined at strength $1$. Each condition uses five paired training seeds, $1000$ episodes and ten held-out evaluations per seed, under both the original unbounded scorer and an explicitly separate per-client weight cap of $0.20$. Outcomes comprise final restored load, safe-dwell success, malicious-client acceptance, accepted malicious weight and paired clean-control degradation. All uncertainty intervals are formed over training seeds, not federation rounds. As the server caps reported utility and clips updates, stronger nominal manipulation need not produce stronger effective uploads.
+\input{results/iotj_r3_adaptive_strength/AdaptiveStrengthResults.tex}
+}{}
+
