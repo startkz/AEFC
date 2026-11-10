@@ -1,0 +1,124 @@
+name: IoTJ R3 full-budget adaptive weight-maximizing poisoning (IEEE39)
+on:
+  push:
+    branches: [experiment/iotj-76369-r3-adaptive-strength-20261110]
+    paths: ['.github/workflows/iotj-76369-r3-adaptive-full.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: iotj-r3-adaptive-full
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        seed: [90,91,92,93,94]
+        defense: [uncapped,capped]
+        scenario:
+          - clean
+          - joint
+          - adaptive_weight_025
+          - adaptive_weight_050
+          - adaptive_weight_100
+          - adaptive_weight_200
+          - adaptive_damage_025
+          - adaptive_damage_050
+          - adaptive_damage_100
+          - adaptive_damage_200
+          - adaptive_meta_100
+          - adaptive_update_100
+          - adaptive_proto_100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install frozen full-budget runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'pandapower==3.2.1'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Run one immutable N=10 M=2 IEEE39 attack-strength cell (1000 training episodes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          scenario="${{ matrix.scenario }}"
+          attack="${scenario%_*}"
+          level="${scenario##*_}"
+          if [ "$scenario" = clean ] || [ "$scenario" = joint ]; then
+            attack="$scenario"; level=000
+          fi
+          case "$level" in
+            000) strength=0;;
+            025) strength=0.25;;
+            050) strength=0.50;;
+            100) strength=1.0;;
+            200) strength=2.0;;
+            *) echo "Unregistered strength $level" >&2; exit 3;;
+          esac
+          cap=()
+          if [ "${{ matrix.defense }}" = capped ]; then cap=(--weight-cap 0.20); fi
+          out="results/iotj_r3_adaptive_raw/seed${{ matrix.seed }}/${{ matrix.defense }}/${scenario}.json"
+          python iotj_bridge/strict_run.py \
+            --case 39 --seed ${{ matrix.seed }} --mode adv --hetero dim \
+            --attack "$attack" --attack-strength "$strength" \
+            --attack-start-round 1 --episodes 1000 --clients 10 --malicious-clients 2 \
+            --batch 256 --hidden 128 --latent 32 --local-steps 5 \
+            --sharing-steps 2 --kappa 0.20 --eval-episodes 10 --fixed-traffic \
+            "${cap[@]}" --out "$out"
+      - name: Upload full JSON, model checkpoint, SHA256 manifest
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r3-strength-s${{ matrix.seed }}-${{ matrix.defense }}-${{ matrix.scenario }}-${{ github.sha }}
+          path: results/iotj_r3_adaptive_raw/
+          if-no-files-found: warn
+          retention-days: 90
+  audit:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iotj-r3-strength-*
+          path: r3-raw-artifacts/
+          merge-multiple: false
+      - name: Fail closed unless all 130 full budget outputs and hashes pass
+        run: |
+          python iotj_bridge/audit_adaptive_strength.py \
+            --root r3-raw-artifacts/ \
+            --out results/iotj_r3_adaptive_strength/
+      - name: Save complete immutable raw logs and independently audited tables
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iotj-r3-adaptive-full-evidence-${{ github.sha }}
+          path: |
+            r3-raw-artifacts/
+            results/iotj_r3_adaptive_strength/
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Write verified paper table and Chinese/English replies into R3 branch
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp results/iotj_r3_adaptive_strength/Reviewer_Adaptive_EN.md docs/IOTJ_R3_Reviewer_Adaptive_EN_VERIFIED.md
+          cp results/iotj_r3_adaptive_strength/Reviewer_Adaptive_ZH.md docs/IOTJ_R3_Reviewer_Adaptive_ZH_VERIFIED.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/iotj_r3_adaptive_strength/ docs/IOTJ_R3_Reviewer_Adaptive_*
+          git commit -m 'IOTJ-R3: write SHA256-audited IEEE39 adaptive-strength outcomes to paper and bilingual replies'
+          git push origin HEAD:refs/heads/experiment/iotj-76369-r3-adaptive-strength-20261110
