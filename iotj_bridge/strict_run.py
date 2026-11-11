@@ -32,8 +32,11 @@ class RecoveryGrid(Grid):
   self.step_idx=0;self.obs_cache={};self.violations=[];self._delay_history=[]
   self._solve();return self.observations()
  def observations(self):
-  if self.hetero in ('delay','shift'):
-   saved=self.hetero;self.hetero='base';o=super().observations();self.hetero=saved
+  if self.hetero in ('delay','shift','dim_saturation_shift'):
+   saved=self.hetero
+   self.hetero='dim' if saved=='dim_saturation_shift' else 'base'
+   o=super().observations()
+   self.hetero=saved
   else:o=super().observations()
   if self.hetero=='pad_dim':
    # Naive same-size zero padding for an explicit no-adapter control.
@@ -56,13 +59,13 @@ class RecoveryGrid(Grid):
   return o
  def step(self,actions):
   cmd=np.asarray(actions,float).copy()
-  if self.hetero=='saturation':cmd[1::2]=np.minimum(cmd[1::2],.6)
+  if self.hetero in ('saturation','dim_saturation_shift'):cmd[1::2]=np.minimum(cmd[1::2],.6)
   # Command corruption AFTER policy choice, evaluated against true physical state.
   if self.attack in ('physical','joint') and 5<=self.step_idx<16:
    target=0 if self.hetero=='attackgroup' else len(cmd)-1
    cmd[target]=np.clip(cmd[target]-.25,0,1)
   old=self.served.copy()
-  if self.hetero=='shift' and self.step_idx==11 and getattr(self,'demand_shift_enabled',True):
+  if self.hetero in ('shift','dim_saturation_shift') and self.step_idx==11 and getattr(self,'demand_shift_enabled',True):
    # An unannounced legitimate 6% load demand step, preserving continuity of control.
    for group in self.groups[1::2]:
     self.demand[group]*=1.06
@@ -160,7 +163,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
  observations=env.reset()
  agents=[]
  for i,obs in enumerate(observations):
-  action_high=.6 if hetero=='saturation' and i%2 else 1.
+  action_high=.6 if hetero in ('saturation','dim_saturation_shift') and i%2 else 1.
   agents.append(Agent(len(obs),seed*100+i,latent=latent,hidden=hidden,
                       act_high=action_high,batch=batch))
  theta=flatten(agents[0].actor.backbone)
@@ -196,7 +199,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
        'max_thermal_excess_pct':episode_result['max_thermal_excess_pct'],
        'max_voltage_violation_pu':episode_result['max_voltage_violation_pu'],
        'censored':episode_result['censored'],
-       'shift_active':int(hetero=='shift' and env.demand_shift_enabled),
+       'shift_active':int(hetero in ('shift','dim_saturation_shift') and env.demand_shift_enabled),
        'client_outcomes':episode_result['client_outcomes']}
    if record_training_trace:
     ep_record.update({'recovery_step':episode_result['recovery_step'],
@@ -241,7 +244,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
                            'malicious_weight':stats['malicious_weight'],'accepted':stats['accepted'],
                            'direction_norm':stats.get('direction_norm',0.),
                            'attack_active':stats.get('attack_active',False),
-                           'shift_active':int(hetero=='shift' and env.demand_shift_enabled),
+                           'shift_active':int(hetero in ('shift','dim_saturation_shift') and env.demand_shift_enabled),
                            'attack_start_round_0based':stats.get('attack_start_round'),
                            'trained_episodes':min((k+1)*sync_interval,episodes),
                            'per_client':stats.get('per_client',[]),
@@ -272,6 +275,15 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
               else 'sum_abs_raw_pre_adam_gradients' if mode=='coord_gradtopk'
               else 'topk_final_adam_displacement' if mode in ('adv','ordinary') else None),
           'clients':clients_n,
+          'observation_dimensions':[len(x) for x in observations],
+          'latent_dimension':latent,
+          'per_client_encoder_parameters':[
+              sum(p.numel() for p in a.actor.encoder.parameters()) for a in agents],
+          'per_client_head_parameters':[
+              sum(p.numel() for p in a.actor.head.parameters()) for a in agents],
+          'shared_backbone_parameters':sum(p.numel() for p in agents[0].actor.backbone.parameters()),
+          'disable_adapter_training':int(disable_adapters),
+          'prototype_alignment_disabled':int(disable_proto),
           'malicious_clients':len(bad),'malicious_client_ids':list(bad),
           'attack_start_round_0based':attack_start_round,
           'attack_start_round_1based':None if attack_start_round is None else int(attack_start_round)+1,
@@ -314,7 +326,7 @@ def main():
  p.add_argument('--case',type=int,choices=[39,118],required=True)
  p.add_argument('--seed',type=int,default=80)
  p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share','dense_cw','coord_random','coord_gradtopk'],default='adv')
- p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation','attackgroup','pad_dim'],default='dim')
+ p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation','dim_saturation_shift','attackgroup','pad_dim'],default='dim')
  p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint','immediate_metadata','delayed_metadata','immediate_credibility','delayed_credibility','temporal_credibility',*ADAPTIVE_MODES],default='clean')
  p.add_argument('--attack-strength',type=float,default=1.,help='Adaptive manipulation budget in [0,2]')
  p.add_argument('--episodes',type=int,default=10)
