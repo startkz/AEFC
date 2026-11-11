@@ -1,0 +1,87 @@
+name: IoTJ R4 heterogeneity manifest SHA256 supplement
+on:
+  push:
+    branches: [experiment/iotj-r4-coordinate-ablation-20261111]
+    paths: ['.github/workflows/iotj-r4-hetero-manifest-audit.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download and verify the exact completed 96-cell source artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/iotj-r4-hetero-evidence
+          curl -fL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/13835176012/zip" \
+            -o /tmp/iotj-r4-hetero-evidence/source.zip
+          echo "82a572cb4b44edf8f9ea5f2262921876b625bc47a3e0a203a7a0b716c152144c  /tmp/iotj-r4-hetero-evidence/source.zip" | sha256sum -c -
+          test "$(stat -c %s /tmp/iotj-r4-hetero-evidence/source.zip)" = "521452888"
+          unzip -q /tmp/iotj-r4-hetero-evidence/source.zip -d /tmp/iotj-r4-hetero-evidence/unpacked
+          ROOT="$(find /tmp/iotj-r4-hetero-evidence/unpacked -type d -name 'r4-hetero-raw' -print -quit)"
+          test -n "${ROOT}"
+          echo "HETERO_AUDIT_ROOT=${ROOT}" >> "${GITHUB_ENV}"
+      - name: Install the exact audit dependency
+        run: python -m pip install 'numpy==2.2.6'
+      - name: Re-run the full 96-cell physical, budget, byte and censoring audit
+        run: |
+          set -euo pipefail
+          python iotj_bridge/audit_hetero_factorial.py \
+            --root "${HETERO_AUDIT_ROOT}" \
+            --out results/iotj_r4_hetero_manifest_audit/recheck
+          python - <<'PY'
+          import json
+          p='results/iotj_r4_hetero_manifest_audit/recheck/r4_hetero_audit.json'
+          d=json.load(open(p))
+          assert d['passed'] is True
+          assert d['expected_runs']==96 and d['audited_runs']==96
+          assert d['missing']==[] and d['errors']==[]
+          assert d['git_source_shas']==['be2d40a4c884a9b6730607e9bbfd8a045e9190db']
+          PY
+      - name: Compute detached SHA256 for every manifest and verify all JSON/PT digests
+        run: |
+          set -euo pipefail
+          python iotj_bridge/audit_hetero_manifest_hashes.py \
+            --root "${HETERO_AUDIT_ROOT}" \
+            --out results/iotj_r4_hetero_manifest_audit
+      - name: Commit only supplemental audit outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('results/iotj_r4_hetero_manifest_audit/r4_hetero_manifest_audit.json'))
+          assert d['passed'] and d['audited_cells']==96
+          assert d['detached_manifest_sha256_computed']==96
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/iotj_r4_hetero_manifest_audit/
+          git commit -m 'IoT-J R4: record detached SHA256 for 96 heterogeneity manifests [skip ci]'
+          for n in 1 2 3 4 5; do
+            git fetch origin experiment/iotj-r4-coordinate-ablation-20261111
+            git rebase FETCH_HEAD
+            if git push origin HEAD:refs/heads/experiment/iotj-r4-coordinate-ablation-20261111; then
+              exit 0
+            fi
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-hetero-manifest-audit-${{ github.sha }}
+          path: results/iotj_r4_hetero_manifest_audit/
+          if-no-files-found: warn
+          retention-days: 90
