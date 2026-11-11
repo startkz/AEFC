@@ -179,3 +179,10 @@
 ### 追加物理干预审计
 
 独立补充报告：results/iotj_r4_hetero_pilot/r4_hetero_physical_intervention_audit.json（提交 374bf485dfa67bd9d5957cca1a55789df64ecf3c）。该报告复核96个单元、96,000条训练轨迹和960条 held-out 轨迹；需求阶跃检查48,000/48,000训练轨迹及480/480 held-out 轨迹通过；执行器限幅检查2,880,000个训练步进和28,800个 held-out 步进，无超限。它同时澄清原始 actuator_saturation 字段并非0.6限幅绑定指示，避免误用该字段；只增加派生审计结果，不修改原始训练数据、检查点或协议。
+
+
+## I. 执行器限幅日志字段修正（仅输出，不重跑训练）
+
+原始异构性实验的 actuator_saturation 字段在0.6限幅后才检查命令是否超出[0,1]，因此不能反映0.6限幅是否实际触发。历史 JSON/PT 保持原样；实际限幅触发次数由独立物理审计根据相邻 client_served_fraction 增量重新计算，并已提交 results/iotj_r4_hetero_pilot/r4_hetero_physical_intervention_audit.json。
+
+为避免后续实验继续产生歧义，新增 iotj_bridge/actuator_trace.py，将“是否触及执行器命令边界”的日志标志改为在裁剪前计算；返回给物理模型和奖励计算的命令值与原实现逐元素一致。该修改不改变奖励、动作、物理状态转移、训练随机数或已归档结果。六项纯输出单元测试（包括随机命令与旧物理命令路径逐元素一致性）通过 Run 42997543345，代码提交 26a4e16bea2c9a5a37409d4b7fdc77025e7dac54。该 CI 仅执行 py_compile 和单元测试，没有启动训练。
