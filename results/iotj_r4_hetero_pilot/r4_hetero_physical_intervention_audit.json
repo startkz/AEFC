@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "audit_type": "independent_physical_intervention_recheck",
+  "source_run_id": 42959386414,
+  "source_code_sha": "be2d40a4c884a9b6730607e9bbfd8a045e9190db",
+  "source_artifact_id": 13835176012,
+  "source_artifact_sha256": "82a572cb4b44edf8f9ea5f2262921876b625bc47a3e0a203a7a0b716c152144c",
+  "audited_cells": 96,
+  "training_episode_traces": 96000,
+  "heldout_test_traces": 960,
+  "observation_dimension_factor_cells": 48,
+  "observation_dimensions_with_factor": [
+    6,
+    3,
+    6,
+    3,
+    6
+  ],
+  "observation_dimensions_without_factor": [
+    6,
+    6,
+    6,
+    6,
+    6
+  ],
+  "actuator_factor_cells": 48,
+  "training_actuator_increments_checked": 2880000,
+  "training_actuator_cap_binding_increments": 694093,
+  "training_actuator_cap_binding_fraction": 0.24100451388888888,
+  "heldout_actuator_increments_checked": 28800,
+  "heldout_actuator_cap_binding_increments": 11789,
+  "heldout_actuator_cap_binding_fraction": 0.4093402777777778,
+  "configured_actuator_increment_cap": 0.0108,
+  "actuator_cap_violations": 0,
+  "demand_shift_training_traces_checked": 48000,
+  "demand_shift_heldout_traces_checked": 480,
+  "demand_shift_step": 12,
+  "demand_shift_multiplier": 1.06,
+  "demand_shift_client_indices_zero_based": [
+    1,
+    3
+  ],
+  "unchanged_demand_client_indices_zero_based": [
+    0,
+    2,
+    4
+  ],
+  "demand_shift_check_failures": 0,
+  "raw_trace_flag_semantics": "The original actuator_saturation field is not a cap-binding indicator: it is computed after applying the 0.6 cap and checks only whether cmd is outside [0,1]. The derived binding counts above are computed from observed consecutive client_served_fraction increments.",
+  "raw_training_data_modified": false,
+  "raw_checkpoints_modified": false,
+  "training_protocol_modified": false,
+  "notes": [
+    "The 0.6 actuator cap is applied before the physical served-load update.",
+    "A binding increment is an observed consecutive served-fraction increase equal to 0.018*0.6=0.0108 within numerical tolerance.",
+    "Demand ratios at AC step 12 were checked for every training episode and held-out trace.",
+    "This is an audit/output supplement only; no training run was repeated."
+  ]
+}
