@@ -1,0 +1,42 @@
+name: IoTJ Fig5-6 independent second-pass physical-trace verification
+on:
+  push:
+    branches: [experiment/iotj-fig56-episode-traces-20261111]
+    paths: ['.github/workflows/iotj-fig56-second-pass.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify-archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Retrieve original completed-run audited physical-step archive
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 42940416216
+          name: iotj-fig56-audited-episode-and-step-logs-0af6e066ff385b191b2db3b86a40adc2ad79956f
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./archived-physical-traces
+      - name: Independently cross-check 50,000 episode rows against all physical steps
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile iotj_bridge/verify_fig56_deliverables.py
+          python iotj_bridge/verify_fig56_deliverables.py \
+            --committed results/iotj_fig56_episode_traces \
+            --archive archived-physical-traces \
+            --out results/iotj_fig56_second_pass
+      - name: Preserve verified row counts, step hash and source identity
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-fig56-second-pass-verification-${{ github.sha }}
+          path: results/iotj_fig56_second_pass/
+          if-no-files-found: warn
+          retention-days: 90
