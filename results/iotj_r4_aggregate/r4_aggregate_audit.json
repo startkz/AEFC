@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "expected_training_seeds": 10,
+  "audited_training_seeds": 10,
+  "expected_training_episode_rows": 10000,
+  "audited_training_episode_rows": 10000,
+  "right_censored_training_episodes": 4206,
+  "expected_paired_physical_profiles": 90,
+  "audited_paired_profiles": 90,
+  "missing_seeds": [],
+  "errors": [],
+  "source_commits": [
+    "65f28231f3c3d13d8a50893cc99f224edf670faa"
+  ],
+  "scope": "actual applied aggregate backbone update under same frozen local adapters; deterministic IEEE39 AC",
+  "not_proven": "global training monotonicity, optimal policy advantage, dynamic frequency safety"
+}
