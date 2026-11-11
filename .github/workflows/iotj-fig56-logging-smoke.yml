@@ -28,12 +28,12 @@ jobs:
         run: |
           set -euo pipefail
           for method in adv ordinary adv_no_cw dense dense_cw; do
-            out="results/iotj_fig56_smoke/\${method}.json"
+            out="results/iotj_fig56_smoke/${method}.json"
             python iotj_bridge/strict_run.py \
               --case 39 --seed 80 --mode "$method" --hetero dim --attack clean \
               --episodes 10 --clients 5 --malicious-clients 0 \
               --batch 32 --hidden 32 --latent 12 --local-steps 1 \
-              --sharing-steps 1 --kappa 0.2 --eval-episodes 2 --fixed-traffic \
+              --sharing-steps 1 --kappa 0.2 --eval-episodes 2 \
               --record-training-trace --out "$out"
           done
       - name: Independently recompute recovery step from each recorded trajectory
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iotj-fig56-smoke-\${{ github.sha }}
+          name: iotj-fig56-smoke-${{ github.sha }}
           path: results/iotj_fig56_smoke/
           if-no-files-found: warn
           retention-days: 90
