@@ -153,3 +153,24 @@
 坐标 manifest 补充审计 Run 42991080229 和异构性 manifest 补充审计 Run 42990167631、聚合 manifest 补充审计 Run 42991863092 均成功。各自独立 SHA256 清单与原始 ZIP 逐项复核一致。
 
 原始六方法 Simulink–Python Fig. 5/6 未由本 AC 平台复现。当前分支 main.tex 仍编译 PATBU/Risk-Gate/TDSC 论文；在取得正确 IoT-J AEFC-FRL 主稿之前，只允许集成本独立修改稿和双语回复，不修改现有 LaTeX 源文件。
+
+
+## H. 完整运行与工件入口
+
+### 正式实验
+
+- 坐标选择 Run 42957084297：Actions https://github.com/startkz/AEFC/actions/runs/42957084297；原始40单元 ZIP https://api.github.com/repos/startkz/AEFC/actions/artifacts/13830018801/zip；Manifest SHA 补充审计 Run 42991080229，工件 https://api.github.com/repos/startkz/AEFC/actions/artifacts/13841981672/zip。
+- 异构性 Run 42959386414：Actions https://github.com/startkz/AEFC/actions/runs/42959386414；原始96单元 ZIP https://api.github.com/repos/startkz/AEFC/actions/artifacts/13835176012/zip；Manifest SHA 补充审计 Run 42990167631，工件 https://api.github.com/repos/startkz/AEFC/actions/artifacts/13841821152/zip。
+- 实际聚合更新 Run 42962801194：Actions https://github.com/startkz/AEFC/actions/runs/42962801194；原始10种子 ZIP https://api.github.com/repos/startkz/AEFC/actions/artifacts/13831945798/zip；Manifest SHA 补充审计 Run 42991863092，工件 https://api.github.com/repos/startkz/AEFC/actions/artifacts/13840799871/zip。
+- 优势误差 Run 42958431836：Actions https://github.com/startkz/AEFC/actions/runs/42958431836；原始工件 https://api.github.com/repos/startkz/AEFC/actions/artifacts/13828675696/zip。
+- 聚合更新短预算 smoke Run 42959621587：Actions https://github.com/startkz/AEFC/actions/runs/42959621587；工件 https://api.github.com/repos/startkz/AEFC/actions/artifacts/13828303692/zip。
+
+### 结果提交与当前文档
+
+- 坐标结果提交：https://github.com/startkz/AEFC/commit/c5a81519061ea08d445d6c59b79d631b91468027
+- 坐标 manifest 清单提交：https://github.com/startkz/AEFC/commit/4db9bfa66e04c64013ca48aab27eccd988f9ad77
+- 异构性结果提交：https://github.com/startkz/AEFC/commit/51ba84c7a5d4bf80615fe4b39de7087973adca8e
+- 异构性 manifest 清单提交：https://github.com/startkz/AEFC/commit/f22392f84f880732fcb8aa125b5f7a5111e5acd3
+- 聚合更新结果提交：https://github.com/startkz/AEFC/commit/3f6c98a0f290caa92f49e4d60df8a456efd205bf
+- 聚合更新 manifest 清单提交：https://github.com/startkz/AEFC/commit/d812219af934d8841543b24e9afba73ea0aa57a8
+- 本轮独立 R4 文档集成提交：https://github.com/startkz/AEFC/commit/ab017823c82aca7df9c0b0cd39a8ef2a825150eb
