@@ -174,3 +174,8 @@
 - 聚合更新结果提交：https://github.com/startkz/AEFC/commit/3f6c98a0f290caa92f49e4d60df8a456efd205bf
 - 聚合更新 manifest 清单提交：https://github.com/startkz/AEFC/commit/d812219af934d8841543b24e9afba73ea0aa57a8
 - 本轮独立 R4 文档集成提交：https://github.com/startkz/AEFC/commit/ab017823c82aca7df9c0b0cd39a8ef2a825150eb
+
+
+### 追加物理干预审计
+
+独立补充报告：results/iotj_r4_hetero_pilot/r4_hetero_physical_intervention_audit.json（提交 374bf485dfa67bd9d5957cca1a55789df64ecf3c）。该报告复核96个单元、96,000条训练轨迹和960条 held-out 轨迹；需求阶跃检查48,000/48,000训练轨迹及480/480 held-out 轨迹通过；执行器限幅检查2,880,000个训练步进和28,800个 held-out 步进，无超限。它同时澄清原始 actuator_saturation 字段并非0.6限幅绑定指示，避免误用该字段；只增加派生审计结果，不修改原始训练数据、检查点或协议。
