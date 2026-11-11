@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "expected_training_seeds": 10,
+  "audited_training_seeds": 10,
+  "total_paired_physical_samples": 396,
+  "missing_seeds": [],
+  "errors": [],
+  "source_training_checkpoint_commit": "0af6e066ff385b191b2db3b86a40adc2ad79956f",
+  "diagnostic": "paired deterministic AC current-policy finite-horizon physical returns",
+  "not_established": "optimal Q*, uniform epsilon_Q, true-advantage sign guarantee, global aggregation return",
+  "training_is_untouched": true,
+  "interpretation": "empirical errors conditional on sampled states/profiles; not valid sup bounds"
+}
