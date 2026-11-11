@@ -4,7 +4,7 @@ This is deliberately separate from legacy aefc/PATBU and the earlier bridge
 development prototype. See STRICT_REPRODUCTION.md for unverified assumptions.
 """
 from __future__ import annotations
-import copy, math, io, struct
+import copy, math, io, struct, hashlib
 from dataclasses import dataclass
 import numpy as np
 import torch
@@ -98,6 +98,7 @@ class Agent:
         self.batch=int(batch);self.actor_lr=float(actor_lr)
         self.align_lambda=float(align_lambda)
         self.rng=np.random.default_rng(seed+1907)
+        self.coord_rng=np.random.default_rng(seed+410013)
         self.last_adapt={}
     def set_global(self,theta):
         set_flat(self.actor.backbone,theta)
@@ -189,12 +190,12 @@ class Agent:
                 y=r+self.gamma*(1-d)*self.target_critic(torch.cat([ns,self.target_actor(ns)],dim=1))
                 td=(y-qbeh).abs().flatten()
                 selected=torch.argsort(td,descending=True,stable=True)[:n]
-            elif mode not in ("adv","uniform_high"):raise ValueError(mode)
+            elif mode not in ("adv","uniform_high","coord_random","coord_gradtopk"):raise ValueError(mode)
         if not len(selected):
             if not fixed_traffic:return None
             return self._zero_sparse_message(theta,kappa)
         # v_j*A_j normalized for advantage; compare high-set uniform and ordinary.
-        if mode=="adv":raw=(isw[selected]*advantage[selected]).detach().clamp_min(0)
+        if mode in ("adv","coord_random","coord_gradtopk"):raw=(isw[selected]*advantage[selected]).detach().clamp_min(0)
         else:raw=isw[selected].detach().clamp_min(0)
         if float(raw.sum())<=0:
             if not fixed_traffic:return None
@@ -203,11 +204,17 @@ class Agent:
         for p in list(self.actor.encoder.parameters())+list(self.actor.head.parameters())+list(self.critic.parameters()):
             p.requires_grad_(False)
         opt=torch.optim.Adam(self.actor.backbone.parameters(),lr=self.actor_lr)
+        grad_abs_sum=torch.zeros_like(flatten(self.actor.backbone)) if mode=='coord_gradtopk' else None
         # Detached reference actions and selected batch are held fixed during sharing.
         for _ in range(int(sharing_steps)):
             q=self.critic(torch.cat([s[selected],self.actor(s[selected])],dim=1)).flatten()
             loss=-(weight*q).sum()
-            opt.zero_grad(set_to_none=True);loss.backward();opt.step()
+            opt.zero_grad(set_to_none=True);loss.backward()
+            if grad_abs_sum is not None:
+                gradient=torch.cat([p.grad.detach().reshape(-1).cpu()
+                                    for p in self.actor.backbone.parameters()])
+                grad_abs_sum+=gradient.abs()
+            opt.step()
         delta=flatten(self.actor.backbone)-torch.as_tensor(theta)
         k=max(1,int(math.ceil((1.0 if mode in ('dense','dense_cw','critic_share') else float(kappa))*delta.numel())))
         # Stable magnitude sort: smaller coordinate wins ties.
