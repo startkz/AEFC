@@ -217,14 +217,38 @@ class Agent:
             opt.step()
         delta=flatten(self.actor.backbone)-torch.as_tensor(theta)
         k=max(1,int(math.ceil((1.0 if mode in ('dense','dense_cw','critic_share') else float(kappa))*delta.numel())))
-        # Stable magnitude sort: smaller coordinate wins ties.
-        indices=torch.argsort(delta.abs(),descending=True,stable=True)[:k].sort().values
+        # Same final Adam delta for all three selectors; only chosen support changes.
+        if mode=="coord_random":
+            indices=torch.from_numpy(np.sort(
+                self.coord_rng.choice(delta.numel(),size=k,replace=False).astype(np.int64)))
+            rule="uniform_random_coordinate_without_replacement"
+        elif mode=="coord_gradtopk":
+            indices=torch.argsort(grad_abs_sum,descending=True,stable=True)[:k].sort().values
+            rule="sum_abs_raw_pre_adam_gradients"
+        else:
+            indices=torch.argsort(delta.abs(),descending=True,stable=True)[:k].sort().values
+            rule="topk_final_adam_displacement"
         message={'idx':indices.numpy().astype(np.int32),
                  'val':delta[indices].numpy().astype(np.float32),
                  'n':int(delta.numel()),'utility':float(advantage[selected].mean()),
                  'proto':self.prototypes(),
                  'high_count':int(n),'selection_count':int(len(selected)),
                  'uncompressed':delta.numpy().copy()}
+        if mode in ("coord_random","coord_gradtopk"):
+            idx_numpy=indices.numpy().astype(np.int32)
+            ref_idx=torch.argsort(delta.abs(),descending=True,stable=True)[:k]
+            message['coordinate_selection_audit']={
+                'rule':rule,'k':k,'dimension':int(delta.numel()),
+                'support_sha256':hashlib.sha256(idx_numpy.tobytes()).hexdigest(),
+                'final_adam_delta_sha256':hashlib.sha256(
+                    delta.numpy().astype('<f4').tobytes()).hexdigest(),
+                'overlap_final_delta_topk':int(torch.isin(indices,ref_idx).sum()),
+                'selected_delta_l2':float(torch.linalg.vector_norm(delta[indices])),
+                'global_delta_l2':float(torch.linalg.vector_norm(delta)),
+                'raw_gradient_score_sha256':(
+                    hashlib.sha256(grad_abs_sum.numpy().astype('<f4').tobytes()).hexdigest()
+                    if grad_abs_sum is not None else None),
+                'same_raw_loss_and_adam_steps':True}
         if fixed_traffic:self._set_fixed_padding(message)
         for p in list(self.actor.encoder.parameters())+list(self.actor.head.parameters())+list(self.critic.parameters()):
             p.requires_grad_(True)
