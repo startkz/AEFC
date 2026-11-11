@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "source_run_id": 42957084297,
+  "source_artifact_id": 13830018801,
+  "source_artifact_sha256": "4421bb8a925f27f04d14fa48ac8922ff89f6bf9da6583551ce76b975db89879f",
+  "source_code_sha": "e674db8b7d00ce908614154bd6f3f21c1a3495ce",
+  "expected_cells": 40,
+  "audited_cells": 40,
+  "json_files": 40,
+  "checkpoint_files": 40,
+  "manifest_files": 40,
+  "json_sha256_matches_manifest": 40,
+  "checkpoint_sha256_matches_manifest": 40,
+  "detached_manifest_sha256_computed": 40,
+  "training_episode_records": 40000,
+  "federated_round_records": 8000,
+  "heldout_test_records": 400,
+  "actual_uplink_bytes_equal_across_four_methods_within_each_seed": true,
+  "independent_statistical_unit": "training seed; ten paired seeds",
+  "inventory": "r4_coordinate_manifest_sha256.csv",
+  "scope": "hash and budget supplement; coordinate, serialized-byte and physical recovery checks are rerun by audit_coordinate_ablation.py"
+}

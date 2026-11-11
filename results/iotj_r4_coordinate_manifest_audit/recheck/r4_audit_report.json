@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "expected_runs": 40,
+  "audited_runs": 40,
+  "training_seeds": [
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89
+  ],
+  "methods": [
+    "adv",
+    "ordinary",
+    "coord_random",
+    "coord_gradtopk"
+  ],
+  "missing": [],
+  "errors": [],
+  "git_source_shas": [
+    "e674db8b7d00ce908614154bd6f3f21c1a3495ce"
+  ],
+  "episodes_per_run": 1000,
+  "federation_rounds_per_run": 200,
+  "heldout_episodes_per_run": 10,
+  "aggregate_training_episode_rows": 40000,
+  "independent_statistical_unit": "training seed",
+  "platform": "IEEE39 quasi-static AC; not original Simulink--Python Fig5/6",
+  "position": "Controls change support selected from same Adam displacement",
+  "loss_and_optimizer": "AEFC/coordinate methods use matched positive-advantage loss and Adam steps",
+  "not_claimed": "uniform Q-advantage error bound, guaranteed global improvement, dynamic physical safety"
+}
