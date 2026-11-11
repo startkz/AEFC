@@ -12,10 +12,12 @@ try:
  from .run_experiment import Grid
  from .strict_agent import Agent, Server, ServerSettings, flatten, serialized_size, set_flat
  from .adaptive_attack import AdaptiveServer, ADAPTIVE_MODES
+ from .actuator_trace import apply_actuator_command_limits
 except ImportError:
  from run_experiment import Grid
  from strict_agent import Agent, Server, ServerSettings, flatten, serialized_size, set_flat
  from adaptive_attack import AdaptiveServer, ADAPTIVE_MODES
+ from actuator_trace import apply_actuator_command_limits
 
 class RecoveryGrid(Grid):
  def __init__(self,case,clients,seed,hetero,attack='clean',horizon=30):
@@ -58,8 +60,7 @@ class RecoveryGrid(Grid):
    if len(o[target])>2:o[target][2]-=0.09
   return o
  def step(self,actions):
-  cmd=np.asarray(actions,float).copy()
-  if self.hetero in ('saturation','dim_saturation','saturation_shift','dim_saturation_shift'):cmd[1::2]=np.minimum(cmd[1::2],.6)
+  cmd,actuator_saturation=apply_actuator_command_limits(actions,self.hetero)
   # Command corruption AFTER policy choice, evaluated against true physical state.
   if self.attack in ('physical','joint') and 5<=self.step_idx<16:
    target=0 if self.hetero=='attackgroup' else len(cmd)-1
@@ -87,7 +88,7 @@ class RecoveryGrid(Grid):
   info={'restored_pct':restored,'safe':safe,'ac_converged':int(self.valid),
         'voltage_violation_pu_sum':self.voltage_excess,
         'thermal_excess_pct_sum':self.thermal_excess,
-        'actuator_saturation':int(any((cmd<0)|(cmd>1))),
+        'actuator_saturation':actuator_saturation,
         'actual_steps':self.step_idx,
         'client_served_fraction':self.served.astype(float).tolist(),
         'client_demand_mw':client_demand.tolist(),
