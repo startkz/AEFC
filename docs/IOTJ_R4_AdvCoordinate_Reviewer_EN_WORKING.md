@@ -58,3 +58,8 @@ Primary artifacts:
 - Advantage-error Run 42958431836, source SHA e18cc5735c85ed9c1a4bcfad82dfe2391320dd2d, result commit 9ec371474e9779bcad3da89f9a252c94e61ed3f9; 396 paired samples.
 
 **Integration limitation:** the current branch's main.tex still compiles the Bounded-Authority/PATBU/Risk-Gate manuscript, not the target IoT-J AEFC-FRL paper. No existing LaTeX file has been modified. This response and the separate integration delta must be merged only into the correct AEFC-FRL manuscript after its source is identified.
+
+
+### Actuator telemetry clarification
+
+The archived actuator_saturation field was computed after the 0.6 cap and therefore did not indicate whether that cap bound a command. Historical JSON/PT files were left unchanged; actual cap-binding counts were independently reconstructed from consecutive client_served_fraction values and archived in r4_hetero_physical_intervention_audit.json. For future runs, actuator_trace.py now computes the output flag before clipping while preserving the exact command values passed to the physical/reward path. Six output-only unit tests, including elementwise equivalence with the legacy command path, passed in Run 42997543345 (commit 26a4e16bea2c9a5a37409d4b7fdc77025e7dac54). This CI run performed no training.
