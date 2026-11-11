@@ -37,7 +37,18 @@ def q_value(agent,obs,action):
     with torch.no_grad():return float(agent.critic(z).flatten()[0])
 def policy_rollout(snapshot,agents,first_actions,gamma=.99):
     # Paired trajectories differ ONLY in the first chosen local action.
-    model=copy.deepcopy(snapshot)
+    # Grid stores imported pandapower module (snapshot.pp), which cannot be deepcopied.
+    # Clone only mutable simulator state, keeping the module object shared.
+    model=copy.copy(snapshot)
+    model.net=copy.deepcopy(snapshot.net)
+    model.served=snapshot.served.copy()
+    model.demand=snapshot.demand.copy()
+    model.vm=snapshot.vm.copy()
+    model.violations=copy.deepcopy(snapshot.violations)
+    model.obs_cache=copy.deepcopy(snapshot.obs_cache)
+    model._delay_history=copy.deepcopy(getattr(snapshot,'_delay_history',[]))
+    model.rng=np.random.default_rng()
+    model.rng.bit_generator.state=copy.deepcopy(snapshot.rng.bit_generator.state)
     obs=model.observations()
     discount=1.
     returns=np.zeros(len(agents),dtype=np.float64)
