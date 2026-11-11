@@ -83,7 +83,7 @@ def audit_one(path, ep_writer, step_writer):
         ("fed_sync_interval",5),("batch_size",256),
         ("hidden_size",128),("latent_size",32),
         ("local_fit_steps",5),("sharing_steps",2),
-        ("fixed_traffic",1),("record_training_trace",1),
+        ("fixed_traffic",0),("record_training_trace",1),
     ):
         require(int(summary[key]) == expected, f"{key} mismatch in {path}")
     close(summary["kappa"],.20,"kappa",1.e-12)
