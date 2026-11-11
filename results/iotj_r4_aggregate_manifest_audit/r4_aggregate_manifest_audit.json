@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "source_run_id": 42962801194,
+  "source_artifact_id": 13831945798,
+  "source_artifact_sha256": "759532d8f5af32122b533d5865aac7d97c86515efe98c41434db61033fb45213",
+  "source_code_sha": "65f28231f3c3d13d8a50893cc99f224edf670faa",
+  "expected_seeds": 10,
+  "audited_seeds": 10,
+  "json_files": 10,
+  "checkpoint_files": 10,
+  "manifest_files": 10,
+  "json_sha256_matches_manifest": 10,
+  "checkpoint_sha256_matches_manifest": 10,
+  "detached_manifest_sha256_computed": 10,
+  "training_episode_records": 10000,
+  "federated_round_records": 2000,
+  "heldout_test_records": 100,
+  "paired_physical_profiles": 90,
+  "independent_statistical_unit": "training seed; ten seeds",
+  "inventory": "r4_aggregate_manifest_sha256.csv",
+  "scope": "hash and budget supplement; physical recovery, demand perturbation and applied-update checks are rerun by audit_aggregate_gain.py"
+}
