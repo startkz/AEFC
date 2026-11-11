@@ -1,0 +1,28 @@
+name: IoTJ R4 actuator telemetry output test (no training)
+on:
+  push:
+    branches: [experiment/iotj-r4-coordinate-ablation-20261111]
+    paths:
+      - '.github/workflows/iotj-r4-actuator-output-test.yml'
+      - 'iotj_bridge/actuator_trace.py'
+      - 'iotj_bridge/test_actuator_trace.py'
+      - 'iotj_bridge/strict_run.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  telemetry-unit-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install audit-only dependency
+        run: python -m pip install 'numpy==2.2.6'
+      - name: Verify output flag without running training
+        run: |
+          set -euo pipefail
+          python -m py_compile iotj_bridge/strict_run.py iotj_bridge/actuator_trace.py iotj_bridge/test_actuator_trace.py
+          python -m unittest discover -s iotj_bridge -p 'test_actuator_trace.py' -v
