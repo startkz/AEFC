@@ -1,0 +1,74 @@
+name: IoTJ R4 adapter and heterogeneity factor contract smoke
+on:
+  push:
+    branches: [experiment/iotj-r4-coordinate-ablation-20261111]
+    paths: ['.github/workflows/iotj-r4-hetero-smoke.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install 'pandapower==3.2.1' 'numpy==2.2.6'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify physical intervention and architecture without statistical claims
+        run: |
+          python -m py_compile iotj_bridge/strict_run.py
+          python iotj_bridge/test_hetero_geometry.py
+      - name: Three actual held-out AC episodes for each factor and ablation
+        shell: bash
+        run: |
+          set -euo pipefail
+          for hetero in base dim saturation shift dim_saturation_shift; do
+            for control in adv no_adapter_update no_proto_alignment dense; do
+              args=()
+              case "$control" in
+                no_adapter_update) method=adv; args=(--disable-adapters);;
+                no_proto_alignment) method=adv; args=(--disable-proto);;
+                *) method="$control";;
+              esac
+              python iotj_bridge/strict_run.py --case 39 --seed 80 \
+                --mode "$method" --hetero "$hetero" --attack clean \
+                --episodes 3 --clients 5 --malicious-clients 0 \
+                --batch 32 --hidden 32 --latent 12 \
+                --local-steps 1 --sharing-steps 1 --kappa .20 \
+                --eval-episodes 1 "${args[@]}" \
+                --out "results/iotj_r4_hetero_smoke/${hetero}/${control}.json"
+            done
+          done
+      - name: Audit five-factor, four-control pilot identities
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json
+          root=Path('results/iotj_r4_hetero_smoke')
+          docs=[p for p in root.rglob('*.json') if not p.name.endswith('.manifest.json')]
+          assert len(docs)==20,len(docs)
+          for p in docs:
+              d=json.loads(p.read_text());s=d['summary']
+              assert s['completed_rounds']==1 and s['train_episodes']==3
+              assert s['latent_dimension']==12
+              if s['hetero'] in ('dim','dim_saturation_shift'):
+                  assert s['observation_dimensions']==[6,3,6,3,6]
+              else:assert s['observation_dimensions']==[6]*5
+              assert len(d['tests'])==1
+              meta=json.loads(p.with_suffix('.manifest.json').read_text())
+              assert meta['source_json_sha256']==hashlib.sha256(p.read_bytes()).hexdigest()
+              assert meta['checkpoint_sha256']==hashlib.sha256(p.with_suffix('.pt').read_bytes()).hexdigest()
+          print('20 pilot combinations: PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-hetero-structure-smoke-${{ github.sha }}
+          path: results/iotj_r4_hetero_smoke/
+          if-no-files-found: warn
+          retention-days: 90
