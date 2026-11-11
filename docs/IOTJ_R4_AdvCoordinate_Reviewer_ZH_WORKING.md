@@ -58,3 +58,8 @@ Run 42959386414 已完成96/96单元，即八种因素组合 × 四种配置 × 
 - 优势误差 Run 42958431836，源代码 SHA e18cc5735c85ed9c1a4bcfad82dfe2391320dd2d，结果提交 9ec371474e9779bcad3da89f9a252c94e61ed3f9；396个配对样本。
 
 **集成限制：** 当前分支 main.tex 仍编译 Bounded-Authority/PATBU/Risk-Gate 论文，不是目标 IoT-J AEFC-FRL 主稿。尚未修改现有 LaTeX 文件。本回复和单独集成修改稿只能在确认正确 AEFC-FRL 论文源码后并入。
+
+
+### 执行器限幅日志说明
+
+历史实验的 actuator_saturation 字段在0.6限幅后计算，不能表示0.6限幅是否触发。历史 JSON/PT 未改动；实际触发次数由相邻 client_served_fraction 增量独立重算并归档于 r4_hetero_physical_intervention_audit.json。为避免后续实验继续产生歧义，新增 actuator_trace.py，在裁剪前计算输出标志，同时保证传入物理模型和奖励计算的命令值与旧实现逐元素一致。六项纯输出单元测试（含随机命令与旧物理命令路径逐元素等价检查）已由 Run 42997543345 通过，代码提交 26a4e16bea2c9a5a37409d4b7fdc77025e7dac54；该 CI 未启动训练。
