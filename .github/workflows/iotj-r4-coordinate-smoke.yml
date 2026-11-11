@@ -1,0 +1,70 @@
+name: IoTJ R4 same-byte coordinate-selection smoke
+on:
+  push:
+    branches: [experiment/iotj-r4-coordinate-ablation-20261111]
+    paths: ['.github/workflows/iotj-r4-coordinate-smoke.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install 'pandapower==3.2.1' 'numpy==2.2.6'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Python syntax and coordinate-selection unit invariants
+        run: |
+          python -m py_compile iotj_bridge/strict_agent.py iotj_bridge/strict_run.py
+          python iotj_bridge/test_strict.py
+          python iotj_bridge/test_coordinate_selection.py
+      - name: End-to-end matched budget smoke across 4 methods
+        shell: bash
+        run: |
+          set -euo pipefail
+          for method in adv ordinary coord_random coord_gradtopk; do
+            python iotj_bridge/strict_run.py --case 39 --seed 80 \
+              --mode "$method" --hetero dim --attack clean \
+              --episodes 10 --batch 32 --hidden 32 --latent 12 \
+              --clients 5 --malicious-clients 0 --local-steps 1 \
+              --sharing-steps 2 --kappa .20 --eval-episodes 2 \
+              --fixed-traffic --record-training-trace \
+              --out "results/iotj_r4_smoke/${method}.json"
+          done
+      - name: Byte, support, and SHA256 audit (smoke only)
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          totals={}
+          for mode in ('adv','ordinary','coord_random','coord_gradtopk'):
+              f=Path(f'results/iotj_r4_smoke/{mode}.json')
+              d=json.loads(f.read_text())
+              s=d['summary']; rounds=d['rounds']
+              assert s['train_episodes']==10 and s['completed_rounds']==2
+              assert len(d['train_episodes'])==10
+              meta=json.loads(f.with_suffix('.manifest.json').read_text())
+              assert hashlib.sha256(f.read_bytes()).hexdigest()==meta['source_json_sha256']
+              assert hashlib.sha256(f.with_suffix('.pt').read_bytes()).hexdigest()==meta['checkpoint_sha256']
+              for r in rounds:
+                  assert sum(r['actual_serialized_client_bytes'])==r['uplink_bytes']
+                  if mode.startswith('coord_'):
+                      for x in r['coordinate_selection']:
+                          assert x['k']==int(x['dimension']*.2+.999999999)
+                          assert x['same_raw_loss_and_adam_steps']
+              totals[mode]=sum(r['uplink_bytes'] for r in rounds)
+          assert len(set(totals.values()))==1, f'byte mismatch {totals}'
+          print('R4 byte parity and selector provenance:',totals)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-coordinate-smoke-${{ github.sha }}
+          path: results/iotj_r4_smoke/
+          retention-days: 90
