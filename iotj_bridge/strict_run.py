@@ -10,11 +10,11 @@ import numpy as np
 import torch
 try:
  from .run_experiment import Grid
- from .strict_agent import Agent, Server, ServerSettings, flatten, serialized_size
+ from .strict_agent import Agent, Server, ServerSettings, flatten, serialized_size, set_flat
  from .adaptive_attack import AdaptiveServer, ADAPTIVE_MODES
 except ImportError:
  from run_experiment import Grid
- from strict_agent import Agent, Server, ServerSettings, flatten, serialized_size
+ from strict_agent import Agent, Server, ServerSettings, flatten, serialized_size, set_flat
  from adaptive_attack import AdaptiveServer, ADAPTIVE_MODES
 
 class RecoveryGrid(Grid):
@@ -152,12 +152,47 @@ def run_episode(env,agents,explore,noise_seed,trace=False):
          'any_unsafe':int(any(not z['safe'] for z in env.violations)),
          'censored':int(first is None),'client_outcomes':client_outcomes,'trace':records}
 
+def compare_frozen_candidate_update(agents,case,clients_n,seed,hetero,round_1based,
+                                    theta_before,theta_after,num_profiles=3):
+ """Freeze trained local adapters; test same AC demand profiles before/after the actual aggregate update.
+ The diagnostic never updates critic, replay, global theta, or target nets.
+ """
+ records=[]
+ try:
+  for j in range(num_profiles):
+   physical_seed=300000+seed*1000+round_1based*10+j
+   pair={}
+   for label,theta in (('before',theta_before),('after',theta_after)):
+    for agent in agents:set_flat(agent.actor.backbone,theta)
+    env=RecoveryGrid(case,clients_n,physical_seed,hetero,attack='clean')
+    v=run_episode(env,agents,False,noise_seed=physical_seed+9000000,trace=False)
+    pair[label]=v
+   a,b=pair['before'],pair['after']
+   records.append({
+    'seed':seed,'round':round_1based,'scenario_seed':physical_seed,'hetero':hetero,
+    'pre_final_restored_pct':float(a['final_restored_pct']),
+    'post_final_restored_pct':float(b['final_restored_pct']),
+    'paired_final_load_gain_pp':float(b['final_restored_pct']-a['final_restored_pct']),
+    'pre_average_load_pct':float(a['average_restored_pct']),
+    'post_average_load_pct':float(b['average_restored_pct']),
+    'paired_load_auc_gain_pp':float(b['average_restored_pct']-a['average_restored_pct']),
+    'pre_safe_dwell5':int(a['safe_dwell5']),'post_safe_dwell5':int(b['safe_dwell5']),
+    'pre_recovery_step':int(a['recovery_step']),
+    'post_recovery_step':int(b['recovery_step']),
+    'pre_censored':int(a['censored']),'post_censored':int(b['censored']),
+    'actual_applied_delta_l2':float(torch.linalg.vector_norm(theta_after-theta_before)),
+    'same_frozen_local_adapters':True,'no_training_feedback':True})
+ finally:
+  for agent in agents:set_flat(agent.actor.backbone,theta_before)
+ return records
+
 def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
         clients_n=5,batch=256,hidden=128,latent=32,steps=5,
         sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False,
         malicious_clients=1,disable_adapters=False,fixed_traffic=False,
         shift_lambda=1.0,attack_start_round=None,shift_onset_round=None,
-        bytes_to_target_dir=None,attack_strength=1.0,record_training_trace=False):
+        bytes_to_target_dir=None,attack_strength=1.0,record_training_trace=False,
+        aggregate_diagnostic_rounds=None,aggregate_diagnostic_profiles=3):
  torch.set_num_threads(1);torch.manual_seed(seed);np.random.seed(seed)
  env=RecoveryGrid(case,clients_n,seed,hetero,attack='physical' if attack in ('physical','joint') else 'clean')
  observations=env.reset()
@@ -172,7 +207,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
  server=(AdaptiveServer(theta,settings,strength=attack_strength)
          if attack in ADAPTIVE_MODES else Server(theta,settings))
  for c in agents:c.set_global(server.theta)
- first_record=[];traffic=0;server_summaries=[];train_episode_records=[]
+ first_record=[];traffic=0;server_summaries=[];train_episode_records=[];aggregate_diag_records=[]
  sync_interval=5
  rounds=math.ceil(episodes/sync_interval)
  btt=None
@@ -236,8 +271,13 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
    stats={'upload_bytes':sum(_flatten(a.critic).numel()*4 for a in agents),
           'malicious_weight':0.,'accepted':len([m for m in out if m is not None])}
   else:
+   theta_before=server.theta.detach().clone() if aggregate_diagnostic_rounds and k+1 in aggregate_diagnostic_rounds else None
    stats=server.step(out,poisoned=bad,attack=atk,round_id=k,
                      attack_start_round=attack_start_round)
+   if theta_before is not None:
+    aggregate_diag_records.extend(compare_frozen_candidate_update(
+        agents,case,clients_n,seed,hetero,k+1,theta_before,
+        server.theta.detach().clone(),aggregate_diagnostic_profiles))
    for a in agents:a.set_global(server.theta)
   traffic+=stats['upload_bytes']
   server_summaries.append({'round':k,'round_1based':k+1,'uplink_bytes':stats['upload_bytes'],
@@ -313,7 +353,10 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'max_thermal_excess':max(v['max_thermal_excess_pct'] for v in test_runs),
           'max_voltage_violation':max(v['max_voltage_violation_pu'] for v in test_runs),
           'uplink_bytes':traffic,
-          'mean_malicious_weight':float(np.mean([x['malicious_weight'] for x in server_summaries]))}
+          'mean_malicious_weight':float(np.mean([x['malicious_weight'] for x in server_summaries])),
+          'aggregate_diagnostic_rounds':list(aggregate_diagnostic_rounds or []),
+          'aggregate_diagnostic_profiles':int(aggregate_diagnostic_profiles) if aggregate_diagnostic_rounds else 0,
+          'aggregate_candidate_update_impact':aggregate_diag_records}
  if btt_report is not None:
   summary['bytes_to_target_protocol']=btt_report['protocol_id']
   summary['bytes_to_target_joint_event_observed']=btt_report['joint_target']['event_observed']
@@ -343,6 +386,8 @@ def main():
  p.add_argument('--disable-adapters',action='store_true')
  p.add_argument('--fixed-traffic',action='store_true')
  p.add_argument('--record-training-trace',action='store_true',help='Immutable per-episode step trace and first safe five-step dwell; logging only')
+ p.add_argument('--aggregate-diagnostic-rounds',type=str,default='',help='Comma-separated 1-based aggregate rounds for frozen paired evaluation')
+ p.add_argument('--aggregate-diagnostic-profiles',type=int,default=3)
  p.add_argument('--malicious-clients',type=int,default=1)
  p.add_argument('--shift-lambda',type=float,default=1.0)
  p.add_argument('--attack-start-round',type=int,default=None)
@@ -355,7 +400,10 @@ def main():
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
      args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,
      args.malicious_clients,args.disable_adapters,args.fixed_traffic,args.shift_lambda,
-     args.attack_start_round,args.shift_onset_round,args.bytes_to_target_dir,args.attack_strength,args.record_training_trace)
+     args.attack_start_round,args.shift_onset_round,args.bytes_to_target_dir,args.attack_strength,
+     args.record_training_trace,
+     tuple(int(x) for x in args.aggregate_diagnostic_rounds.split(',') if x.strip()),
+     args.aggregate_diagnostic_profiles)
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
                                 'train_episodes':train_episode_records},
