@@ -1,4 +1,4 @@
-name: IoTJ R4 adapter and heterogeneity factor contract smoke
+name: IoTJ R4 full 2x2x2 factor and adapter contract smoke
 on:
   push:
     branches: [experiment/iotj-r4-coordinate-ablation-20261111]
@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for hetero in base dim saturation shift dim_saturation_shift; do
+          for hetero in base dim saturation shift dim_saturation dim_shift saturation_shift dim_saturation_shift; do
             for control in adv no_adapter_update no_proto_alignment dense; do
               args=()
               case "$control" in
@@ -51,19 +51,19 @@ jobs:
           import hashlib,json
           root=Path('results/iotj_r4_hetero_smoke')
           docs=[p for p in root.rglob('*.json') if not p.name.endswith('.manifest.json')]
-          assert len(docs)==20,len(docs)
+          assert len(docs)==32,len(docs)
           for p in docs:
               d=json.loads(p.read_text());s=d['summary']
               assert s['completed_rounds']==1 and s['train_episodes']==3
               assert s['latent_dimension']==12
-              if s['hetero'] in ('dim','dim_saturation_shift'):
+              if s['hetero'] in ('dim','dim_saturation','dim_shift','dim_saturation_shift'):
                   assert s['observation_dimensions']==[6,3,6,3,6]
               else:assert s['observation_dimensions']==[6]*5
               assert len(d['tests'])==1
               meta=json.loads(p.with_suffix('.manifest.json').read_text())
               assert meta['source_json_sha256']==hashlib.sha256(p.read_bytes()).hexdigest()
               assert meta['checkpoint_sha256']==hashlib.sha256(p.with_suffix('.pt').read_bytes()).hexdigest()
-          print('20 pilot combinations: PASS')
+          print('32 pilot combinations: PASS')
           PY
       - uses: actions/upload-artifact@v4
         if: always()
