@@ -37,6 +37,17 @@ class ActuatorTraceTest(unittest.TestCase):
         np.testing.assert_array_equal(cmd, raw)
         self.assertEqual(flag, 1)
 
+    def test_command_values_match_legacy_physics_path(self):
+        rng = np.random.default_rng(20261111)
+        for mode in ("base", "saturation", "dim_saturation_shift"):
+            for _ in range(100):
+                raw = rng.uniform(-0.2, 1.2, size=5)
+                legacy = raw.copy()
+                if mode in ("saturation", "dim_saturation", "saturation_shift", "dim_saturation_shift"):
+                    legacy[1::2] = np.minimum(legacy[1::2], 0.6)
+                current, _ = apply_actuator_command_limits(raw, mode)
+                np.testing.assert_array_equal(current, legacy)
+
 
 if __name__ == "__main__":
     unittest.main()
