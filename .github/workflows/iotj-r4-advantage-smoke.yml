@@ -1,4 +1,4 @@
-name: IoTJ R4 frozen-checkpoint paired advantage diagnostic smoke
+name: IoTJ R4 frozen-checkpoint paired advantage diagnostic smoke (cloned net)
 on:
   push:
     branches: [experiment/iotj-r4-coordinate-ablation-20261111]
