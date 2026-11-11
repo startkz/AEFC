@@ -165,7 +165,7 @@ def compare_frozen_candidate_update(agents,case,clients_n,seed,hetero,round_1bas
    for label,theta in (('before',theta_before),('after',theta_after)):
     for agent in agents:set_flat(agent.actor.backbone,theta)
     env=RecoveryGrid(case,clients_n,physical_seed,hetero,attack='clean')
-    v=run_episode(env,agents,False,noise_seed=physical_seed+9000000,trace=False)
+    v=run_episode(env,agents,False,noise_seed=physical_seed+9000000,trace=True)
     pair[label]=v
    a,b=pair['before'],pair['after']
    records.append({
@@ -180,6 +180,7 @@ def compare_frozen_candidate_update(agents,case,clients_n,seed,hetero,round_1bas
     'pre_recovery_step':int(a['recovery_step']),
     'post_recovery_step':int(b['recovery_step']),
     'pre_censored':int(a['censored']),'post_censored':int(b['censored']),
+    'pre_physical_trace':a['trace'],'post_physical_trace':b['trace'],
     'actual_applied_delta_l2':float(torch.linalg.vector_norm(theta_after-theta_before)),
     'same_frozen_local_adapters':True,'no_training_feedback':True})
  finally:
