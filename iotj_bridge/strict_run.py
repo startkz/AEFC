@@ -154,7 +154,7 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
         sharing_steps=2,kappa=.2,eval_episodes=3,weight_cap=None,disable_proto=False,
         malicious_clients=1,disable_adapters=False,fixed_traffic=False,
         shift_lambda=1.0,attack_start_round=None,shift_onset_round=None,
-        bytes_to_target_dir=None,attack_strength=1.0):
+        bytes_to_target_dir=None,attack_strength=1.0,record_training_trace=False):
  torch.set_num_threads(1);torch.manual_seed(seed);np.random.seed(seed)
  env=RecoveryGrid(case,clients_n,seed,hetero,attack='physical' if attack in ('physical','joint') else 'clean')
  observations=env.reset()
@@ -189,15 +189,22 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
   # Identity-preserving clean phase: observation and actor dimensions never change.
   env.demand_shift_enabled=bool(shift_onset_round is None or k>=int(shift_onset_round))
   for e in range(k*sync_interval,min((k+1)*sync_interval,episodes)):
-   episode_result=run_episode(env,agents,True,noise_seed=seed*100000+e)
-   train_episode_records.append({'episode':e+1,'average_restored_pct':episode_result['average_restored_pct'],
+   episode_result=run_episode(env,agents,True,noise_seed=seed*100000+e,trace=record_training_trace)
+   ep_record={'episode':e+1,'average_restored_pct':episode_result['average_restored_pct'],
        'final_restored_pct':episode_result['final_restored_pct'],
        'safe_dwell5':episode_result['safe_dwell5'],'any_unsafe':episode_result['any_unsafe'],
        'max_thermal_excess_pct':episode_result['max_thermal_excess_pct'],
        'max_voltage_violation_pu':episode_result['max_voltage_violation_pu'],
        'censored':episode_result['censored'],
        'shift_active':int(hetero=='shift' and env.demand_shift_enabled),
-       'client_outcomes':episode_result['client_outcomes']})
+       'client_outcomes':episode_result['client_outcomes']}
+   if record_training_trace:
+    ep_record.update({'recovery_step':episode_result['recovery_step'],
+                      'recovery_accuracy_pct':episode_result['final_restored_pct'],
+                      'steps_executed':len(env.violations),
+                      'recovery_reached':episode_result['safe_dwell5'],
+                      'trace':episode_result['trace']})
+   train_episode_records.append(ep_record)
   out=[]
   for i,c in enumerate(agents):
    if mode!='critic_share':c.set_global(server.theta)
@@ -264,6 +271,9 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'train_episodes':episodes,
           'scheduled_rounds':rounds,'completed_rounds':len(server_summaries),
           'train_episode_records':len(train_episode_records),
+          'record_training_trace':int(record_training_trace),
+          'train_recovery_rule':'first of 5 consecutive converged AC steps with >=90% load and zero voltage/thermal violation; -1 if not reached' if record_training_trace else None,
+          'train_accuracy_rule':'final served load divided by demand, percent; not a recovery-success percentage' if record_training_trace else None,
           'randomized_load_profile':'rng(seed+901), new scenario per episode',
           'eval_episodes':eval_episodes,'steps_per_episode':env.horizon,
           'fed_sync_interval':sync_interval,'batch_size':batch,'hidden_size':hidden,
@@ -293,7 +303,7 @@ def main():
  p=argparse.ArgumentParser()
  p.add_argument('--case',type=int,choices=[39,118],required=True)
  p.add_argument('--seed',type=int,default=80)
- p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share'],default='adv')
+ p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share','dense_cw'],default='adv')
  p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation','attackgroup','pad_dim'],default='dim')
  p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint','immediate_metadata','delayed_metadata','immediate_credibility','delayed_credibility','temporal_credibility',*ADAPTIVE_MODES],default='clean')
  p.add_argument('--attack-strength',type=float,default=1.,help='Adaptive manipulation budget in [0,2]')
@@ -310,6 +320,7 @@ def main():
  p.add_argument('--disable-proto',action='store_true')
  p.add_argument('--disable-adapters',action='store_true')
  p.add_argument('--fixed-traffic',action='store_true')
+ p.add_argument('--record-training-trace',action='store_true',help='Immutable per-episode step trace and first safe five-step dwell; logging only')
  p.add_argument('--malicious-clients',type=int,default=1)
  p.add_argument('--shift-lambda',type=float,default=1.0)
  p.add_argument('--attack-start-round',type=int,default=None)
@@ -322,7 +333,7 @@ def main():
      args.episodes,args.clients,args.batch,args.hidden,args.latent,args.local_steps,
      args.sharing_steps,args.kappa,args.eval_episodes,args.weight_cap,args.disable_proto,
      args.malicious_clients,args.disable_adapters,args.fixed_traffic,args.shift_lambda,
-     args.attack_start_round,args.shift_onset_round,args.bytes_to_target_dir,args.attack_strength)
+     args.attack_start_round,args.shift_onset_round,args.bytes_to_target_dir,args.attack_strength,args.record_training_trace)
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
                                 'train_episodes':train_episode_records},
