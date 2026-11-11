@@ -1,0 +1,132 @@
+name: IoTJ Fig5-6 1000-episode AC raw recovery trajectories
+on:
+  push:
+    branches: [experiment/iotj-fig56-episode-traces-20261111]
+    paths: ['.github/workflows/iotj-fig56-full-episodes.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: iotj-fig56-episode-traces-v1
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        seed: [80,81,82,83,84,85,86,87,88,89]
+        method: [adv,ordinary,adv_no_cw,dense,dense_cw]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install frozen physics and learning versions
+        run: |
+          python -m pip install 'pandapower==3.2.1' 'numpy==2.2.6'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Audit source syntax and regression contracts
+        run: |
+          python -m py_compile iotj_bridge/strict_run.py iotj_bridge/strict_agent.py iotj_bridge/audit_fig56_episode_traces.py
+          python iotj_bridge/test_strict.py
+      - name: Record every real AC training recovery step and physical trajectory
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="results/iotj_fig56_full_raw/seed${{ matrix.seed }}/${{ matrix.method }}.json"
+          python iotj_bridge/strict_run.py \
+            --case 39 --seed ${{ matrix.seed }} --mode ${{ matrix.method }} \
+            --hetero dim --attack clean \
+            --episodes 1000 --clients 5 --malicious-clients 0 \
+            --batch 256 --hidden 128 --latent 32 \
+            --local-steps 5 --sharing-steps 2 --kappa .20 \
+            --eval-episodes 10 --record-training-trace --out "$out"
+      - name: Verify that each raw run has a complete 1000 episode trace and checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          p=Path("results/iotj_fig56_full_raw/seed${{ matrix.seed }}/${{ matrix.method }}.json")
+          d=json.loads(p.read_text())
+          s=d["summary"]
+          assert s["record_training_trace"]==1 and s["train_episodes"]==1000
+          assert len(d["train_episodes"])==1000 and len(d["rounds"])==200
+          assert s["eval_episodes"]==10 and s["steps_per_episode"]==30
+          assert all(len(ep["trace"])==ep["steps_executed"] for ep in d["train_episodes"])
+          meta=json.loads(p.with_suffix(".manifest.json").read_text())
+          assert meta["source_json_sha256"]==hashlib.sha256(p.read_bytes()).hexdigest()
+          assert meta["checkpoint_sha256"]==hashlib.sha256(p.with_suffix(".pt").read_bytes()).hexdigest()
+          print("1000-episode raw log and SHA256 checkpoint: PASS", p)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-fig56-raw-seed${{ matrix.seed }}-${{ matrix.method }}-${{ github.sha }}
+          path: results/iotj_fig56_full_raw/
+          if-no-files-found: warn
+          retention-days: 90
+
+  independently-audit:
+    needs: collect
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install 'numpy==2.2.6' 'matplotlib==3.9.2'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iotj-fig56-raw-*
+          path: fig56-raw-artifacts/
+          merge-multiple: false
+      - name: Fail-closed audit of 50 complete seeds and 50,000 real episodes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python iotj_bridge/audit_fig56_episode_traces.py \
+            --root fig56-raw-artifacts \
+            --out results/iotj_fig56_episode_traces/
+      - name: Preserve raw trace audit, per-episode CSV and full per-step CSV.gz
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-fig56-audited-episode-and-step-logs-${{ github.sha }}
+          path: results/iotj_fig56_episode_traces/
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Commit only independently audited concise tables and AC figures
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("results/iotj_fig56_episode_traces/fig56_audit_report.json")
+          a=json.loads(p.read_text())
+          assert a["passed"] and a["audited_runs"]==50
+          assert len(a["source_git_commits"])==1
+          assert a["original_simulink_figures_reproduced"] is False
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/iotj_fig56_episode_traces/fig56_per_episode.csv \
+                  results/iotj_fig56_episode_traces/fig56_per_seed.csv \
+                  results/iotj_fig56_episode_traces/fig56_seed_summary.csv \
+                  results/iotj_fig56_episode_traces/fig56_per_episode_seed_mean.csv \
+                  results/iotj_fig56_episode_traces/fig56_audit_report.json \
+                  results/iotj_fig56_episode_traces/fig5_ieee39_ac_supplement.png \
+                  results/iotj_fig56_episode_traces/fig6_ieee39_ac_supplement.png
+          git commit -m 'IoTJ Fig5-6: archive 50 SHA256-audited 1000-episode AC trajectories [skip ci]'
+          git fetch origin experiment/iotj-fig56-episode-traces-20261111
+          git rebase FETCH_HEAD
+          git push origin HEAD:refs/heads/experiment/iotj-fig56-episode-traces-20261111
