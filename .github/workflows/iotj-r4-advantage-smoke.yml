@@ -32,7 +32,7 @@ jobs:
           python -m py_compile iotj_bridge/diagnose_advantage_error.py
           find source-checkpoint -name '*.json' -not -name '*.manifest.json'
           python iotj_bridge/diagnose_advantage_error.py \
-            --input source-checkpoint/results/iotj_fig56_full_raw/seed80/adv.json \
+            --input source-checkpoint/seed80/adv.json \
             --out results/iotj_r4_advantage_smoke/seed80.csv
           python - <<'PY'
           import json,csv
