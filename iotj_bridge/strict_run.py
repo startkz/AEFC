@@ -337,7 +337,9 @@ def main():
  args.out.parent.mkdir(parents=True,exist_ok=True)
  args.out.write_text(json.dumps({'summary':result,'rounds':rounds,'tests':tests,
                                 'train_episodes':train_episode_records},
-                                indent=2,allow_nan=False)+'\n')
+                                indent=None if args.record_training_trace else 2,
+                                separators=(',',':') if args.record_training_trace else None,
+                                allow_nan=False)+'\n')
  import os,hashlib,sys
  ckpt=args.out.with_suffix('.pt')
  torch.save({'seed':args.seed,'method':args.mode,'case':args.case,
