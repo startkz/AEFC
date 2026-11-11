@@ -1,0 +1,52 @@
+name: IoTJ R4 frozen-checkpoint paired advantage diagnostic smoke
+on:
+  push:
+    branches: [experiment/iotj-r4-coordinate-ablation-20261111]
+    paths: ['.github/workflows/iotj-r4-advantage-smoke.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  paired-rollout-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install 'pandapower==3.2.1' 'numpy==2.2.6'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Retrieve previously verified full-budget seed80 AEFC-FRL model and manifest
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 42940416216
+          name: iotj-fig56-raw-seed80-adv-0af6e066ff385b191b2db3b86a40adc2ad79956f
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: source-checkpoint/
+      - name: Replay same initial condition and physically paired counterfactual actions
+        run: |
+          set -euo pipefail
+          python -m py_compile iotj_bridge/diagnose_advantage_error.py
+          find source-checkpoint -name '*.json' -not -name '*.manifest.json'
+          python iotj_bridge/diagnose_advantage_error.py \
+            --input source-checkpoint/results/iotj_fig56_full_raw/seed80/adv.json \
+            --out results/iotj_r4_advantage_smoke/seed80.csv
+          python - <<'PY'
+          import json,csv
+          d=json.load(open('results/iotj_r4_advantage_smoke/seed80.summary.json'))
+          rows=list(csv.DictReader(open('results/iotj_r4_advantage_smoke/seed80.csv')))
+          assert d['samples']>=20 and len(rows)==d['samples']
+          assert 0<=d['sign_mismatch_fraction']<=1
+          assert d['global_error_guarantee'] is False
+          print('R4 physical paired rollout diagnostic functional test: PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-advantage-smoke-${{ github.sha }}
+          path: results/iotj_r4_advantage_smoke/
+          if-no-files-found: warn
+          retention-days: 90
