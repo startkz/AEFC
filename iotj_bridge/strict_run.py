@@ -10,11 +10,11 @@ import numpy as np
 import torch
 try:
  from .run_experiment import Grid
- from .strict_agent import Agent, Server, ServerSettings, flatten
+ from .strict_agent import Agent, Server, ServerSettings, flatten, serialized_size
  from .adaptive_attack import AdaptiveServer, ADAPTIVE_MODES
 except ImportError:
  from run_experiment import Grid
- from strict_agent import Agent, Server, ServerSettings, flatten
+ from strict_agent import Agent, Server, ServerSettings, flatten, serialized_size
  from adaptive_attack import AdaptiveServer, ADAPTIVE_MODES
 
 class RecoveryGrid(Grid):
@@ -245,6 +245,12 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
                            'attack_start_round_0based':stats.get('attack_start_round'),
                            'trained_episodes':min((k+1)*sync_interval,episodes),
                            'per_client':stats.get('per_client',[]),
+                           'coordinate_selection':[
+                               None if m is None else m.get('coordinate_selection_audit')
+                               for m in out],
+                           'actual_serialized_client_bytes':[
+                               0 if m is None else serialized_size(m)
+                               for m in out],
                            'attack_strength':stats.get('attack_strength',0.),
                            'attack_mode':stats.get('attack_mode',None),
                            'malicious_accepted_count':stats.get('malicious_accepted_count',0)})
@@ -261,6 +267,10 @@ def run(case,seed,mode='adv',hetero='base',attack='clean',episodes=10,
           'method':mode,'hetero':hetero,'attack':attack,
           'attack_strength':float(attack_strength) if attack in ADAPTIVE_MODES else None,
           'attack_search_visibility':'prior model increments and prototypes, own preceding public weight only' if attack in ADAPTIVE_MODES else None,
+          'coordinate_selection_rule':(
+              'uniform_random_coordinate_without_replacement' if mode=='coord_random'
+              else 'sum_abs_raw_pre_adam_gradients' if mode=='coord_gradtopk'
+              else 'topk_final_adam_displacement' if mode in ('adv','ordinary') else None),
           'clients':clients_n,
           'malicious_clients':len(bad),'malicious_client_ids':list(bad),
           'attack_start_round_0based':attack_start_round,
@@ -303,7 +313,7 @@ def main():
  p=argparse.ArgumentParser()
  p.add_argument('--case',type=int,choices=[39,118],required=True)
  p.add_argument('--seed',type=int,default=80)
- p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share','dense_cw'],default='adv')
+ p.add_argument('--mode',choices=['adv','ordinary','random','td','uniform_high','dense','adv_no_cw','critic_share','dense_cw','coord_random','coord_gradtopk'],default='adv')
  p.add_argument('--hetero',choices=['base','dim','mask','delay','shift','saturation','attackgroup','pad_dim'],default='dim')
  p.add_argument('--attack',choices=['clean','physical','joint','poison','delayed_joint','immediate_metadata','delayed_metadata','immediate_credibility','delayed_credibility','temporal_credibility',*ADAPTIVE_MODES],default='clean')
  p.add_argument('--attack-strength',type=float,default=1.,help='Adaptive manipulation budget in [0,2]')
