@@ -38,6 +38,48 @@ def actual_safe_dwell(trace):
         n=n+1 if hit else 0
         if n>=5:return int(z["t"])-4
     return -1
+def audit_training_episodes(d,s,seed):
+    must(int(s.get("record_training_trace",0))==1 and
+         int(s.get("train_episode_records",0))==1000,
+         "training episode traces were not recorded in full")
+    must(len(d.get("train_episodes",[]))==1000,"missing 1000 raw training episodes")
+    rows=[]
+    for index,e in enumerate(d["train_episodes"],1):
+        must(int(e["episode"])==index,f"seed {seed}: missing training episode {index}")
+        trace=e["trace"]
+        must(1<=len(trace)<=30 and len(trace)==int(e["steps_executed"]),
+             f"seed {seed} episode {index}: invalid trace length")
+        must([int(z["t"]) for z in trace]==list(range(1,len(trace)+1)),
+             f"seed {seed} episode {index}: nonconsecutive physical time")
+        rt=actual_safe_dwell(trace)
+        censored=int(rt<0);dwell=int(rt>=0)
+        must(rt==int(e["recovery_step"]),f"seed {seed} episode {index}: first-safe recovery step")
+        must(censored==int(e["censored"]),f"seed {seed} episode {index}: right-censoring")
+        must(dwell==int(e["safe_dwell5"])==int(e["recovery_reached"]),
+             f"seed {seed} episode {index}: five-step safe dwell")
+        near(trace[-1]["restored_pct"],e["final_restored_pct"],
+             f"seed {seed} episode {index}: terminal load")
+        near(trace[-1]["restored_pct"],e["recovery_accuracy_pct"],
+             f"seed {seed} episode {index}: recorded recovery accuracy")
+        near(np.mean([z["restored_pct"] for z in trace]),e["average_restored_pct"],
+             f"seed {seed} episode {index}: load AUC")
+        must(int(e["any_unsafe"])==int(any(not bool(z["safe"]) for z in trace)),
+             f"seed {seed} episode {index}: unsafe flag")
+        near(max(float(z["thermal_excess_pct_sum"]) for z in trace),
+             e["max_thermal_excess_pct"],f"seed {seed} episode {index}: thermal maximum")
+        near(max(float(z["voltage_violation_pu_sum"]) for z in trace),
+             e["max_voltage_violation_pu"],f"seed {seed} episode {index}: voltage maximum")
+        rows.append({
+            "seed":seed,"episode":index,"recovery_step":rt,
+            "right_censored":censored,"safe_dwell5":dwell,
+            "final_restored_pct":float(e["final_restored_pct"]),
+            "average_restored_pct":float(e["average_restored_pct"]),
+            "any_unsafe":int(e["any_unsafe"]),
+            "max_thermal_excess_pct":float(e["max_thermal_excess_pct"]),
+            "max_voltage_violation_pu":float(e["max_voltage_violation_pu"]),
+        })
+    return rows
+
 def check_raw(p):
     d=json.loads(p.read_text());s=d["summary"];seed=int(s["seed"])
     must(seed in SEEDS and s["method"]=="adv","Unexpected seed/mode")
@@ -56,6 +98,7 @@ def check_raw(p):
     must(hash_file(ck)==meta["checkpoint_sha256"],"checkpoint checksum")
     must(int(meta["training_episodes_executed"])==1000,"missing training")
     must(len(d["rounds"])==200 and len(d["tests"])==10,"missing federated/eval rounds")
+    training_rows=audit_training_episodes(d,s,seed)
     must(sum(int(x["uplink_bytes"]) for x in d["rounds"])==s["uplink_bytes"],
          "uplink accounting mismatch")
     rows=[];known=set()
@@ -68,8 +111,10 @@ def check_raw(p):
              x["same_frozen_local_adapters"] is True,"learning contamination")
         near(float(x["actual_applied_delta_l2"]),d["rounds"][n-1]["direction_norm"],
              "actual aggregate update norm",1e-5)
+        paired_traces={}
         for side in ("pre","post"):
             trace=x[side+"_physical_trace"]
+            paired_traces[side]=trace
             must(1<=len(trace)<=30,"missing physical step records")
             must([int(z["t"]) for z in trace]==list(range(1,len(trace)+1)),
                  "nonconsecutive physical time")
@@ -80,6 +125,30 @@ def check_raw(p):
             near(trace[-1]["restored_pct"],x[side+"_final_restored_pct"],side+" load")
             near(np.mean([z["restored_pct"] for z in trace]),
                  x[side+"_average_load_pct"],side+" load AUC")
+            demand=np.asarray(trace[0]["client_demand_mw"],dtype=float)
+            ratio=np.asarray(trace[0]["client_demand_ratio"],dtype=float)
+            must(np.isfinite(demand).all() and np.isfinite(ratio).all(),
+                 f"{side} invalid AC demand profile")
+            must(np.any(np.abs(ratio-1.)>1e-4),
+                 f"{side} no realized randomized demand perturbation")
+            for z in trace:
+                must(np.allclose(np.asarray(z["client_demand_mw"],dtype=float),
+                                 demand,rtol=1e-7,atol=1e-8),
+                     f"{side} demand changed within clean dim profile")
+                must(np.allclose(np.asarray(z["client_demand_ratio"],dtype=float),
+                                 ratio,rtol=1e-7,atol=1e-8),
+                     f"{side} demand ratio changed within clean dim profile")
+        pre,post=paired_traces["pre"],paired_traces["post"]
+        must(len(pre)==len(post),"paired physical traces have different horizons")
+        for a,b in zip(pre,post):
+            must(np.allclose(np.asarray(a["client_demand_mw"],dtype=float),
+                             np.asarray(b["client_demand_mw"],dtype=float),
+                             rtol=1e-7,atol=1e-8),
+                 "pre/post AC demand profiles are not identical")
+            must(np.allclose(np.asarray(a["client_demand_ratio"],dtype=float),
+                             np.asarray(b["client_demand_ratio"],dtype=float),
+                             rtol=1e-7,atol=1e-8),
+                 "pre/post demand ratios are not identical")
         near(x["post_final_restored_pct"]-x["pre_final_restored_pct"],
              x["paired_final_load_gain_pp"],"wrong physical gain")
         near(x["post_average_load_pct"]-x["pre_average_load_pct"],
@@ -97,7 +166,7 @@ def check_raw(p):
            "pre_censored":x["pre_censored"],"post_censored":x["post_censored"],
         })
     must(len(known)==len(ROUNDS)*PROFILES,"missing frozen-state comparisons")
-    return seed,meta["git_commit"],rows
+    return seed,meta["git_commit"],rows,training_rows
 def interval(v,seed):
     a=np.array(v,dtype=float)
     must(len(a)==10,"Require 10 independent seed summaries")
@@ -106,19 +175,21 @@ def interval(v,seed):
     return float(np.mean(a)),float(np.quantile(means,.025)),float(np.quantile(means,.975))
 def audit(root,out):
     root,out=Path(root),Path(out);out.mkdir(parents=True,exist_ok=True)
-    records={};errors=[];sha=[]
+    records={};training_episodes=[];errors=[];sha=[]
     for p in sorted(root.rglob("*.json")):
         if p.name.endswith(".manifest.json"):continue
         try:
-            seed,src,rows=check_raw(p)
+            seed,src,rows,train_rows=check_raw(p)
             must(seed not in records,"Duplicate source seed "+str(seed))
-            records[seed]=rows;sha.append(src)
+            records[seed]=rows;training_episodes.extend(train_rows);sha.append(src)
         except Exception as e:errors.append({"file":str(p),"reason":str(e)})
     missing=sorted(set(SEEDS)-set(records))
     if len(set(sha))!=1:errors.append({"reason":"Source code SHA differs","shas":list(set(sha))})
     report={
-      "passed":len(records)==10 and not missing and not errors,
+      "passed":len(records)==10 and not missing and not errors and len(training_episodes)==10000,
       "expected_training_seeds":10,"audited_training_seeds":len(records),
+      "expected_training_episode_rows":10000,"audited_training_episode_rows":len(training_episodes),
+      "right_censored_training_episodes":sum(int(x["right_censored"]) for x in training_episodes),
       "expected_paired_physical_profiles":len(EXPECTED),
       "audited_paired_profiles":sum(len(x) for x in records.values()),
       "missing_seeds":missing,"errors":errors,"source_commits":sorted(set(sha)),
@@ -128,6 +199,8 @@ def audit(root,out):
     if not report["passed"]:raise ValueError("Fail closed: "+str(out/"r4_aggregate_audit.json"))
     rows=[r for k in sorted(records) for r in records[k]]
     csv_save(out/"r4_aggregate_per_scenario.csv",rows)
+    csv_save(out/"r4_aggregate_training_episodes.csv",
+             sorted(training_episodes,key=lambda x:(x["seed"],x["episode"])))
     per_seed=[]
     for seed in SEEDS:
         for checkpoint in ROUNDS:
