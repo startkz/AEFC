@@ -69,3 +69,16 @@ Evidence sources:
 - factorial interface smoke: https://github.com/startkz/AEFC/actions/runs/42958645635
 
 All final numerical statements must link exact code SHA, GitHub Actions run and archived raw inputs, report failures/censoring, avoid pseudo-replication, and preserve negative outcomes.
+
+
+## E. Completed full-budget evidence snapshot (2026-11-11)
+
+The three full-budget evidence gates are now complete and independently rechecked:
+
+- Coordinate selection Run 42957084297: 40/40 JSON/PT/manifest triplets; 40,000 training episodes, 8,000 rounds, 400 held-out tests; per-round application-byte equality across all four methods within each seed. Source SHA e674db8b7d00ce908614154bd6f3f21c1a3495ce; result commit c5a81519061ea08d445d6c59b79d631b91468027; detached-manifest result commit 4db9bfa66e04c64013ca48aab27eccd988f9ad77.
+- Heterogeneity Run 42959386414: 96/96 JSON/PT/manifest triplets; 96,000 training episodes, 19,200 rounds, 960 held-out tests; all three physical interventions checked from traces. This is a three-seed exploratory pilot only. Source SHA be2d40a4c884a9b6730607e9bbfd8a045e9190db; result commit 51ba84c7a5d4bf80615fe4b39de7087973adca8e; detached-manifest result commit f22392f84f880732fcb8aa125b5f7a5111e5acd3.
+- Applied aggregate Run 42962801194: 10/10 seeds, 10,000 training episodes, 2,000 rounds, 100 held-out tests and 90 paired physical profiles; 4,206 training episodes right-censored. The actual updates were nonzero, but the measured pre/post effects did not support stable positive improvement. Source SHA 65f28231f3c3d13d8a50893cc99f224edf670faa; result commit 3f6c98a0f290caa92f49e4d60df8a456efd205bf; detached-manifest result commit d812219af934d8841543b24e9afba73ea0aa57a8.
+
+The independent manifest inventories contain 40, 96, and 10 detached manifest SHA256 values respectively. The raw archive digests are recorded in the bilingual working responses and the standalone integration delta. The 10-seed advantage-error replay Run 42958431836 remains limited to 396 sampled finite-horizon current-policy comparisons; it does not prove a uniform epsilon_Q bound.
+
+No native six-method Simulink–Python Fig. 5/6 reproduction has been performed by the quasi-static AC platform. The repository's current LaTeX entry point still compiles the separate PATBU/Risk-Gate TDSC manuscript; no LaTeX file was modified. The standalone integration delta is docs/IOTJ_R4_AEFC_FRL_Integration_Delta_20261111.md.
