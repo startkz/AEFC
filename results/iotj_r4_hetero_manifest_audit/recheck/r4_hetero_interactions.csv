@@ -1,0 +1,9 @@
+bootstrap95_high,bootstrap95_low,control,effect,mean,metric,paired_training_seeds
+5.548660009110989,-0.17639731362585565,adv,dim_x_saturation_x_shift,1.8033776968351656,heldout_terminal_load_pct,3
+0.8000000000000002,-0.10000000000000009,adv,dim_x_saturation_x_shift,0.3,heldout_safe_dwell_fraction,3
+1.3943062855749844,-0.35745452236767505,adapter_frozen,dim_x_saturation_x_shift,0.4050353429665516,heldout_terminal_load_pct,3
+0.0,0.0,adapter_frozen,dim_x_saturation_x_shift,0.0,heldout_safe_dwell_fraction,3
+6.515316208328102,0.11920833013900278,proto_alignment_off,dim_x_saturation_x_shift,2.625322751677691,heldout_terminal_load_pct,3
+0.3999999999999999,0.0,proto_alignment_off,dim_x_saturation_x_shift,0.1333333333333333,heldout_safe_dwell_fraction,3
+4.4595379754744755,-8.337877034859062,dense,dim_x_saturation_x_shift,-1.2326477411017198,heldout_terminal_load_pct,3
+0.8000000000000002,-1.0,dense,dim_x_saturation_x_shift,-0.06666666666666665,heldout_safe_dwell_fraction,3

@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "source_run_id": 42959386414,
+  "source_artifact_id": 13835176012,
+  "source_artifact_sha256": "82a572cb4b44edf8f9ea5f2262921876b625bc47a3e0a203a7a0b716c152144c",
+  "source_code_sha": "be2d40a4c884a9b6730607e9bbfd8a045e9190db",
+  "expected_cells": 96,
+  "audited_cells": 96,
+  "json_files": 96,
+  "checkpoint_files": 96,
+  "manifest_files": 96,
+  "json_sha256_matches_manifest": 96,
+  "checkpoint_sha256_matches_manifest": 96,
+  "detached_manifest_sha256_computed": 96,
+  "training_episode_records": 96000,
+  "federated_round_records": 19200,
+  "heldout_test_records": 960,
+  "independent_statistical_unit": "training seed; three-seed exploratory pilot only",
+  "inventory": "r4_hetero_manifest_sha256.csv",
+  "scope": "hash and budget supplement; physical safety, censoring and intervention checks are rerun by audit_hetero_factorial.py"
+}

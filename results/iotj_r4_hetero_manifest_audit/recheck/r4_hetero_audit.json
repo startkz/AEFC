@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "expected_runs": 96,
+  "audited_runs": 96,
+  "missing": [],
+  "errors": [],
+  "training_seeds": [
+    80,
+    81,
+    82
+  ],
+  "git_source_shas": [
+    "be2d40a4c884a9b6730607e9bbfd8a045e9190db"
+  ],
+  "platform": "quasi-static AC IEEE39",
+  "train_episodes_each": 1000,
+  "fed_rounds_each": 200,
+  "pilot_only": true,
+  "not_justified": "ten-seed population significance or native Simulink inference",
+  "censoring": "-1 for failure; 31 only a restricted comparison score",
+  "adapter_freeze_means": "freeze local adapter training, not delete encoder/head",
+  "prototype_off_means": "disable local alignment, not global prototype exchange"
+}
