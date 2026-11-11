@@ -1,0 +1,99 @@
+name: IoTJ R4 10-seed frozen-checkpoint physical advantage-error replay
+on:
+  push:
+    branches: [experiment/iotj-r4-coordinate-ablation-20261111]
+    paths: ['.github/workflows/iotj-r4-advantage-full.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: iotj-r4-adv-error-full
+  cancel-in-progress: false
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 210
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        seed: [80,81,82,83,84,85,86,87,88,89]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install 'pandapower==3.2.1' 'numpy==2.2.6'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Retrieve unchanged archived 1000-episode frozen model and SHA256
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 42940416216
+          name: iotj-fig56-raw-seed${{ matrix.seed }}-adv-0af6e066ff385b191b2db3b86a40adc2ad79956f
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: frozen/
+      - name: Same-state, same-demand AC paired rollout against frozen local critic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python iotj_bridge/diagnose_advantage_error.py \
+            --input frozen/seed${{ matrix.seed }}/adv.json \
+            --out results/iotj_r4_adv_error_raw/seed${{ matrix.seed }}.csv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-adv-error-seed${{ matrix.seed }}-${{ github.sha }}
+          path: results/iotj_r4_adv_error_raw/
+          if-no-files-found: warn
+          retention-days: 90
+  audit:
+    needs: replay
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy==2.2.6'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iotj-r4-adv-error-seed*
+          path: paired-samples/
+          merge-multiple: false
+      - name: Fail closed on missing seeds, invalid signs or unsupported guarantees
+        run: |
+          set -euo pipefail
+          python iotj_bridge/audit_advantage_error.py \
+            --root paired-samples/ \
+            --out results/iotj_r4_adv_error/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-adv-error-full-evidence-${{ github.sha }}
+          path: |
+            paired-samples/
+            results/iotj_r4_adv_error/
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Integrate only ten-seed independently audited error diagnostics
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          a=json.load(open('results/iotj_r4_adv_error/r4_adv_error_audit_report.json'))
+          assert a['passed'] and a['audited_training_seeds']==10
+          assert a['training_is_untouched'] is True
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/iotj_r4_adv_error/
+          git commit -m 'IoT-J R4: archive 10-seed empirical advantage-error diagnostic [skip ci]'
+          git fetch origin experiment/iotj-r4-coordinate-ablation-20261111
+          git rebase FETCH_HEAD
+          git push origin HEAD:refs/heads/experiment/iotj-r4-coordinate-ablation-20261111
