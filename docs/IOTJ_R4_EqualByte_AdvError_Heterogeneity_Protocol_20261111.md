@@ -82,3 +82,8 @@ The three full-budget evidence gates are now complete and independently rechecke
 The independent manifest inventories contain 40, 96, and 10 detached manifest SHA256 values respectively. The raw archive digests are recorded in the bilingual working responses and the standalone integration delta. The 10-seed advantage-error replay Run 42958431836 remains limited to 396 sampled finite-horizon current-policy comparisons; it does not prove a uniform epsilon_Q bound.
 
 No native six-method Simulink–Python Fig. 5/6 reproduction has been performed by the quasi-static AC platform. The repository's current LaTeX entry point still compiles the separate PATBU/Risk-Gate TDSC manuscript; no LaTeX file was modified. The standalone integration delta is docs/IOTJ_R4_AEFC_FRL_Integration_Delta_20261111.md.
+
+
+## F. Output-only actuator telemetry correction
+
+The historical actuator_saturation flag was computed after the 0.6 cap and did not identify whether the cap bound the command. The original JSON/PT evidence remains immutable; actual binding was independently reconstructed from served-fraction increments and archived in the supplemental physical-intervention audit. The future trace logger now computes the flag before clipping while preserving the command vector exactly. Six unit tests, including elementwise equivalence with the previous physical command path, passed in Run 42997543345 (commit 26a4e16bea2c9a5a37409d4b7fdc77025e7dac54). This was an output-only CI run, not a training rerun.
