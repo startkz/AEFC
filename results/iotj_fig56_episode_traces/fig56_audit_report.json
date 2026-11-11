@@ -1,0 +1,21 @@
+{
+  "study": "IEEE39 quasi-static AC training convergence; independent supplementary evidence, not native Simulink Fig5/6",
+  "expected_runs": 50,
+  "audited_runs": 50,
+  "passed": true,
+  "missing": [],
+  "unexpected": [],
+  "errors": [],
+  "training_seed_unit": "seed, 80..89",
+  "train_episodes_per_seed": 1000,
+  "fed_rounds_per_seed": 200,
+  "evaluation_episodes_per_seed": 10,
+  "recovery_definition": ">=90% served load AND AC safe, five consecutive steps, record first step; -1 if not achieved",
+  "recovery_censoring": "-1 retained; 31 is a separately labeled restricted score, not measured recovery time",
+  "accuracy_definition": "100 * terminal served load / total demand; not a binary success rate",
+  "source_git_commits": [
+    "0af6e066ff385b191b2db3b86a40adc2ad79956f"
+  ],
+  "original_simulink_figures_reproduced": false,
+  "not_included": "privileged centrally trained MADDPG; not implemented in AC strict learner"
+}
