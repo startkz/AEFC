@@ -1,0 +1,132 @@
+name: IoTJ R4 2x2x2 heterogeneity factorial 3-seed exploratory pilot
+on:
+  push:
+    branches: [experiment/iotj-r4-coordinate-ablation-20261111]
+    paths: ['.github/workflows/iotj-r4-hetero-pilot.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: iotj-r4-hetero-fullbudget-pilot
+  cancel-in-progress: false
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        seed: [80,81,82]
+        hetero: [base,dim,saturation,shift,dim_saturation,dim_shift,saturation_shift,dim_saturation_shift]
+        control: [adv,adapter_frozen,proto_alignment_off,dense]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install 'pandapower==3.2.1' 'numpy==2.2.6'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify 8 experimental intervention combinations and exact model geometry
+        run: |
+          python -m py_compile iotj_bridge/strict_run.py iotj_bridge/audit_hetero_factorial.py
+          python iotj_bridge/test_hetero_geometry.py
+      - name: Run one 1000-episode paired-seed AC factor/ablation cell
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          mode=adv
+          case "${{ matrix.control }}" in
+            adapter_frozen) args=(--disable-adapters);;
+            proto_alignment_off) args=(--disable-proto);;
+            dense) mode=dense;;
+            adv) ;;
+            *) echo 'Unexpected learning configuration' >&2; exit 2;;
+          esac
+          out="results/iotj_r4_hetero_raw/seed${{ matrix.seed }}/${{ matrix.hetero }}/${{ matrix.control }}.json"
+          python iotj_bridge/strict_run.py \
+            --case 39 --seed ${{ matrix.seed }} \
+            --mode "$mode" --hetero "${{ matrix.hetero }}" --attack clean \
+            --episodes 1000 --clients 5 --malicious-clients 0 \
+            --batch 256 --hidden 128 --latent 32 \
+            --local-steps 5 --sharing-steps 2 --kappa .20 \
+            --eval-episodes 10 --fixed-traffic --record-training-trace \
+            "${args[@]}" --out "$out"
+      - name: Check SHA256 provenance and full episode budget
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json
+          p=Path('results/iotj_r4_hetero_raw/seed${{ matrix.seed }}/${{ matrix.hetero }}/${{ matrix.control }}.json')
+          d=json.loads(p.read_text());s=d['summary']
+          assert len(d['train_episodes'])==1000 and len(d['rounds'])==200 and len(d['tests'])==10
+          assert s['record_training_trace']==1
+          meta=json.loads(p.with_suffix('.manifest.json').read_text())
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==meta['source_json_sha256']
+          assert hashlib.sha256(p.with_suffix('.pt').read_bytes()).hexdigest()==meta['checkpoint_sha256']
+          print('Matched 1000/200/10 and SHA256: PASS',p)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-hetero-seed${{ matrix.seed }}-${{ matrix.hetero }}-${{ matrix.control }}-${{ github.sha }}
+          path: results/iotj_r4_hetero_raw/
+          if-no-files-found: warn
+          retention-days: 90
+  audit:
+    needs: train
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy==2.2.6'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iotj-r4-hetero-seed*
+          path: r4-hetero-raw/
+          merge-multiple: false
+      - name: Fail closed on missing 2x2x2 matched seeds, physical bounds or fingerprints
+        shell: bash
+        run: |
+          set -euo pipefail
+          python iotj_bridge/audit_hetero_factorial.py \
+            --root r4-hetero-raw/ --out results/iotj_r4_hetero_pilot/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-hetero-pilot-evidence-${{ github.sha }}
+          path: |
+            r4-hetero-raw/
+            results/iotj_r4_hetero_pilot/
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Commit only 96 independently audited full-budget pilot cells
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('results/iotj_r4_hetero_pilot/r4_hetero_audit.json'))
+          assert d['passed'] and d['audited_runs']==96 and d['expected_runs']==96
+          assert d['pilot_only'] is True
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/iotj_r4_hetero_pilot/
+          git commit -m 'IoT-J R4: archive 96-cell 2x2x2 physical factor pilot evidence [skip ci]'
+          for n in 1 2 3 4 5; do
+            git fetch origin experiment/iotj-r4-coordinate-ablation-20261111
+            git rebase FETCH_HEAD
+            if git push origin HEAD:refs/heads/experiment/iotj-r4-coordinate-ablation-20261111; then
+              exit 0
+            fi
+          done
+          exit 1
