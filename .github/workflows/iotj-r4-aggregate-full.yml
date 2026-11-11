@@ -1,0 +1,133 @@
+name: IoTJ R4 10-seed full-budget applied-aggregate physical audit
+on:
+  push:
+    branches: [experiment/iotj-r4-coordinate-ablation-20261111]
+    paths: ['.github/workflows/iotj-r4-aggregate-full.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: iotj-r4-aggregate-full
+  cancel-in-progress: false
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        seed: [80,81,82,83,84,85,86,87,88,89]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install frozen dependencies
+        run: |
+          python -m pip install 'pandapower==3.2.1' 'numpy==2.2.6'
+          python -m pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+      - name: Run 1000 episodes, 200 rounds and 90 frozen paired AC rollouts
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="results/iotj_r4_aggregate_raw/seed${{ matrix.seed }}/adv.json"
+          python -m py_compile iotj_bridge/strict_run.py iotj_bridge/audit_aggregate_gain.py
+          python iotj_bridge/strict_run.py \
+            --case 39 --seed ${{ matrix.seed }} --mode adv \
+            --hetero dim --attack clean --episodes 1000 \
+            --clients 5 --malicious-clients 0 \
+            --batch 256 --hidden 128 --latent 32 \
+            --local-steps 5 --sharing-steps 2 --kappa .20 \
+            --eval-episodes 10 --fixed-traffic --record-training-trace \
+            --aggregate-diagnostic-rounds 50,100,200 \
+            --aggregate-diagnostic-profiles 3 \
+            --out "$out"
+      - name: Verify raw episode budget, paired profiles and SHA256 before archival
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          p=Path("results/iotj_r4_aggregate_raw/seed${{ matrix.seed }}/adv.json")
+          d=json.loads(p.read_text()); s=d["summary"]
+          assert s["train_episodes"]==1000 and s["completed_rounds"]==200
+          assert s["train_episode_records"]==1000 and s["record_training_trace"]==1
+          assert s["eval_episodes"]==10 and len(d["tests"])==10
+          assert len(d["train_episodes"])==1000 and len(d["rounds"])==200
+          impact=s["aggregate_candidate_update_impact"]
+          assert len(impact)==9
+          assert {(int(x["round"]), int(x["scenario_seed"])) for x in impact} == {
+              (r, 300000+${{ matrix.seed }}*1000+r*10+j)
+              for r in (50,100,200) for j in range(3)}
+          meta=json.loads(p.with_suffix(".manifest.json").read_text())
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==meta["source_json_sha256"]
+          assert hashlib.sha256(p.with_suffix(".pt").read_bytes()).hexdigest()==meta["checkpoint_sha256"]
+          assert meta["training_episodes_executed"]==1000
+          print("R4 aggregate 1000/200/10, training traces, paired profiles and SHA256: PASS",p)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-aggregate-seed${{ matrix.seed }}-${{ github.sha }}
+          path: results/iotj_r4_aggregate_raw/seed${{ matrix.seed }}/
+          if-no-files-found: warn
+          retention-days: 90
+  audit:
+    needs: train
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy==2.2.6'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iotj-r4-aggregate-seed*
+          path: aggregate-raw/
+          merge-multiple: false
+      - name: Fail-closed 10-seed training, right-censoring and paired physical audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python iotj_bridge/audit_aggregate_gain.py \
+            --root aggregate-raw/ --out results/iotj_r4_aggregate/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iotj-r4-aggregate-audited-${{ github.sha }}
+          path: |
+            aggregate-raw/
+            results/iotj_r4_aggregate/
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Commit only independently audited ten-seed physical evidence
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('results/iotj_r4_aggregate/r4_aggregate_audit.json'))
+          assert d['passed'] is True
+          assert d['expected_training_seeds']==10 and d['audited_training_seeds']==10
+          assert d['expected_paired_physical_profiles']==90 and d['audited_paired_profiles']==90
+          assert d['expected_training_episode_rows']==10000
+          assert d['audited_training_episode_rows']==10000
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/iotj_r4_aggregate/
+          git commit -m 'IoT-J R4: archive 10-seed audited aggregate-update physical effects [skip ci]'
+          for n in 1 2 3 4 5; do
+            git fetch origin experiment/iotj-r4-coordinate-ablation-20261111
+            git rebase FETCH_HEAD
+            if git push origin HEAD:refs/heads/experiment/iotj-r4-coordinate-ablation-20261111; then
+              exit 0
+            fi
+          done
+          exit 1
