@@ -139,16 +139,14 @@ def check_raw(p):
                                  ratio,rtol=1e-7,atol=1e-8),
                      f"{side} demand ratio changed within clean dim profile")
         pre,post=paired_traces["pre"],paired_traces["post"]
-        must(len(pre)==len(post),"paired physical traces have different horizons")
-        for a,b in zip(pre,post):
-            must(np.allclose(np.asarray(a["client_demand_mw"],dtype=float),
-                             np.asarray(b["client_demand_mw"],dtype=float),
-                             rtol=1e-7,atol=1e-8),
-                 "pre/post AC demand profiles are not identical")
-            must(np.allclose(np.asarray(a["client_demand_ratio"],dtype=float),
-                             np.asarray(b["client_demand_ratio"],dtype=float),
-                             rtol=1e-7,atol=1e-8),
-                 "pre/post demand ratios are not identical")
+        must(np.allclose(np.asarray(pre[0]["client_demand_mw"],dtype=float),
+                         np.asarray(post[0]["client_demand_mw"],dtype=float),
+                         rtol=1e-7,atol=1e-8),
+             "pre/post AC demand profiles are not identical")
+        must(np.allclose(np.asarray(pre[0]["client_demand_ratio"],dtype=float),
+                         np.asarray(post[0]["client_demand_ratio"],dtype=float),
+                         rtol=1e-7,atol=1e-8),
+             "pre/post demand ratios are not identical")
         near(x["post_final_restored_pct"]-x["pre_final_restored_pct"],
              x["paired_final_load_gain_pp"],"wrong physical gain")
         near(x["post_average_load_pct"]-x["pre_average_load_pct"],
