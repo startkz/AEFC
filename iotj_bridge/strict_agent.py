@@ -180,7 +180,7 @@ class Agent:
             selected=torch.nonzero(advantage>zeta).flatten()
             n=int(selected.numel())
             # Non-adv selection methods have matched transition counts, independent of advantages.
-            if mode in ('dense','critic_share'):selected=torch.arange(len(s))
+            if mode in ('dense','dense_cw','critic_share'):selected=torch.arange(len(s))
             elif mode=="ordinary":selected=torch.arange(len(s))[:n]
             elif mode=="random":
                 selected=torch.randperm(len(s),generator=torch.Generator().manual_seed(int(self.rng.integers(2**31))))[:n]
@@ -209,7 +209,7 @@ class Agent:
             loss=-(weight*q).sum()
             opt.zero_grad(set_to_none=True);loss.backward();opt.step()
         delta=flatten(self.actor.backbone)-torch.as_tensor(theta)
-        k=max(1,int(math.ceil((1.0 if mode in ('dense','critic_share') else float(kappa))*delta.numel())))
+        k=max(1,int(math.ceil((1.0 if mode in ('dense','dense_cw','critic_share') else float(kappa))*delta.numel())))
         # Stable magnitude sort: smaller coordinate wins ties.
         indices=torch.argsort(delta.abs(),descending=True,stable=True)[:k].sort().values
         message={'idx':indices.numpy().astype(np.int32),
