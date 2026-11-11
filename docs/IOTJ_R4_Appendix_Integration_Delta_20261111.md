@@ -8,7 +8,7 @@
 
 Run **42957084297** used IEEE39 quasi-static AC, training seeds 80–89, five clients, 1,000 training episodes, 200 federated rounds, ten held-out tests per cell, and \(\kappa=0.20\). The matrix contains 40 cells: ten seeds crossed with `adv`, `ordinary`, `coord_random`, and `coord_gradtopk`. The completed batch therefore contains 40,000 training episodes, 8,000 federated rounds, and 400 held-out tests.
 
-For `adv`, `coord_random`, and `coord_gradtopk`, each client first computes the same complete final two-step Adam displacement under the matched positive-advantage objective and minibatch. The methods differ only in the support-selection rule; uploaded values are taken from that already-computed displacement. `ordinary` uses a different, ordinary-loss objective and is an optimization-objective comparator, not a pure coordinate-only ablation.
+For `adv`, `coord_random`, and `coord_gradtopk`, each client computes its complete final two-step Adam displacement before support selection, under the matched positive-advantage objective and minibatch. Within a local sharing step, the coordinate rules select different supports from that method's already-computed displacement and upload the displacement values on those supports. This does not imply that separately trained method trajectories have identical cross-method displacements in later rounds. `ordinary` uses a different, ordinary-loss objective and is an optimization-objective comparator, not a pure coordinate-only ablation.
 
 Every cell uploaded 40,230,000 application-layer bytes (201,150 bytes per round). The independent audit verified equal per-round serialized-byte totals across the four methods within each seed. The 40-cell audit passed, with no missing cells or audit errors. There were 17,805 right-censored training episodes among the 40,000 episodes.
 
@@ -126,7 +126,15 @@ All added physical results are from the IEEE39 quasi-static AC backend. They do 
 | Applied aggregate Run 42962801194 | `65f28231f3c3d13d8a50893cc99f224edf670faa` | `3f6c98a0f290caa92f49e4d60df8a456efd205bf` | Run 42991863092 / `d812219af934d8841543b24e9afba73ea0aa57a8` |
 | Advantage error Run 42958431836 | `e18cc5735c85ed9c1a4bcfad82dfe2391320dd2d` | `9ec371474e9779bcad3da89f9a252c94e61ed3f9` | — |
 
-Full raw and supplementary audit artifacts are linked from the corresponding GitHub Actions run pages and the integration delta document. The raw artifacts remain immutable; the manifest and physical-intervention supplements are separate audit outputs.
+Direct evidence entry points (the raw ZIPs are immutable; detached-manifest and physical-intervention inventories are separate audit outputs):
+
+- Coordinate raw artifact 13830018801: https://api.github.com/repos/startkz/AEFC/actions/artifacts/13830018801/zip; manifest-audit artifact 13841981672: https://api.github.com/repos/startkz/AEFC/actions/artifacts/13841981672/zip; source run https://github.com/startkz/AEFC/actions/runs/42957084297; manifest audit run https://github.com/startkz/AEFC/actions/runs/42991080229.
+- Heterogeneity raw artifact 13835176012: https://api.github.com/repos/startkz/AEFC/actions/artifacts/13835176012/zip; manifest-audit artifact 13841821152: https://api.github.com/repos/startkz/AEFC/actions/artifacts/13841821152/zip; source run https://github.com/startkz/AEFC/actions/runs/42959386414; manifest audit run https://github.com/startkz/AEFC/actions/runs/42990167631.
+- Aggregate-update raw artifact 13831945798: https://api.github.com/repos/startkz/AEFC/actions/artifacts/13831945798/zip; manifest-audit artifact 13840799871: https://api.github.com/repos/startkz/AEFC/actions/artifacts/13840799871/zip; source run https://github.com/startkz/AEFC/actions/runs/42962801194; manifest audit run https://github.com/startkz/AEFC/actions/runs/42991863092.
+- Advantage-error artifact 13828675696: https://api.github.com/repos/startkz/AEFC/actions/artifacts/13828675696/zip; source run https://github.com/startkz/AEFC/actions/runs/42958431836.
+- Actuator telemetry output-only unit tests: https://github.com/startkz/AEFC/actions/runs/42997543345; code commit `26a4e16bea2c9a5a37409d4b7fdc77025e7dac54`.
+
+The manifest inventories contain 40, 96, and 10 detached SHA256 values for the coordinate, heterogeneity, and aggregate batches respectively. The physical-intervention supplement is `results/iotj_r4_hetero_pilot/r4_hetero_physical_intervention_audit.json`. The raw training JSON/PT files and frozen protocol were not changed by either audit supplement.
 
 ## I. Manuscript integration boundary
 
