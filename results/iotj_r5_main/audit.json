@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "study": "main",
+  "backend": "pandapower AC quasi-static",
+  "expected_runs": 60,
+  "audited_runs": 60,
+  "missing": [],
+  "errors": [],
+  "source_commits": [
+    "c44e599a9aa88cc482281f8abbdcd4fca1e73418"
+  ],
+  "source_run_ids": [
+    "44218199172"
+  ],
+  "native_simulink_reproduced": false,
+  "matches_every_manuscript_point": false,
+  "centralized_baseline": "new MADDPG-style AC reconstruction; not native original"
+}
