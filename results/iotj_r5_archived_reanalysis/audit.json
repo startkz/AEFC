@@ -1,0 +1,21 @@
+{
+  "source": "results/iotj_fig56_episode_traces/fig56_per_seed.csv",
+  "source_commits": [
+    "0af6e066ff385b191b2db3b86a40adc2ad79956f"
+  ],
+  "n_runs": 50,
+  "seed_ids": [
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89
+  ],
+  "matches_latest_manuscript": false,
+  "note": "Previously hash-audited raw cohort; this analysis uses its archived seed CSV, not the latest manuscript values. MADDPG not present."
+}
