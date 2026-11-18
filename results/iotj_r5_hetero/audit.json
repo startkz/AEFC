@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "study": "hetero",
+  "backend": "pandapower AC quasi-static",
+  "expected_runs": 320,
+  "audited_runs": 320,
+  "missing": [],
+  "errors": [],
+  "source_commits": [
+    "c44e599a9aa88cc482281f8abbdcd4fca1e73418"
+  ],
+  "source_run_ids": [
+    "44218199010"
+  ],
+  "native_simulink_reproduced": false,
+  "factorial": "2^4 x 4 methods x 5 seeds; five-seed exact two-sided signflip minimum p=0.0625"
+}
