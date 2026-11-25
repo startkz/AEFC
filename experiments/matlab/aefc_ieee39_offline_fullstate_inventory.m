@@ -23,6 +23,34 @@ try
     end
     info.n_model_blocks=numel(blocks);
     info.block_types=unique(types);
+    % Discover physically meaningful generator speed measurement paths,
+    % separate from hidden integration states; no online oracle access.
+    candidates=struct('generator',{},'block',{},'port',{},'is_plausible_sensor',{});
+    seen={};
+    for k=1:numel(blocks)
+        name='';
+        try,name=char(get_param(blocks{k},'Name'));catch,end
+        key=regexp(blocks{k},'Generators/(Gen[0-9]+@Bus[0-9]+)/','tokens','once');
+        if isempty(key) || ~strcmp(name,'w') || ...
+                ~contains(blocks{k},'Governor') || any(strcmp(seen,key{1}))
+            continue;
+        end
+        port=0;
+        try
+            ph=get_param(blocks{k},'PortHandles');
+            if isfield(ph,'Outport') && ~isempty(ph.Outport),port=1;end
+        catch
+        end
+        if port<1,continue;end
+        entry=struct('generator',key{1},'block',blocks{k}, ...
+            'port',port,'is_plausible_sensor',true);
+        candidates(end+1)=entry;
+        seen{end+1}=key{1};
+    end
+    info.physical_rotor_speed_sensor_candidates=candidates;
+    info.n_distinct_generator_speed_candidates=numel(candidates);
+    info.all_generator_speed_channels_located=(numel(candidates)==10);
+    info.generator_speed_sensor_integrity_established=false;
     simIn=Simulink.SimulationInput(model);
     simIn=simIn.setModelParameter('StopTime','0.10');
     simIn=simIn.setModelParameter('SaveState','on');
