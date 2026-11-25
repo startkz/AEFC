@@ -12,7 +12,7 @@ classdef AEFCNativeController < matlab.System
 % governors are not certified by the supervisor and continue to operate.
 % ExploratoryMode=true releases only four-speed SURROGATE-screened actions.
 properties(Nontunable)
-    ConfigPath = 'configs/ieee39_joint20.json'
+    ConfigPath = 'configs/ieee39_unpriv_r1.json'
     MappingPath = 'results/ieee39_r2024b/interface_mapping.json'
 end
 properties
