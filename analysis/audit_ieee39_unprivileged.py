@@ -78,6 +78,19 @@ def dynamic_audit(directory:Path):
             all_speed_safe=max(abs(z) for z in all_z)<=cfg['normalized_safe_limit']+1e-9
             assert r['sampled_all_ten_speed_inside_proxy']==all_speed_safe
             if not all_speed_safe:ten_speed_violations+=1
+            if manifest.get('pref_setpoint_interposition_monitored',False):
+                base_pref=list(map(float,r['original_governor_pref_reference']))
+                delivered=list(map(float,r['native_delivered_pref_reference']))
+                errors=list(map(float,r['pref_interposition_error']))
+                assert len(base_pref)==len(delivered)==len(errors)==4
+                assert all(math.isfinite(v) for v in base_pref+delivered+errors)
+                assert max(abs(d-b-c-a) for d,b,c,a in
+                    zip(delivered,base_pref,r['shield_action'],r['post_shield_attack']))<2e-6
+                assert max(abs(e) for e in errors)<2e-6
+                if manifest['strict_full_state_no_release']:
+                    assert all(abs(v)<1e-15 for v in r['shield_action'])
+                    assert not r['surrogate_released']
+                    assert r['proxy_status']<0
             status_negative+=int(r['proxy_status']<0)
         idx=cfg['attack_end_step']
         threshold=cfg['normalized_recovery_limit']
@@ -108,6 +121,24 @@ def dynamic_audit(directory:Path):
             assert abs(float(row['all_ten_speed_recovery_time'])-
                        (trace[ten_first]['time']-trace[idx]['time']))<=1e-7
         all_ten_exposed+=int(ten_exposed);all_ten_recovered+=int(ten_corrected)
+        if manifest.get('unaltered_native_solver_time_physical_monitor',False):
+            fpRaw=directory/f'scale_{scale:g}'/sc/met/f'seed_{seed:02d}.raw-solver.jsonl'
+            assert fpRaw.exists(),fpRaw
+            raw=[json.loads(line) for line in fpRaw.read_text().splitlines()]
+            assert len(raw)>0
+            prior=float('-inf')
+            for t in raw:
+                when=float(t['time'])
+                assert when>=prior and math.isfinite(when)
+                prior=when
+                sp=list(map(float,t['all_ten_generator_speed_native']))
+                zs=list(map(float,t['all_ten_speed_normalized']))
+                assert len(sp)==len(zs)==10
+                assert max(abs(z-(v-b)/0.02) for z,v,b in zip(zs,sp,base))<2e-9
+                assert bool(t['all_ten_speed_inside_proxy']) == (
+                    max(abs(z) for z in zs)<=cfg['normalized_safe_limit']+1e-9)
+            assert abs(float(raw[0]['time']))<1e-8
+            assert abs(float(raw[-1]['time'])-cfg['stop_time'])<1e-6
         by_method.setdefault(met,dict(episodes=0,exposed=0,recovered=0,surrogate_proxy_releases=0))
         by_method[met]['episodes']+=1
         by_method[met]['exposed']+=int(exposed)
