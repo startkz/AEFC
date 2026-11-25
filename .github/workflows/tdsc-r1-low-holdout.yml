@@ -1,0 +1,45 @@
+name: TDSC-R1 independent low-tier physical recovery holdout
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-core-chain-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-low-holdout.yml'
+permissions:
+  contents: read
+jobs:
+  independent_low_tier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Frozen safety and no-oracle interface tests
+        run: python -m unittest discover -s tests -p test_tdsc_contract_chain.py -v
+      - name: Independent 20-seed experiment (400-419), unchanged recovery threshold
+        run: |
+          python -m experiments.hydro_valve.run_tdsc_contract_chain \
+            --seed-start 400 --seeds 20 --stage frozen-holdout \
+            --post-attack-strength 0.015 --load-stress 0.002 \
+            --output results/tdsc_core_holdout_low_400_419 | tee holdout_summary.json
+      - name: Independently recompute physical transitions and all release certificates
+        run: |
+          python analysis/audit_tdsc_contract_run.py \
+            --input results/tdsc_core_holdout_low_400_419 | tee holdout_audit.json
+      - name: Archive immutable raw evidence and source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-low-holdout-400-419-${{ github.sha }}
+          path: |
+            results/tdsc_core_holdout_low_400_419/
+            holdout_summary.json
+            holdout_audit.json
+            docs/TDSC_R1_LOW_HOLDOUT_PROTOCOL_20261125.md
+            experiments/hydro_valve/run_tdsc_contract_chain.py
+            experiments/hydro_valve/run_hydro_valve_cps.py
+            analysis/audit_tdsc_contract_run.py
+          if-no-files-found: warn
