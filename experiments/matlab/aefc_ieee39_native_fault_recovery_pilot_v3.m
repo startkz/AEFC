@@ -8,7 +8,7 @@ p=jsondecode(fileread(protocolPath));
 rp=p.preregistered_recovery_predicate;
 busTol=double(rp.bus_voltage_relative_deviation_from_prefault_baseline_max);
 speedBound=double(rp.generator_speed_max_abs_normalized_deviation);
-holdSamples=double(rholdSamples);
+holdSamples=double(rp.hold_samples);
 cfg=jsondecode(fileread(fullfile(repo,'configs','ieee39_unpriv_r1.json')));
 model=char(p.model);modelPath=fullfile(repo,'results','ieee39_r2024b',[model '.slx']);
 if exist(modelPath,'file')~=2,aefc_ieee39_build_stress;end
