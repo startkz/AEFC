@@ -49,40 +49,42 @@ try
        if isempty(variable),continue;end
        variable=variable{1};category='other';logicalBus='';section='';
        component='';
-       tok=regexp(parent,'/Grid/Bus([^/]+)/(Vt|ph|I\\d+)$','tokens','once');
-       if ~isempty(tok)
-         busParts=strsplit(tok{1},'_');logicalBus=busParts{1};section='';
-         if numel(busParts)>1,section=busParts{2};end
-         variable=tok{2};
-         else, section=tok{2}; variable=tok{3}; end
-         if strcmp(variable,'Vt')
-           category='bus_voltage';busIds{end+1}=logicalBus; %#ok<AGROW>
-           busSections{end+1}=[logicalBus '_' section]; %#ok<AGROW>
-           report.bus_voltage_leaf_rows=report.bus_voltage_leaf_rows+1;
-         elseif strcmp(variable,'ph')
-           category='bus_phase';report.bus_phase_leaf_rows=report.bus_phase_leaf_rows+1;
-         else
-           category='bus_current';report.bus_current_leaf_rows=report.bus_current_leaf_rows+1;
-         end
-       else
-         tok=regexp(parent,'/Grid/(B\\d+_to_B\\d+)/phase_splitter(\\d+)/(I|i_a|i_b|i_c)$','tokens','once');
-         if ~isempty(tok)
-           component=tok{1};variable=['phase_splitter' tok{2} '/' tok{3}];
-           category='line_current';lineIds{end+1}=component; %#ok<AGROW>
-         else
-           tok=regexp(parent,'/Grid/(B\\d+_to_B\\d+)/(power_dissipated)$','tokens','once');
-           if ~isempty(tok),component=tok{1};variable=tok{2};category='line_loss';end
-         end
-         else
-           tok=regexp(parent,'/Grid/(TF_B\d+_to_B\d+)/(i1|i2|power_dissipated)$','tokens','once');
-           if ~isempty(tok)
-             component=tok{1};variable=tok{2};
-             if any(strcmp(variable,{'i1','i2'}))
-               category='transformer_current';tfIds{end+1}=component; %#ok<AGROW>
-             else,category='transformer_loss';end
-           end
-         end
-       end
+        tok=regexp(parent,'/Grid/Bus([^/]+)/(Vt|ph|I\\d+)$','tokens','once');
+        if ~isempty(tok)
+          busParts=strsplit(tok{1},'_');logicalBus=busParts{1};section='';
+          if numel(busParts)>1,section=busParts{2};end
+          variable=tok{2};
+          if strcmp(variable,'Vt')
+            category='bus_voltage';busIds{end+1}=logicalBus; %#ok<AGROW>
+            busSections{end+1}=[logicalBus '_' section]; %#ok<AGROW>
+            report.bus_voltage_leaf_rows=report.bus_voltage_leaf_rows+1;
+          elseif strcmp(variable,'ph')
+            category='bus_phase';report.bus_phase_leaf_rows=report.bus_phase_leaf_rows+1;
+          else
+            category='bus_current';report.bus_current_leaf_rows=report.bus_current_leaf_rows+1;
+          end
+        else
+          tok=regexp(parent,'/Grid/(B\\d+_to_B\\d+)/phase_splitter(\\d+)/(I|i_a|i_b|i_c)$','tokens','once');
+          if ~isempty(tok)
+            component=tok{1};variable=['phase_splitter' tok{2} '/' tok{3}];
+            category='line_current';lineIds{end+1}=component; %#ok<AGROW>
+          else
+            tok=regexp(parent,'/Grid/(B\\d+_to_B\\d+)/(power_dissipated)$','tokens','once');
+            if ~isempty(tok)
+              component=tok{1};variable=tok{2};category='line_loss';
+            else
+              tok=regexp(parent,'/Grid/(TF_B\\d+_to_B\\d+)/(i1|i2|power_dissipated)$','tokens','once');
+              if ~isempty(tok)
+                component=tok{1};variable=tok{2};
+                if any(strcmp(variable,{'i1','i2'}))
+                  category='transformer_current';tfIds{end+1}=component; %#ok<AGROW>
+                else
+                  category='transformer_loss';
+                end
+              end
+            end
+          end
+        end
        if ~any(strcmp(category,{'bus_voltage','bus_phase','bus_current', ...
              'line_current','line_loss','transformer_current','transformer_loss'}))
          continue
