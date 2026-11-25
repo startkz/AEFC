@@ -33,17 +33,22 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install numpy
       - name: Audit historical source without altering old data
-        run: python analysis/audit_tdsc_core_legacy.py | tee legacy_audit.json
+        run: |
+          set -euo pipefail
+          python analysis/audit_tdsc_core_legacy.py | tee legacy_audit.json
       - name: Unit and randomized model inclusion checks
         run: python -m unittest discover -s tests -p test_tdsc_contract_chain.py -v
       - name: Run frozen tier with original HydroPlant
         run: |
+          set -euo pipefail
           python -m experiments.hydro_valve.run_tdsc_contract_chain \
             --seed-start ${{ matrix.seed_start }} --seeds ${{ matrix.seeds }} \
             --post-attack-strength ${{ matrix.post }} --load-stress ${{ matrix.load }} \
             --stage ${{ matrix.stage }} --output results/tdsc_core_${{ matrix.tier }} | tee run_summary.json
       - name: Independently recompute every raw trace and certificate
-        run: python analysis/audit_tdsc_contract_run.py --input results/tdsc_core_${{ matrix.tier }} | tee raw_audit.json
+        run: |
+          set -euo pipefail
+          python -m analysis.audit_tdsc_contract_run --input results/tdsc_core_${{ matrix.tier }} | tee raw_audit.json
       - name: Upload all raw traces and executable source (including negative outcomes)
         if: always()
         uses: actions/upload-artifact@v4
