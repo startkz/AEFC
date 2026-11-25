@@ -140,3 +140,51 @@ Do not claim complete IEEE39 safety or an independent physical AEFC recovery gai
 > On the tested native IEEE39 exploratory Pref-stress conditions, the current four-dimensional heuristic AEFC mechanism prototype reduced the in-set ten-generator speed-envelope metric relative to Supervisor-only across the ten seed-level averages. No episode crossed the preregistered attack-end recovery-set boundary, so the experiment did not yield a physical outside-to-recovery event. The experiment did not certify full IEEE39 bus/branch/DAE safety or evaluate a trained federated-RL policy checkpoint.
 
 Retain all failed, non-exposed, and censored outcomes. Do not lower the recovery threshold or redefine the attack-stop criterion after observing these results.
+
+
+## 8. Post-audit native physical diagnostics — 2026-11-25
+
+### 8.1 Corrected full-grid offline Simscape current census
+
+[Grid Census v5](https://github.com/startkz/AEFC/actions/runs/45582393099) completed successfully. It traversed 22,413 Simscape nodes and 19,355 logged leaves without truncation and confirmed:
+
+| Native offline quantity | Result |
+|---|---:|
+| Logical bus voltage channels | 39 |
+| Physical bus voltage sections | 41 |
+| Transmission-line components | 34 |
+| Line inductor current-amplitude series | 102 |
+| Transformer components | 12 |
+| Transformer winding-current series | 24 |
+| Total selected branch-current series | 126 |
+
+The line channels are the original `transmission_line/inductor_{a,b,c}/i/amplitude` series; transformer channels are `i1` and `i2`. All are finite and carry amperes as their unit. This census establishes offline simulator-log coverage only. It does not establish online sensor trust, thermal ratings, branch-limit margins, or DAE safety.
+
+**Interpretation caveat:** the captured `inductor_a` current-amplitude values are near numerical zero across the inspected branches, whereas `inductor_b` and `inductor_c` are nonzero. Do not silently interpret all three labels as validated physical phase-current channels. The current mapping is retained for follow-up inspection of the native line subsystem and its phase convention. The branch-current channels are not used in the preregistered recovery predicate.
+
+### 8.2 Original three-phase fault location resolved
+
+The original masked block is `IEEE39BusSystem/Grid/Fault (Three-Phase)`, with the frozen native settings: ABC fault variant, fault type option 11, (R_{pn}=R_{ng}=10^{-3} Omega), temporal fault enabled, start at 5.0 s, and duration 0.1 s.
+
+Two independent native-connection diagnostics succeeded:
+
+- [Fault parent/child line-segment mapping v5](https://github.com/startkz/AEFC/actions/runs/45582643023)
+- [Fault PortConnectivity endpoint mapping v6](https://github.com/startkz/AEFC/actions/runs/45582793472)
+
+Both resolve the fault's physical connection to **Bus16_1**, the split physical section of logical Bus 16, and the adjacent native transmission-line block **B16 to B17**. This is based on the original port handles and physical line-segment endpoints, not on block-name inference. The fault location is now suitable for a location-specific physical-recovery study.
+
+### 8.3 Pilot and local-observability implementation failures
+
+[Fault pilot v3](https://github.com/startkz/AEFC/actions/runs/45582496284) reached the MATLAB execution stage but stopped before simulation because `SimulationInput.setBlockParameter` was called with multiple parameter pairs in one call. MATLAB requires one parameter/value pair per call. This is an API-use defect, not a negative physical result. Pilot v4 separates the calls and is the current rerun.
+
+[Local observability v7](https://github.com/startkz/AEFC/actions/runs/45582398071) successfully entered the linearization stage but rejected the Goto-block input as an invalid linearization I/O point. The per-time attempts were recorded as `NATIVE_LINEARIZATION_FAILED`; this is not evidence of physical unobservability. The revised v9 probe places the four-dimensional input point on the nonvirtual `AEFC_NATIVE_CONTROLLER` action output and separately observes the actual four online speed channels and ten offline generator-speed channels.
+
+The actual four online measurements are the rotor-speed outputs of `Gen10@Bus30`, `Gen1@Bus39`, `Gen2@Bus31`, and `Gen3@Bus32`, as specified in the validated `interface_mapping.json`. The ten-generator output is retained only as an offline upper-bound diagnostic.
+
+### 8.4 Current experimental status and publication boundary
+
+- The 360-episode exploratory Pref-stress result remains the only completed ten-seed physical-response comparison. It had no attack-end outside-recovery events.
+- The 180-episode historical checkpoint experiment remains a parameter rollback result, not a physical-state recovery result.
+- The native Bus16_1 fault pilot is still a two-seed exploratory test; it must establish actual recovery-set exposure before a ten-seed confirmatory run is justified.
+- The full-network safety gate remains **BLOCKED**. No current run verifies trusted online full-state observation, validated branch thermal limits, nonlinear DAE reachable tubes, or continuous intersample safety.
+- Do not change the preregistered 5% bus-voltage tolerance, normalized ten-generator speed bound, 20-sample hold, fault window, or right-censoring rule after observing the pilot.
