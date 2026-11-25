@@ -214,3 +214,12 @@ This evidence supports a limited conclusion: the present four-generator measurem
 [Fault pilot v4](https://github.com/startkz/AEFC/actions/runs/45583843924) reached the MATLAB execution stage but failed before simulation because the script attempted to change `SimscapeLogName` through `SimulationInput` after enabling Fast Restart. MATLAB prohibits this parameter change while the model is initialized in Fast Restart. This is another execution-configuration failure, not a physical fault or recovery result.
 
 Pilot v5 configures `SimscapeLogType` and `SimscapeLogName` once before enabling Fast Restart, preserves the four actual online observations in every JSONL record, and records the verified Bus16_1/B16-to-B17 location in the run manifest. The v5 run is the current physical-fault pilot; no recovery result should be claimed until its artifact is audited.
+
+
+### 8.7 Busbar-port current channels recovered
+
+[Grid Census v6](https://github.com/startkz/AEFC/actions/runs/45584829568) completed successfully after replacing the escaped-digit expression with an explicit digit class in the native Simscape path parser. It now extracts 123 busbar-port current series in addition to the 39 logical-bus voltage channels and 41 physical voltage sections. Each busbar current series is reported in amperes with a three-component dimension `[1,3]`.
+
+For the faulted physical section, the original model exposes `Bus16_1/I1` through `Bus16_1/I4`. The physical-connection audit independently maps `Bus16_1/RConn1` to `B16 to B17/LConn1`. The current-channel-to-port index association is retained as a candidate mapping pending a complete all-bus port-to-component reconciliation; do not yet treat every `I#` label as a validated branch identity.
+
+The updated complete offline census therefore contains 39 logical bus voltage channels, 41 physical bus voltage sections, 123 busbar-port current series, 102 line-inductor current-amplitude series, and 24 transformer winding-current series. These remain simulator-oracle records, not online trusted sensors or certified thermal measurements.
