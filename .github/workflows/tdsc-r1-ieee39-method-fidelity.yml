@@ -1,0 +1,42 @@
+name: TDSC-R1 IEEE39 AEFC native method identity and checkpoint integrity gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-method-fidelity.yml'
+      - 'analysis/audit_ieee39_method_fidelity.py'
+permissions:
+  contents: read
+jobs:
+  confirm_native_prototype_not_misrepresented_as_trained_frl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Preserve algorithm provenance and absent trained AEFC native checkpoint disclosure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_method_fidelity.py --output real_native_method_fidelity.json
+          python - <<'PY'
+          import json
+          q=json.load(open('real_native_method_fidelity.json'))
+          assert q['MATLAB_controller_uses_four_dimensional_heuristic_adaptation']
+          assert q['original_offline_knowledge_updates_derived_from_normalized_speed']
+          assert q['full_AEFC_federated_reinforcement_learning_trained_checkpoint_verified'] is False
+          assert q['intended_publication_claim'].startswith('BLOCKED_')
+          print('PASS: no fabricated trained-FRL policy claim.')
+          PY
+      - name: Keep actual method evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-AEFC-method-fidelity-${{ github.sha }}
+          path: |
+            real_native_method_fidelity.json
+            analysis/audit_ieee39_method_fidelity.py
+          if-no-files-found: warn
