@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paired native IEEE39 four-speed diagnostic comparisons with equal supervisor.
+"""Paired native IEEE39 four-speed and ten-generator diagnostic comparisons with equal supervisor.
 
 No evidence of full IEEE39 physical safety or genuine heterogeneous NN-FRL.
 Time-to-recovery is ONLY comparable on seeds exposed and subsequently
@@ -58,6 +58,18 @@ def audit(path:Path):
                        and math.isfinite(float(b['time_from_attack_stop']))]
             mean_speed_diff=[float(a['mean_native_speed_error'])-float(b['mean_native_speed_error'])
                              for a,b in all_pairs]
+            ten_exposed_treat=sum(int(a['all_ten_speed_exposed_at_attack_stop']=='1') for a,b in all_pairs)
+            ten_exposed_control=sum(int(b['all_ten_speed_exposed_at_attack_stop']=='1') for a,b in all_pairs)
+            ten_recovered_treat=sum(int(a['all_ten_speed_strict_recovered']=='1') for a,b in all_pairs)
+            ten_recovered_control=sum(int(b['all_ten_speed_strict_recovered']=='1') for a,b in all_pairs)
+            ten_both_recovered=[(a,b) for a,b in all_pairs if
+                a['all_ten_speed_strict_recovered']=='1' and b['all_ten_speed_strict_recovered']=='1']
+            ten_time_diff=[float(a['all_ten_speed_recovery_time'])-float(b['all_ten_speed_recovery_time'])
+                           for a,b in ten_both_recovered
+                           if math.isfinite(float(a['all_ten_speed_recovery_time']))
+                           and math.isfinite(float(b['all_ten_speed_recovery_time']))]
+            ten_error_diff=[float(a['mean_all_ten_speed_error'])-float(b['mean_all_ten_speed_error'])
+                            for a,b in all_pairs]
             violations_treat=sum(int(float(a['speed_proxy_violation_steps'])) for a,b in all_pairs)
             violations_control=sum(int(float(b['speed_proxy_violation_steps'])) for a,b in all_pairs)
             results.append(dict(attack_scale=scale,scenario=scene,method=method,
@@ -67,9 +79,16 @@ def audit(path:Path):
                   matched_both_exposed=physical_pair_exposure,matched_both_recovered=len(both_recovered),
                   recovery_time_diff_seconds=ci(time_diff),
                   mean_normalized_speed_error_diff=ci(mean_speed_diff),
+                  all_ten_generator_speed_exposed_method=ten_exposed_treat,
+                  all_ten_generator_speed_exposed_baseline=ten_exposed_control,
+                  all_ten_generator_recovered_method=ten_recovered_treat,
+                  all_ten_generator_recovered_baseline=ten_recovered_control,
+                  all_ten_both_recovered=len(ten_both_recovered),
+                  all_ten_speed_recovery_time_diff_seconds=ci(ten_time_diff),
+                  all_ten_generator_mean_speed_error_diff=ci(ten_error_diff),
                   speed_proxy_violations_method=violations_treat,
                   speed_proxy_violations_baseline=violations_control))
-    report=dict(scope='4 sampled rotor speed channels and surrogate; no full network state certificate',
+    report=dict(scope='all ten generator physical speeds evaluated, only four used online; NO full IEEE39 state safety certificate',
                 statistical_unit='seed (fixed deterministic phases); pilot inference exploratory',
                 pairing='same seed, model, attack schedule, physical and proxy supervisor; baseline Supervisor-only',
                 hazard='recovery-time statistics are conditional on both methods exposed/recovered; use full event counts',
