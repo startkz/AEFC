@@ -1,0 +1,59 @@
+name: TDSC-R1 audit-only immutable low holdout replay
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-core-chain-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-audit-only.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit_original_immutable_traces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Download original complete 80-episode artifact without rerunning model
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45533665872
+          name: TDSC-R1-low-holdout-400-419-702a3b24738e0104bff64e897096469cef6784e2
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_artifact
+      - name: Confirm original source and expected split
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s original_artifact/experiments/hydro_valve/run_tdsc_contract_chain.py
+          test -s original_artifact/results/tdsc_core_holdout_low_400_419/manifest.json
+          test -s original_artifact/results/tdsc_core_holdout_low_400_419/summary.csv
+      - name: Replay every logged transition, uncertainty box and certified margin
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m analysis.audit_tdsc_contract_run \
+            --input original_artifact/results/tdsc_core_holdout_low_400_419 | tee audit_only_recheck.json
+          python - <<'PY'
+          import json
+          p='original_artifact/results/tdsc_core_holdout_low_400_419/audit.json'
+          r=json.load(open(p))
+          assert r['episodes']==80 and r['sample_count']==38400
+          assert r['findings']==[] and r['explicit_contract_failures']==0
+          print('Audited original immutable holdout artifacts with zero findings')
+          PY
+      - name: Persist independent audit and original source identity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-audit-only-original-45533665872-${{ github.sha }}
+          path: |
+            audit_only_recheck.json
+            original_artifact/results/tdsc_core_holdout_low_400_419/audit.json
+            original_artifact/results/tdsc_core_holdout_low_400_419/manifest.json
+            original_artifact/experiments/hydro_valve/run_tdsc_contract_chain.py
+          if-no-files-found: warn
