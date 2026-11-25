@@ -58,10 +58,11 @@ for ai=1:numel(scales)
             if ~exist(runDir,'dir'),mkdir(runDir);end
             for seed=seeds
                 in=Simulink.SimulationInput(model);
-                in=in.setBlockParameter(ctrl,'MethodCode',num2str(mCodes(mi)), ...
-                    'ExploratoryMode',mat2str(~strictMode));
-                in=in.setBlockParameter(harness,'ScenarioCode',num2str(scCodes(si)),...
-                    'Seed',num2str(seed),'AttackScale',num2str(attackScale,'%.17g'));
+                in=in.setBlockParameter(ctrl,'MethodCode',num2str(mCodes(mi)));
+                in=in.setBlockParameter(ctrl,'ExploratoryMode',mat2str(~strictMode));
+                in=in.setBlockParameter(harness,'ScenarioCode',num2str(scCodes(si)));
+                in=in.setBlockParameter(harness,'Seed',num2str(seed));
+                in=in.setBlockParameter(harness,'AttackScale',num2str(attackScale,'%.17g'));
                 in=in.setModelParameter('StopTime',num2str(stopTime,'%.17g'), ...
                     'ReturnWorkspaceOutputs','on');
                 out=sim(in);
