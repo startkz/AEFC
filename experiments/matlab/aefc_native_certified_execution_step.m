@@ -16,7 +16,8 @@ diag=struct('status',-210,'observer_status',-90,'solver_status',-90, ...
     'intersample_safe',false,'n_state_dimensions',0);
 required={'full_network_variables_covered','safety_predicates_all_covered', ...
           'full_state_dynamics_verified','measurement_map_verified', ...
-          'intersample_reachability_verified','verified_emergency_policy'};
+          'intersample_reachability_verified','intersample_derivative_bounds_verified', ...
+          'verified_emergency_policy'};
 if ~isstruct(model)
     return;
 end
@@ -50,10 +51,18 @@ diag.margin=margin;
 if solverStatus<=0
     diag.status=-230;return;
 end
+[holds,holdMargin,holdStatus]=aefc_native_hold_reachability(est,model,proposal_safe);
+if ~holds
+    diag.status=-240;
+    diag.intersample_safe=false;
+    diag.margin=holdMargin;
+    return;
+end
 command=proposal_safe;
 diag.certified=true;
 diag.input_authorized=true;
-diag.intersample_safe=true; % externally verified tube assumption mandatory
+diag.intersample_safe=true;
+diag.margin=min(margin,holdMargin);
 diag.backup_executed=(solverStatus==2 || solverStatus==3);
 diag.status=solverStatus;
 end
