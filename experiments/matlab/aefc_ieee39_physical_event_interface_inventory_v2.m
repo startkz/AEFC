@@ -35,7 +35,6 @@ try
   elseif contains(low,'load'),cat='load_candidate';
   elseif ~isempty(regexp(p,'/TF_B\d+_to_B\d+','once')),cat='transformer';
   elseif ~isempty(regexp(p,'/B\d+_to_B\d+','once')),cat='line';
-  elseif strcmp(bt,'SimscapeBlock') && ~isempty(mt),cat='other_simscape_mask';
   end
   if isempty(cat),continue;end
   if strcmp(cat,'fault_candidate'),report.fault_blocks=report.fault_blocks+1;end
