@@ -38,7 +38,7 @@ jobs:
         uses: matlab-actions/run-command@v3
         with:
           command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_build_unprivileged
-      - name: Real Simulink smoke: same supervisor, attacked physical and joint cases
+      - name: 'Real Simulink smoke: same supervisor, attacked physical and joint cases'
         uses: matlab-actions/run-command@v3
         with:
           command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_unprivileged_joint('smoke')
