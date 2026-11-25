@@ -21,13 +21,15 @@ jobs:
         run: python -m unittest discover -s tests -p test_tdsc_contract_chain.py -v
       - name: Independent 20-seed experiment (400-419), unchanged recovery threshold
         run: |
+          set -euo pipefail
           python -m experiments.hydro_valve.run_tdsc_contract_chain \
             --seed-start 400 --seeds 20 --stage frozen-holdout \
             --post-attack-strength 0.015 --load-stress 0.002 \
             --output results/tdsc_core_holdout_low_400_419 | tee holdout_summary.json
       - name: Independently recompute physical transitions and all release certificates
         run: |
-          python analysis/audit_tdsc_contract_run.py \
+          set -euo pipefail
+          python -m analysis.audit_tdsc_contract_run \
             --input results/tdsc_core_holdout_low_400_419 | tee holdout_audit.json
       - name: Archive immutable raw evidence and source
         if: always()
