@@ -1,0 +1,65 @@
+name: TDSC-R1 IEEE39 strict no-fullstate-certificate fallback under 24 held-pressure native episodes
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-stress-strict.yml'
+permissions:
+  contents: read
+jobs:
+  native_strict_fallback_under_extended_noncertified_threat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check no attacker identity or future knowledge enters defender
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_unprivileged.py
+          python -m py_compile analysis/audit_ieee39_stress.py
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Build original-derived independently isolated MATLAB IEEE39 stress model
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_build_stress
+      - name: Run 24 paired true Simulink strict-reject physical/joint pressure episodes
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_stress_recovery('stress_strict')
+      - name: Independently enforce all refused Pref extra commands, post-shield attacks and raw speed bounds
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_stress.py \
+            --results results/ieee39_stress_r1/stress_strict \
+            --output stress_strict_audit.json | tee stress_strict_log.txt
+          python - <<'PY'
+          import json
+          x=json.load(open('stress_strict_audit.json'))
+          a=x['actual_native_experiment_audit']
+          assert a['cases']==24 and a['samples']==24*181
+          assert a['proxy_releases']==0
+          assert a['proxy_refusals']==24*181
+          assert not x['full_network_safety_certified']
+          print('Strict controller refused added Pref under each stress, not a proof of safe original governor.')
+          PY
+      - name: Archive all actual original/delivered Pref and stress-fallback physical trajectories
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-24-native-strict-stress-${{ github.sha }}
+          path: |
+            results/ieee39_stress_r1/stress_strict/
+            stress_strict_audit.json
+            stress_strict_log.txt
+          if-no-files-found: warn
+          retention-days: 90
