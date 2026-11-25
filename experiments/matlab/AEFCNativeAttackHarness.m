@@ -20,18 +20,22 @@ properties(Access=private)
 end
 methods(Access=protected)
     function setupImpl(obj,~)
-        obj.cfg=jsondecode(fileread(obj.ConfigPath));
-        mapping=jsondecode(fileread(obj.MappingPath));
-        assert(mapping.validated && numel(mapping.baseline_observation)==4, ...
-            'AEFC:NativePacketMapping','Native four-channel mapping invalid');
-        obj.center=double(mapping.baseline_observation(:));
-        obj.scale=obj.deriveScale(mapping.observation_edges,obj.center);
+        obj.loadRuntimeConfig();
         obj.stepCount=0;
     end
     function resetImpl(obj)
+        if ~isstruct(obj.cfg) || numel(obj.center)~=4 || numel(obj.scale)~=4
+            obj.loadRuntimeConfig();
+        end
         obj.stepCount=0;
     end
     function [packet,uPost]=stepImpl(obj,obsPhysical)
+        % Simulink Fast Restart may instantiate an interpreted System block
+        % without preserving private runtime fields from an earlier compile.
+        % Initialize lazily and retain the attack window counter per episode.
+        if ~isstruct(obj.cfg) || numel(obj.center)~=4 || numel(obj.scale)~=4
+            obj.loadRuntimeConfig();
+        end
         % Every stage is dimension checked so Simulink runtime failures
         % produce falsifiable diagnostics instead of opaque size errors.
         phase='input';
@@ -100,6 +104,23 @@ methods(Access=protected)
                 mat2str(size(obj.scale)),ME.message);
         end
     end
+    function s=saveObjectImpl(obj)
+        s=saveObjectImpl@matlab.System(obj);
+        s.cfg=obj.cfg;
+        s.center=obj.center;
+        s.scale=obj.scale;
+        s.stepCount=obj.stepCount;
+    end
+    function loadObjectImpl(obj,s,wasLocked)
+        if isfield(s,'cfg'),obj.cfg=s.cfg;end
+        if isfield(s,'center'),obj.center=s.center;end
+        if isfield(s,'scale'),obj.scale=s.scale;end
+        if isfield(s,'stepCount'),obj.stepCount=s.stepCount;end
+        loadObjectImpl@matlab.System(obj,s,wasLocked);
+        if ~isstruct(obj.cfg) || numel(obj.center)~=4 || numel(obj.scale)~=4
+            obj.loadRuntimeConfig();
+        end
+    end
     function sts=getSampleTimeImpl(obj)
         c=jsondecode(fileread(obj.ConfigPath));
         sts=createSampleTime(obj,'Type','Discrete','SampleTime',double(c.sample_time));
@@ -118,6 +139,17 @@ methods(Access=protected)
     end
 end
 methods(Access=private)
+    function loadRuntimeConfig(obj)
+        obj.cfg=jsondecode(fileread(obj.ConfigPath));
+        mapping=jsondecode(fileread(obj.MappingPath));
+        assert(mapping.validated && numel(mapping.baseline_observation)==4, ...
+            'AEFC:NativePacketMapping','Causal 4-speed mapping invalid');
+        obj.center=double(mapping.baseline_observation(:));
+        obj.scale=obj.deriveScale(mapping.observation_edges,obj.center);
+        assert(all(isfinite(obj.scale)) && all(obj.scale>0), ...
+            'AEFC:NativePacketScale','Positive normalized speed scales required');
+        if isempty(obj.stepCount),obj.stepCount=0;end
+    end
     function v=detNoise(obj,t,salt)
         idx=(1:4)';
         v=sin((idx+salt)*(t+1)*0.731 + (double(obj.Seed)+1)*0.193+salt*0.017);
