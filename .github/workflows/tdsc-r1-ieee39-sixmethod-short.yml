@@ -5,6 +5,12 @@ on:
     branches: [audit/tdsc-r1-ieee39-fullstate-20261125]
     paths:
       - '.github/workflows/tdsc-r1-ieee39-sixmethod-short.yml'
+      - 'experiments/matlab/AEFCNativeAttackHarness.m'
+      - 'experiments/matlab/AEFCNativeController.m'
+      - 'experiments/matlab/aefc_ieee39_build_unprivileged.m'
+      - 'experiments/matlab/aefc_ieee39_attach_all_generator_speeds.m'
+      - 'experiments/matlab/aefc_ieee39_unprivileged_joint.m'
+      - 'analysis/audit_ieee39_unprivileged.py'
 permissions:
   contents: read
 jobs:
