@@ -255,7 +255,8 @@ def run_episode(seed: int, scenario: str, c: Config, output: Path,
         coverage=bool(np.all(true_before>=lower-1e-12) and np.all(true_before<=upper+1e-12))
         if decision.command is None:
             contract_fail=f'{t}:{decision.status}'
-            trace.append(dict(t=t,state_true=true_before.tolist(),command_released=False,
+            trace.append(dict(t=t,state_true=true_before.tolist(),state_before=true_before.tolist(),
+                              local_plc_norm=local.tolist(),command_released=False,
                               status=decision.status,coverage=coverage,safe=safe_state(true_before,c),
                               recovery=in_recovery(true_before,c,flow_tol,speed_tol)))
             break
@@ -269,7 +270,8 @@ def run_episode(seed: int, scenario: str, c: Config, output: Path,
         true_after=plant.step(decision.command,qin,load,post)
         in_box=bool(np.all(true_after>=np.asarray(c.state_lower)-1e-12)
                     and np.all(true_after<=np.asarray(c.state_upper)+1e-12))
-        trace.append(dict(t=t,state_true=true_after.tolist(),command_released=True,
+        trace.append(dict(t=t,state_true=true_after.tolist(),state_before=true_before.tolist(),
+                          local_plc_norm=local.tolist(),qin=qin,load=load,command_released=True,
                           command=decision.command.tolist(),post_attack=post.tolist(),
                           status=decision.status,coverage=coverage,exogenous_covered=exogenous_covered,
                           margin=decision.certified_margin,gate=decision.gate_allowed,
