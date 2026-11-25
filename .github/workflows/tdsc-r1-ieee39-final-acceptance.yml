@@ -1,0 +1,74 @@
+name: TDSC-R1 final native IEEE39 safety & genuine recovery evidence acceptance gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-decisive-evidence-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-final-acceptance.yml'
+      - 'analysis/tdsc_r1_ieee39_final_acceptance.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  require_real_full_cps_proof_before_paper_claim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch independently audited original 48 real MATLAB IEEE39 episodes
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45544343781
+          name: TDSC-R1-IEEE39-FROZEN-replay-audited-699534dca330a9c077ee85676db52b8f5f4cb8d7
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: source_frozen
+      - name: Fetch independently checked 59 safety states and real sensor coverage
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45545636858
+          name: TDSC-R1-IEEE39-59-safety-state-sensor-matrix-1f79be5d0196b306995170776d04290c54362b61
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: source_sensors
+      - name: Fetch heldout actual IEEE39 one-step coverage falsification
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45545121484
+          name: TDSC-R1-native-heldout-output-one-step-diagnostic-0ddfde067ebcd096358b47a2aa62f7cc0b3e7146
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: source_one_step
+      - name: Decide full-system physical safety and post-attack recovery ONLY on immutable independent evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile analysis/tdsc_r1_ieee39_final_acceptance.py
+          python analysis/tdsc_r1_ieee39_final_acceptance.py \
+            --forensic source_frozen/forensic_backup_recovery.json \
+            --sensors source_sensors/ieee39_state_sensor_coverage_matrix.json \
+            --one-step source_one_step/empirical_one_step_increment_holdout.json \
+            --output decisive_final_acceptance.json | tee final_gate.log
+          python - <<'PY'
+          import json
+          x=json.load(open('decisive_final_acceptance.json'))
+          assert x['status']=='BLOCKED'
+          assert x['actual_simulink_physical_episodes']==48
+          assert x['actual_downstream_attack_samples']==3600
+          assert x['true_ten_generator_recovery_exposure_episodes']==0
+          assert x['independent_strict_fail_closed_samples']==1448
+          assert x['measured_one_step_speed_envelope_1p25x_violations']==291
+          assert not x['full_native_ieee39_execution_safety_certified']
+          assert not x['six_method_recovery_superiority_established']
+          print('PASS: publication gate refuses unsupported IEEE39 safety/recovery claims.')
+          PY
+      - name: Preserve evidence-linked acceptance verdict, pass or fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-complete-safety-acceptance-gate-${{ github.sha }}
+          path: |
+            decisive_final_acceptance.json
+            final_gate.log
+            analysis/tdsc_r1_ieee39_final_acceptance.py
+          if-no-files-found: warn
