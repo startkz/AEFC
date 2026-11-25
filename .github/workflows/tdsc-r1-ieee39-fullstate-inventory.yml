@@ -1,0 +1,46 @@
+name: IEEE39 official native offline full-state coverage inventory
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-fullstate-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-fullstate-inventory.yml'
+      - 'experiments/matlab/aefc_ieee39_offline_fullstate_inventory.m'
+      - 'analysis/audit_ieee39_state_inventory.py'
+permissions:
+  contents: read
+jobs:
+  native_fullstate_inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Load original IEEE39 benchmark and inventory simulation dynamic states OFFLINE
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_offline_fullstate_inventory
+      - name: Audit offline versus online trust boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_state_inventory.py results/ieee39_fullstate_p0/original_native_state_inventory.json | tee inventory_audit.json
+      - name: Archive actual dynamic state names and model structure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-offline-state-inventory-${{ github.sha }}
+          path: |
+            results/ieee39_fullstate_p0/
+            results/ieee39_r2024b/model_resolution.json
+            inventory_audit.json
+            experiments/matlab/aefc_ieee39_offline_fullstate_inventory.m
+          if-no-files-found: warn
+          retention-days: 90

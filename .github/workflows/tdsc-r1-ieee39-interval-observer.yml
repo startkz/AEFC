@@ -1,0 +1,34 @@
+name: TDSC-R1 full-state interval observer conditional inclusion selftest
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-fullstate-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-interval-observer.yml'
+      - 'experiments/matlab/aefc_native_interval_observer.m'
+      - 'experiments/matlab/aefc_native_interval_observer_selftest.m'
+permissions:
+  contents: read
+jobs:
+  exact_conditional_linear_observer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          cache: true
+      - name: Validate 1920 state inclusions, missing state/sensor certificate and impossible measurement
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('experiments/matlab'); aefc_native_interval_observer_selftest
+      - name: Archive exact implementation and test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-interval-observer-synthetic-${{ github.sha }}
+          path: |
+            experiments/matlab/aefc_native_interval_observer.m
+            experiments/matlab/aefc_native_interval_observer_selftest.m
+          if-no-files-found: warn

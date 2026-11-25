@@ -48,5 +48,6 @@
     "post_shield_attack_upper": 0.024,
     "surrogate_only": true,
     "note": "Unvalidated four-rotor-speed proxy only; never report full IEEE39 state certificate; 3x attack scale upper bound 0.024, zero-command strict fail-closed"
-  }
+  },
+  "fullstate_certificate_path": "configs/ieee39_fullstate_certification_requirements.json"
 }

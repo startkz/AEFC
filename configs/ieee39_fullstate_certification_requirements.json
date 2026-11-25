@@ -1,0 +1,79 @@
+{
+  "version": "TDSC-R1-IEEE39-FULLSTATE-CERT-20261125",
+  "system": "MathWorks IEEE39BusSystem R2024b",
+  "online_sensor_mapping": "results/ieee39_r2024b/interface_mapping.json",
+  "safety_contract_scope": "ENTIRE NATIVE CPS: all safety-relevant differential, algebraic, and actuator states",
+  "known_sensor_count": 4,
+  "current_verified_sensors": [
+    "Gen10@Bus30 rotor speed",
+    "Gen1@Bus39 rotor speed",
+    "Gen2@Bus31 rotor speed",
+    "Gen3@Bus32 rotor speed"
+  ],
+  "required_predicates": [
+    {
+      "name": "generator_rotor_speed_all_machines",
+      "status": "unverified_all_machines",
+      "bounds_source": null,
+      "unit": "per_unit"
+    },
+    {
+      "name": "generator_rotor_angle_stability",
+      "status": "unverified",
+      "bounds_source": null,
+      "unit": "radian"
+    },
+    {
+      "name": "bus_voltage_limits_all_buses",
+      "status": "unverified",
+      "bounds_source": null,
+      "unit": "per_unit"
+    },
+    {
+      "name": "branch_thermal_power_loading",
+      "status": "unverified",
+      "bounds_source": null,
+      "unit": "power_unit"
+    },
+    {
+      "name": "actuator_governor_pref_and_rate_limits",
+      "status": "unverified",
+      "bounds_source": null,
+      "unit": "per_unit"
+    }
+  ],
+  "online_state_estimator": {
+    "full_state_dimensions": null,
+    "source_measurement_map": null,
+    "certified_initial_state_set": null,
+    "error_bound_proof": null,
+    "coverage_verified": false,
+    "state_constraints_source": null
+  },
+  "sampled_reachable_tube": {
+    "complete_network_discrete_dynamics": null,
+    "guaranteed_model_residual_bound": null,
+    "verified_input_attack_bound": 0.024,
+    "verified_exogenous_disturbance_bound": null,
+    "qualified_interval_extension": null,
+    "validated": false
+  },
+  "intersample_reachable_tube": {
+    "hold_interval_seconds": 0.016666666666666666,
+    "nonlinear_and_algebraic_constraints_covered": false,
+    "validated": false
+  },
+  "backup": {
+    "emergency_actuator_authority_verified": false,
+    "fallback_reachable_set_feasible": false,
+    "deadline_and_solver_timeout_verified": false,
+    "original_governors_independently_certified": false
+  },
+  "manuscript_promotion_gate": {
+    "full_state_execution_safety_certified": false,
+    "accepted_real_ieee39_recovery_paired_holdout": false,
+    "explicit_note": "Offline simulator state logging, empirical holdout coverage, or a green MATLAB workflow alone cannot satisfy these flags"
+  },
+  "verified_native_mat_file": null,
+  "verified_native_mat_sha256": null
+}

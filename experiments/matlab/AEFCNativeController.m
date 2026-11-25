@@ -27,6 +27,10 @@ properties(Access=private)
     scale
     belief
     theta
+    stateModel
+    statePrior
+    previousCertifiedCommand
+    modelCertificateStatus
 end
 methods(Access=protected)
     function setupImpl(obj,~,~)
@@ -34,9 +38,17 @@ methods(Access=protected)
         obj.resetRuntimeState();
     end
     function resetImpl(obj)
+        if ~isstruct(obj.cfg) || ~isequal(size(obj.Bn),[4 4]) || ...
+            numel(obj.center)~=4 || numel(obj.scale)~=4
+            obj.loadRuntimeConfig();
+        end
         obj.resetRuntimeState();
     end
     function [uShield,diagOut]=stepImpl(obj,localPhysical,packet)
+        % Interpreted Simulink MATLAB System objects can restore with empty
+        % private configuration under Fast Restart. Never use an unbuilt
+        % model nor silently carry invalid state across episodes.
+        obj.ensureRuntimeState();
         zNative=double(localPhysical(:));
         packet=double(packet(:));
         assert(numel(zNative)==4 && numel(packet)==67 && ...
@@ -120,9 +132,29 @@ methods(Access=protected)
                 obj.theta=candidate;
             end
         end
-        [uShield,status,proxyMargin,~,proxyPass]= ...
-            aefc_native_execution_contract(zLocal,proposal,backup,obj.Bn, ...
-            c,~logical(obj.ExploratoryMode));
+        coverage=0;fullSafety=0;
+        if logical(obj.ExploratoryMode)
+            [uShield,status,proxyMargin,~,proxyPass]= ...
+                aefc_native_execution_contract(zLocal,proposal,backup,obj.Bn,c,false);
+        else
+            % STRICT path reaches the real full-state observer, reachable
+            % tube and robust input checker. At present the IEEE39 model
+            % lacks a reviewed full-state certificate, so this branch
+            % rejects every extra Pref correction (status < 0).
+            opts=struct('strict',true,'roundoff_inflation',1e-10,'max_passes',4);
+            [uShield,newMemory,fullDiag]=aefc_native_certified_execution_step( ...
+                obj.statePrior,obj.stateModel,obj.previousCertifiedCommand, ...
+                zLocal,proposal,backup,opts);
+            status=fullDiag.status;
+            proxyMargin=fullDiag.margin;
+            proxyPass=fullDiag.certified;
+            coverage=double(fullDiag.full_state_covered);
+            fullSafety=double(fullDiag.certified);
+            if fullDiag.certified
+                obj.statePrior=newMemory;
+                obj.previousCertifiedCommand=uShield;
+            end
+        end
         proxyRecordedMargin=-1e6;
         if isfinite(proxyMargin),proxyRecordedMargin=proxyMargin;end
         intervention=norm(uShield-proposal,2);
@@ -134,7 +166,7 @@ methods(Access=protected)
         diagOut=[trust;risk;double(gateAllowed);discrepancy; ...
             norm(obj.theta,2);intervention;proxyRecordedMargin; ...
             double(status);double(dangerous);double(adaptAccepted); ...
-            0;0;double(backupUsed);double(released);double(proxyPass);double(mc)];
+            coverage;fullSafety;double(backupUsed);double(released);double(proxyPass);double(mc)];
     end
     function sts=getSampleTimeImpl(obj)
         c=jsondecode(fileread(obj.ConfigPath));
@@ -157,6 +189,9 @@ methods(Access=protected)
         s.cfg=obj.cfg;s.mapping=obj.mapping;s.Bn=obj.Bn;
         s.center=obj.center;s.scale=obj.scale;
         s.belief=obj.belief;s.theta=obj.theta;
+        s.stateModel=obj.stateModel;s.statePrior=obj.statePrior;
+        s.previousCertifiedCommand=obj.previousCertifiedCommand;
+        s.modelCertificateStatus=obj.modelCertificateStatus;
     end
     function loadObjectImpl(obj,s,wasLocked)
         if isfield(s,'cfg'),obj.cfg=s.cfg;end
@@ -166,10 +201,34 @@ methods(Access=protected)
         if isfield(s,'scale'),obj.scale=s.scale;end
         if isfield(s,'belief'),obj.belief=s.belief;end
         if isfield(s,'theta'),obj.theta=s.theta;end
+        if isfield(s,'stateModel'),obj.stateModel=s.stateModel;end
+        if isfield(s,'statePrior'),obj.statePrior=s.statePrior;end
+        if isfield(s,'previousCertifiedCommand'),obj.previousCertifiedCommand=s.previousCertifiedCommand;end
+        if isfield(s,'modelCertificateStatus'),obj.modelCertificateStatus=s.modelCertificateStatus;end
         loadObjectImpl@matlab.System(obj,s,wasLocked);
+        obj.ensureRuntimeState();
     end
 end
 methods(Access=private)
+    function ensureRuntimeState(obj)
+        ready=isstruct(obj.cfg) && ...
+              numel(obj.center)==4 && numel(obj.scale)==4 && ...
+              isequal(size(obj.Bn),[4 4]);
+        if ~ready
+            obj.loadRuntimeConfig();
+            obj.resetRuntimeState();
+        end
+        if ~isnumeric(obj.belief) || numel(obj.belief)~=4
+            obj.belief=zeros(4,1);
+        end
+        if ~isnumeric(obj.theta) || numel(obj.theta)~=4
+            obj.theta=zeros(4,1);
+        end
+        if ~isnumeric(obj.previousCertifiedCommand) || ...
+                numel(obj.previousCertifiedCommand)~=4
+            obj.previousCertifiedCommand=zeros(4,1);
+        end
+    end
     function loadRuntimeConfig(obj)
         obj.cfg=jsondecode(fileread(obj.ConfigPath));
         obj.mapping=jsondecode(fileread(obj.MappingPath));
@@ -198,6 +257,9 @@ methods(Access=private)
     function resetRuntimeState(obj)
         obj.belief=zeros(4,1);
         obj.theta=zeros(4,1);
+        [obj.stateModel,obj.statePrior,obj.modelCertificateStatus]= ...
+            aefc_native_load_verified_state_contract(obj.cfg);
+        obj.previousCertifiedCommand=zeros(4,1);
     end
     function y=trimmedMean(~,X,f)
         n=size(X,2);

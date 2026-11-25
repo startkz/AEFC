@@ -20,52 +20,106 @@ properties(Access=private)
 end
 methods(Access=protected)
     function setupImpl(obj,~)
-        obj.cfg=jsondecode(fileread(obj.ConfigPath));
-        mapping=jsondecode(fileread(obj.MappingPath));
-        assert(mapping.validated && numel(mapping.baseline_observation)==4, ...
-            'AEFC:NativePacketMapping','Native four-channel mapping invalid');
-        obj.center=double(mapping.baseline_observation(:));
-        obj.scale=obj.deriveScale(mapping.observation_edges,obj.center);
+        obj.loadRuntimeConfig();
         obj.stepCount=0;
     end
     function resetImpl(obj)
+        if ~isstruct(obj.cfg) || numel(obj.center)~=4 || numel(obj.scale)~=4
+            obj.loadRuntimeConfig();
+        end
         obj.stepCount=0;
     end
     function [packet,uPost]=stepImpl(obj,obsPhysical)
-        x=double(obsPhysical(:));
-        assert(numel(x)==4 && all(isfinite(x)),'AEFC:NativePacketInput', ...
-            'Native physical observation must contain four finite real channels.');
-        z=(x-obj.center)./obj.scale;
-        cfg=obj.cfg; t=obj.stepCount;
-        n=double(cfg.clients);f=double(cfg.byzantine_clients);
-        assert(n==7 && f==2,'AEFC:NativePacketShape', ...
-            'Experiment packet layout frozen to seven clients and two Byzantine.');
-        scenario=round(double(obj.ScenarioCode));
-        attack=t>=cfg.attack_start_step && t<=cfg.attack_end_step;
-        physical=(scenario==3 || scenario==4) && attack;
-        knowledge=(scenario==2 || scenario==4) && attack;
-        strength=max(0,double(obj.AttackScale));
-        received=z;
-        if physical
-            received=received+strength*cfg.observation_attack_fraction_of_scale*obj.detNoise(t,97);
+        % Simulink Fast Restart may instantiate an interpreted System block
+        % without preserving private runtime fields from an earlier compile.
+        % Initialize lazily and retain the attack window counter per episode.
+        if ~isstruct(obj.cfg) || numel(obj.center)~=4 || numel(obj.scale)~=4
+            obj.loadRuntimeConfig();
         end
-        updates=zeros(4,n); evidence=zeros(4,n); ages=zeros(n,1);
-        for j=1:n
-            g=0.65*z+0.15*obj.detNoise(t,10+j);
-            ev=-0.55*z+0.08*obj.detNoise(t,30+j);
-            if knowledge && j<=f
-                g=-strength*cfg.model_replacement_scale*g + 0.8*strength*obj.detNoise(t,50+j);
-                ev=strength*cfg.model_replacement_scale*ev + 0.6*strength;
-                ages(j)=cfg.stale_delay;
+        % Every stage is dimension checked so Simulink runtime failures
+        % produce falsifiable diagnostics instead of opaque size errors.
+        phase='input';
+        try
+            x=double(obsPhysical(:));
+            ctr=double(obj.center(:)); scl=double(obj.scale(:));
+            assert(numel(x)==4 && numel(ctr)==4 && numel(scl)==4, ...
+                'AEFC:HarnessDim','Input/center/scale must all have 4 elements');
+            assert(all(isfinite(x)) && all(isfinite(ctr)) && ...
+                all(isfinite(scl)) && all(scl>0), ...
+                'AEFC:HarnessFinite','Invalid physical input or mapping');
+            z=(x-ctr)./scl;
+            cfg=obj.cfg;t=double(obj.stepCount);
+            n=round(double(cfg.clients));f=round(double(cfg.byzantine_clients));
+            assert(n==7 && f==2,'AEFC:NativePacketShape', ...
+                'Expected 7 clients and 2 Byzantine in offline generator');
+            scenario=round(double(obj.ScenarioCode));
+            active=t>=double(cfg.attack_start_step) && t<=double(cfg.attack_end_step);
+            physical=(scenario==3 || scenario==4) && active;
+            knowledge=(scenario==2 || scenario==4) && active;
+            strength=max(0,double(obj.AttackScale));
+            phase='received_observation';
+            received=z;
+            if physical
+                noise=obj.detNoise(t,97);noise=double(noise(:));
+                assert(numel(noise)==4,'AEFC:HarnessNoiseShape','Observation noise wrong dimension');
+                received=z+strength*double(cfg.observation_attack_fraction_of_scale)*noise;
             end
-            updates(:,j)=g;evidence(:,j)=ev;
+            phase='client_generation';
+            updates=zeros(4,n);evidence=zeros(4,n);ages=zeros(n,1);
+            for j=1:n
+                noise_g=double(obj.detNoise(t,10+j));noise_g=noise_g(:);
+                noise_e=double(obj.detNoise(t,30+j));noise_e=noise_e(:);
+                assert(numel(noise_g)==4 && numel(noise_e)==4, ...
+                    'AEFC:HarnessNoiseShape','Client noise vector wrong dimension');
+                g=0.65*z+0.15*noise_g;
+                ev=-0.55*z+0.08*noise_e;
+                if knowledge && j<=f
+                    noise_a=double(obj.detNoise(t,50+j));noise_a=noise_a(:);
+                    assert(numel(noise_a)==4,'AEFC:HarnessNoiseShape','Attack noise vector wrong dimension');
+                    g=-strength*double(cfg.model_replacement_scale)*g + ...
+                        0.8*strength*noise_a;
+                    ev=strength*double(cfg.model_replacement_scale)*ev+0.6*strength;
+                    ages(j)=double(cfg.stale_delay);
+                end
+                updates(:,j)=g;evidence(:,j)=ev;
+            end
+            phase='packet_assembly';
+            packet=[received(:);updates(:);evidence(:);ages(:)];
+            assert(isequal(size(packet),[67 1]) && all(isfinite(packet)), ...
+                'AEFC:HarnessPacket','Expected finite [67 1] receiver packet');
+            phase='post_shield_attack';
+            uPost=zeros(4,1);
+            if physical
+                noise_p=double(obj.detNoise(t,211));noise_p=noise_p(:);
+                assert(numel(noise_p)==4,'AEFC:HarnessNoiseShape','Postattack noise dimension');
+                uPost=strength*double(cfg.post_shield_control_attack)*noise_p;
+            end
+            assert(isequal(size(uPost),[4 1]) && all(isfinite(uPost)), ...
+                'AEFC:HarnessPost','Expected finite [4 1] post-shield corruption');
+            obj.stepCount=t+1;
+        catch ME
+            error('AEFC:HarnessStage', ...
+                'Offline harness failed in phase %s, native input size=%s, center=%s, scale=%s; cause: %s', ...
+                phase,mat2str(size(obsPhysical)),mat2str(size(obj.center)), ...
+                mat2str(size(obj.scale)),ME.message);
         end
-        packet=[received;updates(:);evidence(:);ages];
-        uPost=zeros(4,1);
-        if physical
-            uPost=strength*cfg.post_shield_control_attack*obj.detNoise(t,211);
+    end
+    function s=saveObjectImpl(obj)
+        s=saveObjectImpl@matlab.System(obj);
+        s.cfg=obj.cfg;
+        s.center=obj.center;
+        s.scale=obj.scale;
+        s.stepCount=obj.stepCount;
+    end
+    function loadObjectImpl(obj,s,wasLocked)
+        if isfield(s,'cfg'),obj.cfg=s.cfg;end
+        if isfield(s,'center'),obj.center=s.center;end
+        if isfield(s,'scale'),obj.scale=s.scale;end
+        if isfield(s,'stepCount'),obj.stepCount=s.stepCount;end
+        loadObjectImpl@matlab.System(obj,s,wasLocked);
+        if ~isstruct(obj.cfg) || numel(obj.center)~=4 || numel(obj.scale)~=4
+            obj.loadRuntimeConfig();
         end
-        obj.stepCount=obj.stepCount+1;
     end
     function sts=getSampleTimeImpl(obj)
         c=jsondecode(fileread(obj.ConfigPath));
@@ -85,6 +139,17 @@ methods(Access=protected)
     end
 end
 methods(Access=private)
+    function loadRuntimeConfig(obj)
+        obj.cfg=jsondecode(fileread(obj.ConfigPath));
+        mapping=jsondecode(fileread(obj.MappingPath));
+        assert(mapping.validated && numel(mapping.baseline_observation)==4, ...
+            'AEFC:NativePacketMapping','Causal 4-speed mapping invalid');
+        obj.center=double(mapping.baseline_observation(:));
+        obj.scale=obj.deriveScale(mapping.observation_edges,obj.center);
+        assert(all(isfinite(obj.scale)) && all(obj.scale>0), ...
+            'AEFC:NativePacketScale','Positive normalized speed scales required');
+        if isempty(obj.stepCount),obj.stepCount=0;end
+    end
     function v=detNoise(obj,t,salt)
         idx=(1:4)';
         v=sin((idx+salt)*(t+1)*0.731 + (double(obj.Seed)+1)*0.193+salt*0.017);
