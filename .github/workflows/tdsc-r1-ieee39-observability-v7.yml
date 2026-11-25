@@ -1,0 +1,55 @@
+name: TDSC-R1 native IEEE39 local four-input ten-speed observability and controllability v7
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-observability-v7.yml'
+      - 'experiments/matlab/aefc_ieee39_local_observability_probe_v7.m'
+permissions:
+  contents: read
+jobs:
+  native_local_ABCD_rank_v7:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical Simulink_Control_Design
+          cache: true
+      - name: Linearize four shield correction inputs to ten generator rotor-speed outputs
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_local_observability_probe_v7
+      - name: Inspect local matrices and distinguish diagnostic failure from physical unobservability
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s results/ieee39_safety_mapping/native_local_observability_probe_v7.json
+          python - <<'PY'
+          import json
+          q=json.load(open('results/ieee39_safety_mapping/native_local_observability_probe_v7.json'))
+          print(json.dumps(q,indent=2))
+          assert q['status']=='DIAGNOSTIC_ATTEMPTS_COMPLETED'
+          assert len(q.get('attempts',[]))==2
+          assert all(a['physical_input_channels']==4 for a in q['attempts'])
+          assert all(a['observed_speed_channels']==10 for a in q['attempts'])
+          assert all(a['finite_linearization'] for a in q['attempts'])
+          assert all(a['status']=='LOCAL_DIAGNOSTIC_ONLY' for a in q['attempts'])
+          assert q['full_network_observer_verified'] is False
+          assert q['bounded_nonlinear_model_residual_verified'] is False
+          assert q['guaranteed_intersample_tube'] is False
+          PY
+      - name: Archive actual ABCD matrices and local rank results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-local-ABCD-v7-${{ github.sha }}
+          path: |
+            results/ieee39_safety_mapping/native_local_observability_probe_v7.json
+            results/ieee39_safety_mapping/native_local_abc_t*.mat
+            experiments/matlab/aefc_ieee39_local_observability_probe_v7.m
+          if-no-files-found: warn
+          retention-days: 90
