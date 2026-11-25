@@ -1,0 +1,139 @@
+{
+  "scope": "local linearized IEEE39 model only",
+  "source_run": "https://github.com/startkz/AEFC/actions/runs/45583683445",
+  "source_artifact": "TDSC-R1-native-IEEE39-four-vs-ten-observability-v9",
+  "relative_tolerances": [
+    0.000001,
+    1e-8,
+    1e-10,
+    1e-12,
+    1e-14
+  ],
+  "full_network_observer_verified": false,
+  "nonlinear_DAE_reachability_certified": false,
+  "intersample_safety_certified": false,
+  "operating_points": [
+    {
+      "file": "native_local_abc_t01.mat",
+      "time": 0.1,
+      "state_dimension": 285,
+      "input_channels": 4,
+      "online_output_channels": 4,
+      "offline_all_generator_output_channels": 10,
+      "metrics": {
+        "online_observability": {
+          "matrix_shape": [
+            1140,
+            285
+          ],
+          "sigma_max": 1.002553638960765,
+          "sigma_min": 1.997127241829915e-41,
+          "condition_number": 5.019978787341319e+40,
+          "machine_precision_rank": 112,
+          "relative_tolerance_ranks": {
+            "1e-06": 62,
+            "1e-08": 80,
+            "1e-10": 94,
+            "1e-12": 109,
+            "1e-14": 120
+          }
+        },
+        "offline_ten_speed_observability": {
+          "matrix_shape": [
+            2850,
+            285
+          ],
+          "sigma_max": 1.0132793047411048,
+          "sigma_min": 2.6213750802397473e-40,
+          "condition_number": 3.865449520670776e+39,
+          "machine_precision_rank": 139,
+          "relative_tolerance_ranks": {
+            "1e-06": 113,
+            "1e-08": 135,
+            "1e-10": 137,
+            "1e-12": 138,
+            "1e-14": 147
+          }
+        },
+        "four_action_channel_controllability": {
+          "matrix_shape": [
+            285,
+            1140
+          ],
+          "sigma_max": 4363509.7573740715,
+          "sigma_min": 2.0642669317236523e-29,
+          "condition_number": 2.1138301884875727e+35,
+          "machine_precision_rank": 72,
+          "relative_tolerance_ranks": {
+            "1e-06": 29,
+            "1e-08": 36,
+            "1e-10": 50,
+            "1e-12": 68,
+            "1e-14": 83
+          }
+        }
+      }
+    },
+    {
+      "file": "native_local_abc_t02.mat",
+      "time": 0.35,
+      "state_dimension": 285,
+      "input_channels": 4,
+      "online_output_channels": 4,
+      "offline_all_generator_output_channels": 10,
+      "metrics": {
+        "online_observability": {
+          "matrix_shape": [
+            1140,
+            285
+          ],
+          "sigma_max": 1.0025547352478181,
+          "sigma_min": 6.247144324926887e-44,
+          "condition_number": 1.6048208318919404e+43,
+          "machine_precision_rank": 113,
+          "relative_tolerance_ranks": {
+            "1e-06": 62,
+            "1e-08": 80,
+            "1e-10": 94,
+            "1e-12": 109,
+            "1e-14": 120
+          }
+        },
+        "offline_ten_speed_observability": {
+          "matrix_shape": [
+            2850,
+            285
+          ],
+          "sigma_max": 1.01324370665911,
+          "sigma_min": 5.632162885655938e-43,
+          "condition_number": 1.7990312553631066e+42,
+          "machine_precision_rank": 140,
+          "relative_tolerance_ranks": {
+            "1e-06": 113,
+            "1e-08": 135,
+            "1e-10": 137,
+            "1e-12": 139,
+            "1e-14": 147
+          }
+        },
+        "four_action_channel_controllability": {
+          "matrix_shape": [
+            285,
+            1140
+          ],
+          "sigma_max": 4361522.156375143,
+          "sigma_min": 9.108537898699426e-29,
+          "condition_number": 4.788388877426648e+34,
+          "machine_precision_rank": 72,
+          "relative_tolerance_ranks": {
+            "1e-06": 29,
+            "1e-08": 36,
+            "1e-10": 49,
+            "1e-12": 68,
+            "1e-14": 83
+          }
+        }
+      }
+    }
+  ]
+}
