@@ -2,7 +2,7 @@ function aefc_ieee39_unprivileged_joint(mode)
 % New evidence only; never rewrite original IEEE39 560-run source or data.
 % Supported "smoke", "pilot", "strict"; all report four-speed proxy scope.
 if nargin<1,mode='smoke';end
-assert(any(strcmp(mode,{'smoke','pilot','strict'})),'AEFC:NewMode','Invalid stage');
+assert(any(strcmp(mode,{'smoke','pilot','pilot_short','strict'})),'AEFC:NewMode','Invalid stage');
 repo=pwd;cfgPath=fullfile(repo,'configs','ieee39_unpriv_r1.json');
 cfg=jsondecode(fileread(cfgPath));
 mapping=jsondecode(fileread(fullfile(repo,cfg.mapping_path)));
@@ -20,6 +20,10 @@ if strcmp(mode,'smoke')
     scenarios={'physical','joint'};scCodes=[3 4];seeds=0:1;scales=1;
 elseif strcmp(mode,'strict')
     methods={'AEFC-Full','Supervisor-only'};mCodes=[7 8];
+    scenarios={'physical','joint'};scCodes=[3 4];seeds=0:1;scales=1;
+elseif strcmp(mode,'pilot_short')
+    methods={'AEFC-Full','Supervisor-only','RobustAgg','AEFC-no-PATBU','AEFC-no-Gate','AEFC-no-TGOPA'};
+    mCodes=[7 8 2 3 4 5];
     scenarios={'physical','joint'};scCodes=[3 4];seeds=0:1;scales=1;
 else
     methods={'AEFC-Full','Supervisor-only','RobustAgg','AEFC-no-PATBU','AEFC-no-Gate','AEFC-no-TGOPA'};
