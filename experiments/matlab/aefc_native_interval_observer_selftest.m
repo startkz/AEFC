@@ -16,8 +16,8 @@ mdl=struct('A',A,'B',B,'c',zeros(n,1), ...
     'measurement_map_verified',true);
 tested=0;maxExcess=-inf;
 for seed=1:80
-    x=0.03*randn(n,1);
     radius=0.05*ones(n,1);
+    x=(2*rand(n,1)-1).*radius;
     state=struct('center',zeros(n,1),'error',radius,...
         'coverage_verified',true);
     assert(all(abs(x-state.center)<=state.error), ...
