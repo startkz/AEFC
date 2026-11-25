@@ -81,6 +81,11 @@ for mi=1:numel(methods)
   sections=numel(busRows);
   assert(numel(busIds)==39,'AEFC:FaultBusCoverage','Expected 39 logical bus Vt channels; found %d',numel(busIds));
   assert(sections>=39,'AEFC:FaultBusSections','Expected at least 39 physical bus sections');
+  busMap=struct('path',{},'logical_bus',{},'section',{},'unit',{});
+  for bm=1:sections
+   busMap(bm)=struct('path',busRows(bm).path,'logical_bus',busRows(bm).logical_bus, ...
+       'section',busRows(bm).section,'unit',busRows(bm).unit); %#ok<AGROW>
+  end
   busV=zeros(numel(tq),sections);busBase=zeros(1,sections);
   for q=1:sections
    [tt,vv]=normalizeLeaf(busRows(q).time,busRows(q).values);
@@ -159,6 +164,7 @@ for mi=1:numel(methods)
    fwrite(fid,jsonencode(rec),'char');fwrite(fid,sprintf('\n'),'char');
   end
   fclose(fid);clear c;
+  saveSummary(fullfile(runDir,sprintf('seed_%02d.bus-map.json',seed)),busMap);
   saveSummary(fullfile(runDir,sprintf('seed_%02d.branch-current.json',seed)),branchSummary);
   saveSummary(fullfile(runDir,sprintf('seed_%02d.fault-current.json',seed)),faultSummary);
   saveSummary(fullfile(runDir,sprintf('seed_%02d.summary.json',seed)),rows(n));
@@ -169,7 +175,7 @@ T=struct2table(rows);writetable(T,fullfile(outRoot,'summary.csv'));
 manifest=struct('protocol',p,'backend','MATLAB R2024b original IEEE39-derived native Simulink/Simscape', ...
  'model',model,'fault_parameters_verified_at_runtime',true,'rows',height(T), ...
  'methods',{methods},'seeds',seeds,'full_network_safety_certified',false, ...
- 'offline_simscape_oracle_only',true,'online_controller_inputs',4, ...
+ 'offline_simscape_oracle_only',true,'online_controller_inputs',4,'bus_voltage_section_map_saved_per_episode',true, ...
  'offline_generator_speed_channels',10,'branch_current_limits_validated',false, ...
  'DAE_reachability_verified',false,'intersample_tube_verified',false);
 saveSummary(fullfile(outRoot,'manifest.json'),manifest);
