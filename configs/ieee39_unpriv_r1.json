@@ -1,0 +1,52 @@
+{
+  "backend": "mathworks_ieee39_r2024b_native",
+  "mapping_path": "results/ieee39_r2024b/interface_mapping.json",
+  "model": "IEEE39BusSystem_AEFCUnpriv",
+  "seeds": 20,
+  "sample_time": 0.016666666666666666,
+  "stop_time": 3,
+  "attack_start_step": 15,
+  "attack_end_step": 89,
+  "clients": 7,
+  "byzantine_clients": 2,
+  "common_support_k": 3,
+  "observation_channels": 4,
+  "actuation_channels": 4,
+  "observation_attack_fraction_of_scale": 0.25,
+  "post_shield_control_attack": 0.008,
+  "action_limit": 0.05,
+  "normalized_safe_limit": 1,
+  "normalized_recovery_limit": 0.25,
+  "shield_reserve": 0.12,
+  "model_replacement_scale": 6,
+  "stale_delay": 7,
+  "patbu": {
+    "beta_age": 0.08,
+    "residual_scale": 0.25,
+    "lambda_b": 0.72,
+    "obs_gain": 0.2,
+    "knowledge_gain": 0.08
+  },
+  "gate": {
+    "rho_max": 0.55,
+    "risk_margin": 0.05,
+    "q_min": 0.18
+  },
+  "adaptation": {
+    "eta": 0.04,
+    "clip_norm": 0.2,
+    "trust_region": 0.035,
+    "q_min": 0.18,
+    "validation_slack": 0.025
+  },
+  "native_contract": {
+    "required_full_state_certificate": true,
+    "full_state_mapping_available": false,
+    "independently_validated_error_coverage": false,
+    "state_measurement_error_normalized": 0.02,
+    "surrogate_prediction_residual": 0.05,
+    "post_shield_attack_upper": 0.024,
+    "surrogate_only": true,
+    "note": "Unvalidated four-rotor-speed proxy only; never report full IEEE39 state certificate; 3x attack scale upper bound 0.024, zero-command strict fail-closed"
+  }
+}
