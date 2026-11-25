@@ -60,5 +60,11 @@ mdl.full_network_variables_covered=false;
     state,mdl,prev,y,zeros(m,1),zeros(m,1),opts);
 assert(all(command==0) && diag.status==-210 && ~diag.certified,...
     'AEFC:CertifiedStepTest','Incomplete native state must fail closed');
-fprintf('FULL-STATE EXECUTION CHAIN: %d certified synthetic samples; missing hold/full-network proof blocked. Real IEEE39 not certified.\\n',released);
+% Real native IEEE39 must remain blocked until reviewed cert artifacts exist.
+cfg=jsondecode(fileread('configs/ieee39_unpriv_r1.json'));
+[loadModel,loadInitial,loadStatus]=aefc_native_load_verified_state_contract(cfg);
+assert(loadStatus<0 && ~loadModel.full_network_variables_covered && ...
+       ~loadInitial.coverage_verified, ...
+    'AEFC:CertifiedStepTest','Unreviewed native contract was erroneously accepted');
+fprintf('FULL-STATE EXECUTION CHAIN: %d certified synthetic samples; missing hold/full-network proof blocked; native R2024b status %d.\\n',released,loadStatus);
 end
