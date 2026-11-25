@@ -5,6 +5,8 @@ on:
     branches: [audit/tdsc-r1-ieee39-native-20261125]
     paths:
       - '.github/workflows/tdsc-r1-ieee39-pilot.yml'
+      - 'experiments/matlab/aefc_ieee39_unprivileged_joint.m'
+      - 'analysis/compare_ieee39_unprivileged.py'
 permissions:
   contents: read
 jobs:
