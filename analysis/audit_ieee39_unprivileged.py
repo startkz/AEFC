@@ -75,7 +75,7 @@ def dynamic_audit(directory:Path):
             assert len(all_sp)==len(all_z)==10
             assert all(math.isfinite(x) for x in all_sp+all_z)
             assert max(abs(zz-(vv-bb)/0.02) for zz,vv,bb in zip(all_z,all_sp,base)) <= 1e-9
-            all_speed_safe=max(abs(all_z))<=cfg['normalized_safe_limit']+1e-9
+            all_speed_safe=max(abs(z) for z in all_z)<=cfg['normalized_safe_limit']+1e-9
             assert r['sampled_all_ten_speed_inside_proxy']==all_speed_safe
             if not all_speed_safe:ten_speed_violations+=1
             status_negative+=int(r['proxy_status']<0)
