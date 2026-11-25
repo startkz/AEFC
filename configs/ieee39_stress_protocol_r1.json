@@ -1,0 +1,84 @@
+{
+  "study": "EXPLORATORY NATIVE IEEE39 TEN-MACHINE REAL POST-ATTACK RECOVERY",
+  "model": "IEEE39BusSystem_AEFCStress",
+  "source_original": "MathWorks R2024b official IEEE39BusSystem",
+  "parent_original_frozen_experiment": "30eb3a58bf9d092e1303e7be3492b36f6458382e",
+  "physical_pref_stress_amplitudes": [
+    0.024,
+    0.06,
+    0.12,
+    0.24
+  ],
+  "stress_source": "AEFCNativeStressAttackHarness",
+  "attack_format": "75-step persistent seed-signed Pref additive attack downstream of all methods' same terminal proxy checker",
+  "threat_attacks": [
+    "physical",
+    "joint"
+  ],
+  "attack_start_step": 15,
+  "attack_end_step": 89,
+  "sample_time": 0.016666666666666666,
+  "stop_time": 3,
+  "methods": [
+    "AEFC-Full",
+    "Supervisor-only",
+    "RobustAgg",
+    "AEFC-no-PATBU",
+    "AEFC-no-Gate",
+    "AEFC-no-TGOPA"
+  ],
+  "pilot_methods": [
+    "AEFC-Full",
+    "Supervisor-only"
+  ],
+  "pilot_seeds": [
+    0,
+    1
+  ],
+  "main_seeds": [
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89
+  ],
+  "main_pressures": [
+    0.06,
+    0.12,
+    0.24
+  ],
+  "recovery_condition": "at attack end max absolute normalized speed over all ten machines greater than 0.25; then all ten hold at most 0.25 for 20 consecutive samples",
+  "independent_physical_sensor_normalization": 0.02,
+  "recovery_bound": 0.25,
+  "sampled_safety_proxy_bound": 1,
+  "primary_statistical_unit": "independent paired seed, not per-sample",
+  "primary_comparison": "AEFC-Full versus Supervisor-only, same seed, pressure, attack scenario, identical terminal supervisor",
+  "secondary_comparisons": [
+    "RobustAgg",
+    "AEFC-no-PATBU",
+    "AEFC-no-Gate",
+    "AEFC-no-TGOPA"
+  ],
+  "outcome_requirements": {
+    "exposure_eligibility": "attack-end outside predeclared ten-generator recovery box",
+    "strict_recovery": "20 consecutive sampled 10-generator speed measurements within recovery box",
+    "physical_safety": "sampled ten-speed only; non-generator bus/branch safety not certified",
+    "intersample": "solver-time speed witness; still not strict reachable tube",
+    "matched_safety_checker": "same four-speed proxy terminal supervisor; NOT full network certified"
+  },
+  "hard_constraints": {
+    "original_P0_postshield_upper": 0.024,
+    "this_stress_max": 0.24,
+    "original_0p024_bound_claimed_for_stresses_above_0p024": false,
+    "bound_source": "exploratory prescribed attack amplitude NOT original certified actuator constraint",
+    "all_electrical_governor_and_line_limits_verified": false,
+    "complete_ieee39_safety_certified": false
+  },
+  "preregistration": "Fixed before this study's native physical stress outcomes were observed",
+  "no_expost_threshold_tuning": true
+}
