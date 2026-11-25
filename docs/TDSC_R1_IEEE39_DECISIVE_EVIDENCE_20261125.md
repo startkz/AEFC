@@ -139,3 +139,11 @@ DeliveredPref = NativeBasePref + AuthorizedCorrection + PostShieldAttack
 已在真实原生 Simulink 的四条 Pref 物理接线增加原始调速器参考值和实际送达参考值的独立日志，并对 `DeliveredPref=OriginalPref+AuthorizedCorrection+PostShieldAttack` 进行采样等式审计；同时保留原始求解器时间戳下的十台机组转速，避免把 1/60 秒的重采样物理监控误当作所有数值求解器中间时刻。首个 CI 失败于原始 Pref 常量源仅保存单个时间样本，被旧读取函数要求至少两个样本。已只对真实原始 Pref 常量源采用零阶保持展开，**不允许对受攻击送达 Pref、控制诊断或物理传感器做相同例外**，重新提交 [原生 Pref 备用路径工作流](https://github.com/startkz/AEFC/actions/runs/45545993086)。在该工作流完成并通过逐迹审计前，这项现场接线证据不得写成验收通过。
 
 真实 MathWorks Simscape 网络代数变量 [物理变量日志探测](https://github.com/startkz/AEFC/actions/runs/45545025290) 和 [本地状态—输出线性化观察诊断](https://github.com/startkz/AEFC/actions/runs/45545265904) 也必须以最终原始工件为准，不能仅凭运行已启动推断已提取全部 39 母线电压或通过全状态安全保证。
+
+## 10. 官方 Simscape 全物理节点扫描完成：真实电气量与重复派生量区分
+
+本次新 [原始 Simscape 离线物理变量审计](https://github.com/startkz/AEFC/actions/runs/45545025290) **成功遍历 22,413 个物理日志节点**，无截断。初步字符串匹配发现 70 个电压相关节点、30 个电角度相关节点、10 个功率相关节点和 0 个匹配支路电流节点。但经原始物理路径识别可知：其中十个是 Gen1–Gen10 在 Bus30–Bus39 的**唯一发电机端电压**路径，其他 60 个主要是输入输出、AVR 内部量测或初始化参数的**同一物理量多个表示**；电角度也只有十个唯一发电机转子角路径，另外二十个是单位转换输入输出；十个功率相关节点是机组 `ic_reactive_power_generated` 初始化参数，并非全网支路功率潮流。
+
+因此这一实测结果对研究是正面进展（已找到原来显示名扫描没有发现的真实 Gen 端电压和 rotor angle），但**不证明已经在十个以上母线找到完整独立在线电压传感器**，更不证明其具备可信误差界或全网络代数可达性。仅 10 个机端节点对应 Bus30–Bus39，其他 29 母线尚未完成可信在线量测与电气约束映射。
+
+[原始 Simscape 变量树证据](https://github.com/startkz/AEFC/actions/runs/45545025290)，新建不重跑 MATLAB 的独立归一化审计 `analysis/reclassify_ieee39_simscape_candidates.py` 与工作流 `tdsc-r1-ieee39-simscape-reclassify.yml`，禁止将 70 个重复节点写成 39/39 母线覆盖，或将机组无功初始化变量错误命名为支路功率。
