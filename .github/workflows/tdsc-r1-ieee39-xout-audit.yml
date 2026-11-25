@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/tdsc-r1-ieee39-xout-audit.yml'
       - 'analysis/audit_ieee39_state_inventory.py'
+      - 'analysis/build_ieee39_state_registry.py'
 permissions:
   contents: read
   actions: read
@@ -46,6 +47,23 @@ jobs:
           assert q['estimated_independent_physical_dynamic_state_dimensions'] is None
           print('PROVENANCE CLASSIFICATION PASS; no inference of 976 physical DoF')
           PY
+      - name: Export reviewable per-generator state and 10-speed sensor mapping registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/build_ieee39_state_registry.py \
+            --input original_artifact/results/ieee39_fullstate_p0/original_native_state_inventory.json \
+            --output native_review_state_registry.json
+          python - <<'PY'
+          import json
+          a=json.load(open('native_review_state_registry.json'))
+          assert len(a['genuine_existing_generator_speed_signal_paths'])==10
+          assert len(a['generators'])==10
+          assert all(g['avr']==15 and g['governor']==3 for g in a['generators'].values())
+          assert a['physical_complete_DAE_state_verified'] is False
+          assert a['physical_complete_online_observer_verified'] is False
+          print('MACHINE STATE REGISTRY PASS, still uncategorized as full physical state')
+          PY
       - name: Save derived audit with unchanged raw original data
         if: always()
         uses: actions/upload-artifact@v4
@@ -54,5 +72,7 @@ jobs:
           path: |
             original_artifact/results/ieee39_fullstate_p0/original_native_state_inventory.json
             state_taxonomy_audit.json
+            native_review_state_registry.json
+            analysis/build_ieee39_state_registry.py
             analysis/audit_ieee39_state_inventory.py
           if-no-files-found: warn
