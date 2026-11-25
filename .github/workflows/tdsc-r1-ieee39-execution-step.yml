@@ -9,6 +9,7 @@ on:
       - 'experiments/matlab/aefc_native_certified_step_selftest.m'
       - 'experiments/matlab/aefc_native_interval_observer.m'
       - 'experiments/matlab/aefc_native_full_state_contract.m'
+      - 'experiments/matlab/aefc_native_hold_reachability.m'
 permissions:
   contents: read
 jobs:
@@ -33,6 +34,7 @@ jobs:
           path: |
             experiments/matlab/aefc_native_interval_observer.m
             experiments/matlab/aefc_native_full_state_contract.m
+            experiments/matlab/aefc_native_hold_reachability.m
             experiments/matlab/aefc_native_certified_execution_step.m
             experiments/matlab/aefc_native_certified_step_selftest.m
           if-no-files-found: warn
