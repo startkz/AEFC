@@ -201,22 +201,360 @@ while head<=numel(stack) && visited<60000
    try,unit=char(child.unit);t=double(time(child));v=double(values(child));catch,continue;end
    if isempty(t)||isempty(v),continue;end
    if contains(parent,'Fault_Three_Phase')
-    var=regexp(parent,'/([^/]+)$','tokens','once');if isempty(var),continue;end
-    fault(end+1)=struct('path',[parent '/' key],'variable',var{1}, ...
-       'unit',unit,'time',t,'values',v); %#ok<AGROW>
-    continue
-   end
-   tok=regexp(parent,'/Grid/Bus(\d+)(?:_(\d+))?/Vt$','tokens','once');
+    var=regexp(parent,'/([^/]+)
+   tok=regexp(parent,'/Grid/Bus([^/]+)/Vt
+   tok=regexp(parent,'/Grid/(TF_B\d+_to_B\d+)/(i1|i2)$','tokens','once');
    if ~isempty(tok)
-    if numel(tok)==2,logicalBus=tok{1};section='';else,logicalBus=tok{1};section=tok{2};end
+    branch(end+1)=struct('path',[parent '/' key],'component',tok{1}, ...
+       'variable',tok{2},'unit',unit,'time',t,'values',v); %#ok<AGROW>
+   end
+  end
+ end
+end
+end
+
+function [t,v]=normalizeLeaf(t,v)
+t=double(t(:));v=double(v);
+if ~isreal(v),v=abs(v);end
+if numel(v)==numel(t),v=v(:);
+else
+ sz=size(v);td=find(sz==numel(t),1,'last');
+ assert(~isempty(td),'AEFC:LeafTimeDimension','Cannot align Simscape series values and time.');
+ perm=[td setdiff(1:ndims(v),td,'stable')];v=permute(v,perm);
+ v=reshape(v,numel(t),[]);
+ v=max(abs(v),[],2);
+end
+[t,ia]=unique(t,'stable');v=v(ia,:);
+if size(v,2)>1,v=max(abs(v),[],2);end
+assert(numel(t)>=2 && numel(v)==numel(t) && all(isfinite(t)) && all(isfinite(v)), ...
+ 'AEFC:LeafSeries','Invalid Simscape physical series.');
+end
+
+function X=sampleOutput(out,name,tq,dim)
+try,v=out.get(name);catch,v=[];end
+assert(~isempty(v),'AEFC:OutputMissing','Missing output %s',name);
+[t,d]=extractSeries(v);t=double(t(:));d=double(d);
+if ~isreal(d),d=abs(d);end
+d=normalizeTimeMajor(d,numel(t),dim,name);[t,ia]=unique(t,'stable');d=d(ia,:);
+if numel(t)==1 && startsWith(name,'AEFC_NATIVE_PREF_BASE_')
+ assert(abs(t(1)-tq(1))<1e-8 && all(isfinite(d),'all'), ...
+     'AEFC:OriginalPrefSingleSample','Single original Pref sample invalid');
+ X=repmat(d(1,1:dim),numel(tq),1);return;
+end
+assert(numel(t)>=2,'AEFC:OutputSamples','Too few samples for %s',name);
+X=interp1(t,d(:,1:dim),tq,'nearest','extrap');
+assert(isequal(size(X),[numel(tq),dim])&&all(isfinite(X),'all'));
+end
+function d=normalizeTimeMajor(d,nT,dim,name)
+if isvector(d)&&dim==1,assert(numel(d)==nT);d=d(:);return;end
+assert(numel(d)==nT*dim,'AEFC:OutputDimension','Bad shape %s',name);
+sz=size(d);td=find(sz==nT,1,'last');assert(~isempty(td));
+d=permute(d,[td setdiff(1:ndims(d),td,'stable')]);d=reshape(d,nT,[]);
+assert(size(d,2)==dim);
+end
+function [t,d]=extractSeries(v)
+if isa(v,'timeseries'),t=v.Time;d=v.Data;
+elseif isa(v,'Simulink.SimulationData.Dataset'),el=v.getElement(1);[t,d]=extractSeries(el.Values);
+elseif isa(v,'Simulink.SimulationData.Signal'),[t,d]=extractSeries(v.Values);
+elseif isstruct(v)&&isfield(v,'time')&&isfield(v,'signals'),t=v.time;d=v.signals.values;
+else,try,t=v.Time;d=v.Data;catch,error('AEFC:OutputFormat','Unsupported %s',class(v));end,end
+end
+function s=getSimParam(p,n)
+s=char(get_param(p,n));
+end
+function saveSummary(path,obj)
+fid=fopen(path,'w');assert(fid>0);c=onCleanup(@()fclose(fid)); %#ok<NASGU>
+fwrite(fid,jsonencode(obj,'PrettyPrint',true),'char');fwrite(fid,sprintf('\n'),'char');
+end
+,'tokens','once');
+   if ~isempty(tok)
+    busParts=strsplit(tok{1},'_');logicalBus=busParts{1};section='';
+    if numel(busParts)>1,section=busParts{2};end
     bus(end+1)=struct('path',[parent '/' key],'logical_bus',logicalBus, ...
        'section',section,'unit',unit,'time',t,'values',v); %#ok<AGROW>
     continue
    end
-   tok=regexp(parent,'/Grid/(B\d+_to_B\d+)/(i)$','tokens','once');
+   tok=regexp(parent,'/Grid/(B\d+_to_B\d+)/phase_splitter(\d+)/(I|i_a|i_b|i_c)
+   tok=regexp(parent,'/Grid/(TF_B\d+_to_B\d+)/(i1|i2)$','tokens','once');
    if ~isempty(tok)
     branch(end+1)=struct('path',[parent '/' key],'component',tok{1}, ...
        'variable',tok{2},'unit',unit,'time',t,'values',v); %#ok<AGROW>
+   end
+  end
+ end
+end
+end
+
+function [t,v]=normalizeLeaf(t,v)
+t=double(t(:));v=double(v);
+if ~isreal(v),v=abs(v);end
+if numel(v)==numel(t),v=v(:);
+else
+ sz=size(v);td=find(sz==numel(t),1,'last');
+ assert(~isempty(td),'AEFC:LeafTimeDimension','Cannot align Simscape series values and time.');
+ perm=[td setdiff(1:ndims(v),td,'stable')];v=permute(v,perm);
+ v=reshape(v,numel(t),[]);
+ v=max(abs(v),[],2);
+end
+[t,ia]=unique(t,'stable');v=v(ia,:);
+if size(v,2)>1,v=max(abs(v),[],2);end
+assert(numel(t)>=2 && numel(v)==numel(t) && all(isfinite(t)) && all(isfinite(v)), ...
+ 'AEFC:LeafSeries','Invalid Simscape physical series.');
+end
+
+function X=sampleOutput(out,name,tq,dim)
+try,v=out.get(name);catch,v=[];end
+assert(~isempty(v),'AEFC:OutputMissing','Missing output %s',name);
+[t,d]=extractSeries(v);t=double(t(:));d=double(d);
+if ~isreal(d),d=abs(d);end
+d=normalizeTimeMajor(d,numel(t),dim,name);[t,ia]=unique(t,'stable');d=d(ia,:);
+if numel(t)==1 && startsWith(name,'AEFC_NATIVE_PREF_BASE_')
+ assert(abs(t(1)-tq(1))<1e-8 && all(isfinite(d),'all'), ...
+     'AEFC:OriginalPrefSingleSample','Single original Pref sample invalid');
+ X=repmat(d(1,1:dim),numel(tq),1);return;
+end
+assert(numel(t)>=2,'AEFC:OutputSamples','Too few samples for %s',name);
+X=interp1(t,d(:,1:dim),tq,'nearest','extrap');
+assert(isequal(size(X),[numel(tq),dim])&&all(isfinite(X),'all'));
+end
+function d=normalizeTimeMajor(d,nT,dim,name)
+if isvector(d)&&dim==1,assert(numel(d)==nT);d=d(:);return;end
+assert(numel(d)==nT*dim,'AEFC:OutputDimension','Bad shape %s',name);
+sz=size(d);td=find(sz==nT,1,'last');assert(~isempty(td));
+d=permute(d,[td setdiff(1:ndims(d),td,'stable')]);d=reshape(d,nT,[]);
+assert(size(d,2)==dim);
+end
+function [t,d]=extractSeries(v)
+if isa(v,'timeseries'),t=v.Time;d=v.Data;
+elseif isa(v,'Simulink.SimulationData.Dataset'),el=v.getElement(1);[t,d]=extractSeries(el.Values);
+elseif isa(v,'Simulink.SimulationData.Signal'),[t,d]=extractSeries(v.Values);
+elseif isstruct(v)&&isfield(v,'time')&&isfield(v,'signals'),t=v.time;d=v.signals.values;
+else,try,t=v.Time;d=v.Data;catch,error('AEFC:OutputFormat','Unsupported %s',class(v));end,end
+end
+function s=getSimParam(p,n)
+s=char(get_param(p,n));
+end
+function saveSummary(path,obj)
+fid=fopen(path,'w');assert(fid>0);c=onCleanup(@()fclose(fid)); %#ok<NASGU>
+fwrite(fid,jsonencode(obj,'PrettyPrint',true),'char');fwrite(fid,sprintf('\n'),'char');
+end
+,'tokens','once');
+   if ~isempty(tok)
+    branch(end+1)=struct('path',[parent '/' key],'component',tok{1}, ...
+       'variable',['phase_splitter' tok{2} '/' tok{3}],'unit',unit,'time',t,'values',v); %#ok<AGROW>
+    continue
+   end
+   tok=regexp(parent,'/Grid/(TF_B\d+_to_B\d+)/(i1|i2)$','tokens','once');
+   if ~isempty(tok)
+    branch(end+1)=struct('path',[parent '/' key],'component',tok{1}, ...
+       'variable',tok{2},'unit',unit,'time',t,'values',v); %#ok<AGROW>
+   end
+  end
+ end
+end
+end
+
+function [t,v]=normalizeLeaf(t,v)
+t=double(t(:));v=double(v);
+if ~isreal(v),v=abs(v);end
+if numel(v)==numel(t),v=v(:);
+else
+ sz=size(v);td=find(sz==numel(t),1,'last');
+ assert(~isempty(td),'AEFC:LeafTimeDimension','Cannot align Simscape series values and time.');
+ perm=[td setdiff(1:ndims(v),td,'stable')];v=permute(v,perm);
+ v=reshape(v,numel(t),[]);
+ v=max(abs(v),[],2);
+end
+[t,ia]=unique(t,'stable');v=v(ia,:);
+if size(v,2)>1,v=max(abs(v),[],2);end
+assert(numel(t)>=2 && numel(v)==numel(t) && all(isfinite(t)) && all(isfinite(v)), ...
+ 'AEFC:LeafSeries','Invalid Simscape physical series.');
+end
+
+function X=sampleOutput(out,name,tq,dim)
+try,v=out.get(name);catch,v=[];end
+assert(~isempty(v),'AEFC:OutputMissing','Missing output %s',name);
+[t,d]=extractSeries(v);t=double(t(:));d=double(d);
+if ~isreal(d),d=abs(d);end
+d=normalizeTimeMajor(d,numel(t),dim,name);[t,ia]=unique(t,'stable');d=d(ia,:);
+if numel(t)==1 && startsWith(name,'AEFC_NATIVE_PREF_BASE_')
+ assert(abs(t(1)-tq(1))<1e-8 && all(isfinite(d),'all'), ...
+     'AEFC:OriginalPrefSingleSample','Single original Pref sample invalid');
+ X=repmat(d(1,1:dim),numel(tq),1);return;
+end
+assert(numel(t)>=2,'AEFC:OutputSamples','Too few samples for %s',name);
+X=interp1(t,d(:,1:dim),tq,'nearest','extrap');
+assert(isequal(size(X),[numel(tq),dim])&&all(isfinite(X),'all'));
+end
+function d=normalizeTimeMajor(d,nT,dim,name)
+if isvector(d)&&dim==1,assert(numel(d)==nT);d=d(:);return;end
+assert(numel(d)==nT*dim,'AEFC:OutputDimension','Bad shape %s',name);
+sz=size(d);td=find(sz==nT,1,'last');assert(~isempty(td));
+d=permute(d,[td setdiff(1:ndims(d),td,'stable')]);d=reshape(d,nT,[]);
+assert(size(d,2)==dim);
+end
+function [t,d]=extractSeries(v)
+if isa(v,'timeseries'),t=v.Time;d=v.Data;
+elseif isa(v,'Simulink.SimulationData.Dataset'),el=v.getElement(1);[t,d]=extractSeries(el.Values);
+elseif isa(v,'Simulink.SimulationData.Signal'),[t,d]=extractSeries(v.Values);
+elseif isstruct(v)&&isfield(v,'time')&&isfield(v,'signals'),t=v.time;d=v.signals.values;
+else,try,t=v.Time;d=v.Data;catch,error('AEFC:OutputFormat','Unsupported %s',class(v));end,end
+end
+function s=getSimParam(p,n)
+s=char(get_param(p,n));
+end
+function saveSummary(path,obj)
+fid=fopen(path,'w');assert(fid>0);c=onCleanup(@()fclose(fid)); %#ok<NASGU>
+fwrite(fid,jsonencode(obj,'PrettyPrint',true),'char');fwrite(fid,sprintf('\n'),'char');
+end
+,'tokens','once');if isempty(var),continue;end
+    vn=var{1};
+    if any(strcmp(vn,{'i','I','i1','i2','i_a','i_b','i_c'}))
+      fault(end+1)=struct('path',[parent '/' key],'variable',vn, ...
+         'unit',unit,'time',t,'values',v); %#ok<AGROW>
+    end
+    continue
+   end
+   tok=regexp(parent,'/Grid/Bus([^/]+)/Vt
+   tok=regexp(parent,'/Grid/(TF_B\d+_to_B\d+)/(i1|i2)$','tokens','once');
+   if ~isempty(tok)
+    branch(end+1)=struct('path',[parent '/' key],'component',tok{1}, ...
+       'variable',tok{2},'unit',unit,'time',t,'values',v); %#ok<AGROW>
+   end
+  end
+ end
+end
+end
+
+function [t,v]=normalizeLeaf(t,v)
+t=double(t(:));v=double(v);
+if ~isreal(v),v=abs(v);end
+if numel(v)==numel(t),v=v(:);
+else
+ sz=size(v);td=find(sz==numel(t),1,'last');
+ assert(~isempty(td),'AEFC:LeafTimeDimension','Cannot align Simscape series values and time.');
+ perm=[td setdiff(1:ndims(v),td,'stable')];v=permute(v,perm);
+ v=reshape(v,numel(t),[]);
+ v=max(abs(v),[],2);
+end
+[t,ia]=unique(t,'stable');v=v(ia,:);
+if size(v,2)>1,v=max(abs(v),[],2);end
+assert(numel(t)>=2 && numel(v)==numel(t) && all(isfinite(t)) && all(isfinite(v)), ...
+ 'AEFC:LeafSeries','Invalid Simscape physical series.');
+end
+
+function X=sampleOutput(out,name,tq,dim)
+try,v=out.get(name);catch,v=[];end
+assert(~isempty(v),'AEFC:OutputMissing','Missing output %s',name);
+[t,d]=extractSeries(v);t=double(t(:));d=double(d);
+if ~isreal(d),d=abs(d);end
+d=normalizeTimeMajor(d,numel(t),dim,name);[t,ia]=unique(t,'stable');d=d(ia,:);
+if numel(t)==1 && startsWith(name,'AEFC_NATIVE_PREF_BASE_')
+ assert(abs(t(1)-tq(1))<1e-8 && all(isfinite(d),'all'), ...
+     'AEFC:OriginalPrefSingleSample','Single original Pref sample invalid');
+ X=repmat(d(1,1:dim),numel(tq),1);return;
+end
+assert(numel(t)>=2,'AEFC:OutputSamples','Too few samples for %s',name);
+X=interp1(t,d(:,1:dim),tq,'nearest','extrap');
+assert(isequal(size(X),[numel(tq),dim])&&all(isfinite(X),'all'));
+end
+function d=normalizeTimeMajor(d,nT,dim,name)
+if isvector(d)&&dim==1,assert(numel(d)==nT);d=d(:);return;end
+assert(numel(d)==nT*dim,'AEFC:OutputDimension','Bad shape %s',name);
+sz=size(d);td=find(sz==nT,1,'last');assert(~isempty(td));
+d=permute(d,[td setdiff(1:ndims(d),td,'stable')]);d=reshape(d,nT,[]);
+assert(size(d,2)==dim);
+end
+function [t,d]=extractSeries(v)
+if isa(v,'timeseries'),t=v.Time;d=v.Data;
+elseif isa(v,'Simulink.SimulationData.Dataset'),el=v.getElement(1);[t,d]=extractSeries(el.Values);
+elseif isa(v,'Simulink.SimulationData.Signal'),[t,d]=extractSeries(v.Values);
+elseif isstruct(v)&&isfield(v,'time')&&isfield(v,'signals'),t=v.time;d=v.signals.values;
+else,try,t=v.Time;d=v.Data;catch,error('AEFC:OutputFormat','Unsupported %s',class(v));end,end
+end
+function s=getSimParam(p,n)
+s=char(get_param(p,n));
+end
+function saveSummary(path,obj)
+fid=fopen(path,'w');assert(fid>0);c=onCleanup(@()fclose(fid)); %#ok<NASGU>
+fwrite(fid,jsonencode(obj,'PrettyPrint',true),'char');fwrite(fid,sprintf('\n'),'char');
+end
+,'tokens','once');
+   if ~isempty(tok)
+    busParts=strsplit(tok{1},'_');logicalBus=busParts{1};section='';
+    if numel(busParts)>1,section=busParts{2};end
+    bus(end+1)=struct('path',[parent '/' key],'logical_bus',logicalBus, ...
+       'section',section,'unit',unit,'time',t,'values',v); %#ok<AGROW>
+    continue
+   end
+   tok=regexp(parent,'/Grid/(B\d+_to_B\d+)/phase_splitter(\d+)/(I|i_a|i_b|i_c)
+   tok=regexp(parent,'/Grid/(TF_B\d+_to_B\d+)/(i1|i2)$','tokens','once');
+   if ~isempty(tok)
+    branch(end+1)=struct('path',[parent '/' key],'component',tok{1}, ...
+       'variable',tok{2},'unit',unit,'time',t,'values',v); %#ok<AGROW>
+   end
+  end
+ end
+end
+end
+
+function [t,v]=normalizeLeaf(t,v)
+t=double(t(:));v=double(v);
+if ~isreal(v),v=abs(v);end
+if numel(v)==numel(t),v=v(:);
+else
+ sz=size(v);td=find(sz==numel(t),1,'last');
+ assert(~isempty(td),'AEFC:LeafTimeDimension','Cannot align Simscape series values and time.');
+ perm=[td setdiff(1:ndims(v),td,'stable')];v=permute(v,perm);
+ v=reshape(v,numel(t),[]);
+ v=max(abs(v),[],2);
+end
+[t,ia]=unique(t,'stable');v=v(ia,:);
+if size(v,2)>1,v=max(abs(v),[],2);end
+assert(numel(t)>=2 && numel(v)==numel(t) && all(isfinite(t)) && all(isfinite(v)), ...
+ 'AEFC:LeafSeries','Invalid Simscape physical series.');
+end
+
+function X=sampleOutput(out,name,tq,dim)
+try,v=out.get(name);catch,v=[];end
+assert(~isempty(v),'AEFC:OutputMissing','Missing output %s',name);
+[t,d]=extractSeries(v);t=double(t(:));d=double(d);
+if ~isreal(d),d=abs(d);end
+d=normalizeTimeMajor(d,numel(t),dim,name);[t,ia]=unique(t,'stable');d=d(ia,:);
+if numel(t)==1 && startsWith(name,'AEFC_NATIVE_PREF_BASE_')
+ assert(abs(t(1)-tq(1))<1e-8 && all(isfinite(d),'all'), ...
+     'AEFC:OriginalPrefSingleSample','Single original Pref sample invalid');
+ X=repmat(d(1,1:dim),numel(tq),1);return;
+end
+assert(numel(t)>=2,'AEFC:OutputSamples','Too few samples for %s',name);
+X=interp1(t,d(:,1:dim),tq,'nearest','extrap');
+assert(isequal(size(X),[numel(tq),dim])&&all(isfinite(X),'all'));
+end
+function d=normalizeTimeMajor(d,nT,dim,name)
+if isvector(d)&&dim==1,assert(numel(d)==nT);d=d(:);return;end
+assert(numel(d)==nT*dim,'AEFC:OutputDimension','Bad shape %s',name);
+sz=size(d);td=find(sz==nT,1,'last');assert(~isempty(td));
+d=permute(d,[td setdiff(1:ndims(d),td,'stable')]);d=reshape(d,nT,[]);
+assert(size(d,2)==dim);
+end
+function [t,d]=extractSeries(v)
+if isa(v,'timeseries'),t=v.Time;d=v.Data;
+elseif isa(v,'Simulink.SimulationData.Dataset'),el=v.getElement(1);[t,d]=extractSeries(el.Values);
+elseif isa(v,'Simulink.SimulationData.Signal'),[t,d]=extractSeries(v.Values);
+elseif isstruct(v)&&isfield(v,'time')&&isfield(v,'signals'),t=v.time;d=v.signals.values;
+else,try,t=v.Time;d=v.Data;catch,error('AEFC:OutputFormat','Unsupported %s',class(v));end,end
+end
+function s=getSimParam(p,n)
+s=char(get_param(p,n));
+end
+function saveSummary(path,obj)
+fid=fopen(path,'w');assert(fid>0);c=onCleanup(@()fclose(fid)); %#ok<NASGU>
+fwrite(fid,jsonencode(obj,'PrettyPrint',true),'char');fwrite(fid,sprintf('\n'),'char');
+end
+,'tokens','once');
+   if ~isempty(tok)
+    branch(end+1)=struct('path',[parent '/' key],'component',tok{1}, ...
+       'variable',['phase_splitter' tok{2} '/' tok{3}],'unit',unit,'time',t,'values',v); %#ok<AGROW>
     continue
    end
    tok=regexp(parent,'/Grid/(TF_B\d+_to_B\d+)/(i1|i2)$','tokens','once');
