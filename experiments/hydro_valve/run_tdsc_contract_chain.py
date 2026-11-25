@@ -144,8 +144,11 @@ def release_command(lo, hi, requested, fallback, c: Config, grid_size=9, max_che
 
 class UnprivilegedController:
     """Production-facing decision boundary: no true plant state or attack flags."""
-    def __init__(self, c: Config):
+    def __init__(self, c: Config, policy_mode='full'):
+        if policy_mode not in ('full','supervisor_only'):
+            raise ValueError('Invalid treatment')
         self.c=c
+        self.policy_mode=policy_mode
 
     def initial_memory(self):
         c=self.c
@@ -155,6 +158,18 @@ class UnprivilegedController:
     def decide(self, packet: OnlineInputs, memory: OnlineMemory) -> Decision:
         c=self.c
         local=np.asarray(packet.local_plc_norm,dtype=float)
+        if self.policy_mode=='supervisor_only':
+            # Independent same-contract baseline: ignores ALL federated reports,
+            # HMI observations, learned backbone and knowledge-derived risk.
+            if local.shape!=(6,) or not np.all(np.isfinite(local)):
+                return Decision(None,'INVALID_LOCAL_SENSOR',0.0,False,False,None,0)
+            anchor=np.asarray(c.theta_anchor,dtype=float)
+            _,error=controller_command(local,anchor,memory.backup_integral,c)
+            memory.backup_integral=np.clip(memory.backup_integral+c.dt*error,-0.25,0.25)
+            backup,_=controller_command(local,anchor,memory.backup_integral,c)
+            lo,hi=state_uncertainty(local,c)
+            command,status,margin,work=release_command(lo,hi,backup,backup,c)
+            return Decision(command,status,1.0,False,False,margin,work)
         hmi=np.asarray(packet.received_hmi_norm,dtype=float)
         reports=np.asarray(packet.federated_reports,dtype=float)
         ages=np.asarray(packet.received_ages,dtype=float)
@@ -220,10 +235,10 @@ def in_recovery(x: np.ndarray, c: Config, flow_tol: float, speed_tol: float):
 
 def run_episode(seed: int, scenario: str, c: Config, output: Path,
                 flow_tol=0.012, speed_tol=0.008, hold=20,
-                post_attack_strength=0.08, load_stress=0.010):
+                post_attack_strength=0.08, load_stress=0.010, policy_mode='full'):
     """Attack schedule and physical truth exist ONLY in this simulation harness."""
     plant=HydroPlant(c)
-    controller=UnprivilegedController(c)
+    controller=UnprivilegedController(c,policy_mode)
     memory=controller.initial_memory()
     tape=make_tape(seed,c)
     n=c.clients; attack_stop=c.attack_end
@@ -292,7 +307,7 @@ def run_episode(seed: int, scenario: str, c: Config, output: Path,
     output.mkdir(parents=True,exist_ok=True)
     raw=output/f'seed_{seed}_{scenario}.jsonl'
     raw.write_text(''.join(json.dumps(row,separators=(',',':'))+'\n' for row in trace),encoding='utf-8')
-    return dict(seed=seed,scenario=scenario,steps=len(trace),failure=contract_fail,
+    return dict(seed=seed,scenario=scenario,policy_mode=policy_mode,steps=len(trace),failure=contract_fail,
                 initial_outside_recovery=exposed,corrected=first is not None,
                 first_recovery_step=first,recovery_steps_from_attack_stop=(first-attack_stop if first is not None else None),
                 violations=sum(not r['safe'] for r in trace),
@@ -313,6 +328,7 @@ def main():
     p.add_argument('--post-attack-strength',type=float,default=0.08)
     p.add_argument('--load-stress',type=float,default=0.010)
     p.add_argument('--stage',choices=('exploratory','frozen-holdout'),default='exploratory')
+    p.add_argument('--mode',choices=('full','supervisor_only'),default='full')
     a=p.parse_args()
     if a.seeds < 1 or a.steps < 100: p.error('invalid run horizon')
     # Exogenous stochastic draws and transient load are within declared bounds.
@@ -325,7 +341,7 @@ def main():
     path.mkdir(parents=True,exist_ok=True)
     cases=('clean','knowledge','physical','joint')
     rows=[run_episode(seed,sc,c,path,post_attack_strength=a.post_attack_strength,
-                      load_stress=a.load_stress) for sc in cases
+                      load_stress=a.load_stress,policy_mode=a.mode) for sc in cases
           for seed in range(a.seed_start,a.seed_start+a.seeds)]
     with (path/'summary.csv').open('w',newline='') as fp:
         w=csv.DictWriter(fp,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
@@ -336,7 +352,7 @@ def main():
                   trusted_inputs='PLC-local bounded observation; known plant bounds and reference controller',
                   attacker_truth_to_controller=False,oracle_shadow_to_controller=False,
                   seed_start=a.seed_start,seeds=a.seeds,scenarios=cases,
-                  steps=a.steps,stage=a.stage,
+                  steps=a.steps,stage=a.stage,policy_mode=a.mode,
                   physical_load_stress=a.load_stress,physical_post_attack_strength=a.post_attack_strength,
                   attack_step_start=c.attack_start,attack_step_end=c.attack_end,
                   recovery_flow_tolerance=0.012,recovery_speed_tolerance=0.008,
