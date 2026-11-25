@@ -73,6 +73,15 @@ for ai=1:numel(scales)
                 diagv=sampleOutput(out,'AEFC_DIAG',tq,16);
                 ushield=sampleOutput(out,'AEFC_SHIELD_VECTOR',tq,4);
                 upost=sampleOutput(out,'AEFC_POST_ATTACK_VECTOR',tq,4);
+                allgen=sampleOutput(out,'AEFC_NATIVE_GEN_ALL_10',tq,10);
+                assert(isequal(size(allgen),[numel(tq),10]) && all(isfinite(allgen),'all'), ...
+                    'AEFC:TenSpeedMissing','All ten real generator speed channels must be recorded');
+                % Initial pre-attack operating reference is observed at t=0,
+                % never a secret clean trajectory or an attack identity flag.
+                allgenReference=allgen(1,:);
+                zAll=(allgen-allgenReference)/0.02;
+                allgenMax=max(abs(zAll),[],2);
+                tenSafe=allgenMax<=cfg.normalized_safe_limit+1e-9;
                 assert(all(diagv(:,11)==0) && all(diagv(:,12)==0), ...
                     'AEFC:FalseCertification','Four-channel experiment must not mark full state certified');
                 assert(all(abs(upost(:))<=double(cfg.native_contract.post_shield_attack_upper)+1e-9), ...
@@ -97,6 +106,16 @@ for ai=1:numel(scales)
                     end
                 end
                 recovered=~isempty(recIdx);
+                tenExposed=allgenMax(idxEnd)>cfg.normalized_recovery_limit;
+                tenRecIdx=[];
+                if tenExposed
+                    for t=idxEnd+1:numel(tq)-19
+                        if all(allgenMax(t:t+19)<=cfg.normalized_recovery_limit)
+                            tenRecIdx=t;break;
+                        end
+                    end
+                end
+                tenRecovered=~isempty(tenRecIdx);
                 tracePath=fullfile(runDir,sprintf('seed_%02d.jsonl',seed));
                 assert(exist(tracePath,'file')~=2,'AEFC:TraceOverwrite','Existing evidence file');
                 fid=fopen(tracePath,'w');assert(fid>0,'AEFC:IO','Cannot write trace');
@@ -121,7 +140,10 @@ for ai=1:numel(scales)
                         'proxy_pass',logical(diagv(k,15)>0.5),...
                         'shield_action',ushield(k,:),'post_shield_attack',upost(k,:),...
                         'executed_correction',ushield(k,:)+upost(k,:), ...
-                        'sampled_speed_inside_proxy',logical(safeObserved(k)));
+                        'sampled_speed_inside_proxy',logical(safeObserved(k)),...
+                        'all_ten_generator_speed_native',allgen(k,:), ...
+                        'all_ten_generator_speed_normalized',zAll(k,:), ...
+                        'sampled_all_ten_speed_inside_proxy',logical(tenSafe(k)));
                     fwrite(fid,jsonencode(r),'char');fwrite(fid,sprintf('\n'),'char');
                 end
                 fclose(fid);
@@ -143,6 +165,15 @@ for ai=1:numel(scales)
                 rows(counter).backup_used_count=sum(diagv(:,13)>0.5);
                 rows(counter).full_state_certified_count=0;
                 rows(counter).mean_native_speed_error=mean(maxabs);
+                rows(counter).all_ten_speed_exposed_at_attack_stop=double(tenExposed);
+                rows(counter).all_ten_speed_strict_recovered=double(tenRecovered);
+                if tenRecovered
+                    rows(counter).all_ten_speed_recovery_time=tq(tenRecIdx)-tq(idxEnd);
+                else
+                    rows(counter).all_ten_speed_recovery_time=NaN;
+                end
+                rows(counter).all_ten_speed_sampled_violation_steps=sum(~tenSafe);
+                rows(counter).mean_all_ten_speed_error=mean(allgenMax);
                 saveSummary(fullfile(runDir,sprintf('seed_%02d.summary.json',seed)),rows(counter));
             end
         end
@@ -152,14 +183,16 @@ try,set_param(model,'FastRestart','off');catch,end
 T=struct2table(rows);
 writetable(T,fullfile(outRoot,'summary.csv'));
 manifest=struct('backend','MATLAB R2024b original native IEEE39 instrumented copy',...
-    'scope','four observable rotor speeds only; no full state or formal CBF guarantee', ...
+    'scope','all 10 generator physical rotor speeds logged, original four received by online controller; NO complete DAE state or formal CBF guarantee', ...
     'source_commit',commitSha,'config_id',configId,'model',model,...
     'methods',{methods},'scenarios',{scenarios},'seeds',seeds,...
     'attack_scales',scales,'rows',height(T),'sample_s',dt,...
     'strict_full_state_no_release',strictMode,...
     'recovery_criterion','outside 0.25 normalized speed at attack stop; then inside for 20 full samples', ...
     'statistical_unit','seed; deterministic phases are not iid independent trials', ...
-    'full_state_certified',false,'proxy_bounds_unvalidated',true);
+    'full_state_certified',false,'all_ten_generators_speed_monitored',true, ...
+    'all_ten_speed_recovery_normalization','each generator preattack observed t=0 rotor-speed; divisor 0.02 p.u.', ...
+    'proxy_bounds_unvalidated',true);
 saveSummary(fullfile(outRoot,'manifest.json'),manifest);
 close_system(model,0);
 end
