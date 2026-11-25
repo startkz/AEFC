@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 from experiments.hydro_valve.run_hydro_valve_cps import Config, predict_next, safe_state
 from experiments.hydro_valve.run_tdsc_contract_chain import (
-    state_uncertainty, interval_step, in_recovery,
+    state_uncertainty, interval_step, in_recovery, certified_margin,
 )
 
 def audit(path: Path):
@@ -44,6 +44,9 @@ def audit(path: Path):
                 assert np.max(np.abs(post))<=c.command_attack_bound+1e-12
                 assert np.all(u>=c.command_attack_bound-1e-12)
                 assert np.all(u<=1-c.command_attack_bound+1e-12)
+                calc_margin=certified_margin(lo,hi,u,c)
+                assert calc_margin>=-1e-12,(sc,seed,i,'negative recomputed margin')
+                assert abs(calc_margin-float(row['margin']))<=1e-10,(sc,seed,i,'margin log mismatch')
                 assert abs(row['qin']-c.qin_nominal)<=c.qin_uncertainty+1e-12 or not row['exogenous_covered']
                 assert abs(row['load']-c.load_nominal)<=c.load_uncertainty+1e-12 or not row['exogenous_covered']
                 actual=np.asarray(row['state_true'])
