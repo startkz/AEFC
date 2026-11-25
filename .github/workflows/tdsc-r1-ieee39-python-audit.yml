@@ -1,0 +1,37 @@
+name: TDSC-R1 IEEE39 native artifact static audit and Python syntax
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-fullstate-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-python-audit.yml'
+      - 'analysis/audit_ieee39_unprivileged.py'
+      - 'analysis/audit_ieee39_fullstate_gate.py'
+      - 'analysis/compare_ieee39_unprivileged.py'
+      - 'tests/test_ieee39_fullstate_gate.py'
+      - 'experiments/matlab/AEFCNativeController.m'
+      - 'experiments/matlab/aefc_ieee39_unprivileged_joint.m'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile all current native trace auditors
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile analysis/audit_ieee39_unprivileged.py
+          python -m py_compile analysis/compare_ieee39_unprivileged.py
+          python -m py_compile analysis/audit_ieee39_fullstate_gate.py
+      - name: Verify no-oracle source and proof-claim gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_unprivileged.py
+          python -m unittest discover -s tests -p test_ieee39_fullstate_gate.py -v
