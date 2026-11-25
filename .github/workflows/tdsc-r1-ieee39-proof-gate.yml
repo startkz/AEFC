@@ -1,0 +1,38 @@
+name: TDSC-R1 IEEE39 full-network readiness and proof-gate audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-fullstate-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-proof-gate.yml'
+      - 'analysis/audit_ieee39_fullstate_gate.py'
+      - 'tests/test_ieee39_fullstate_gate.py'
+      - 'configs/ieee39_fullstate_certification_requirements.json'
+      - 'configs/ieee39_unpriv_r1.json'
+permissions:
+  contents: read
+jobs:
+  evidence_first_claims:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refuse premature IEEE39 physical safety/recovery claims
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p test_ieee39_fullstate_gate.py -v
+          python -m analysis.audit_ieee39_fullstate_gate | tee fullstate_readiness_audit.json
+      - name: Upload explicit noncertified readiness findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-proof-gate-${{ github.sha }}
+          path: |
+            fullstate_readiness_audit.json
+            configs/ieee39_fullstate_certification_requirements.json
+            tests/test_ieee39_fullstate_gate.py
+          if-no-files-found: warn
