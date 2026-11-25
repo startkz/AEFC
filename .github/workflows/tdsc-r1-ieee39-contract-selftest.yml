@@ -1,0 +1,34 @@
+name: TDSC-R1 synthetic full-state robust affine solver selftest
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-native-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-contract-selftest.yml'
+      - 'experiments/matlab/aefc_native_full_state_contract.m'
+      - 'experiments/matlab/aefc_native_full_state_selftest.m'
+permissions:
+  contents: read
+jobs:
+  conditional_discrete_affine_contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          cache: true
+      - name: Verify robust counterpart under 500 independent synthetic samples and missing coverage
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('experiments/matlab'); aefc_native_full_state_selftest
+      - name: Archive exact tested implementation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-fullstate-affine-synthetic-${{ github.sha }}
+          path: |
+            experiments/matlab/aefc_native_full_state_contract.m
+            experiments/matlab/aefc_native_full_state_selftest.m
+          if-no-files-found: warn
