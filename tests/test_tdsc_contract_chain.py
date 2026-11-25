@@ -1,6 +1,7 @@
 """Contract and interface tests against the existing hydraulic SIL plant."""
 import ast
 import inspect
+import textwrap
 import tempfile
 import unittest
 from pathlib import Path
@@ -53,7 +54,7 @@ class ContractTests(unittest.TestCase):
         self.assertTrue(status.startswith('CERTIFIED_'))
 
     def test_controller_decision_ast_has_no_oracle_fields(self):
-        tree=ast.parse(inspect.getsource(UnprivilegedController.decide))
+        tree=ast.parse(textwrap.dedent(inspect.getsource(UnprivilegedController.decide)))
         names={n.id for n in ast.walk(tree) if isinstance(n,ast.Name)}
         self.assertFalse(names.intersection({'plant','true_before','true_after','scenario',
                                              'attack_active','malicious','seed','theta_shadow',
