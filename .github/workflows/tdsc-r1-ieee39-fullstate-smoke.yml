@@ -1,0 +1,64 @@
+name: TDSC-R1 IEEE39 native runtime privilege and actual-plant smoke
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-fullstate-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-fullstate-smoke.yml'
+      - 'experiments/matlab/AEFCNativeAttackHarness.m'
+      - 'experiments/matlab/AEFCNativeController.m'
+      - 'experiments/matlab/aefc_ieee39_unprivileged_joint.m'
+      - 'experiments/matlab/aefc_native_execution_contract.m'
+permissions:
+  contents: read
+jobs:
+  native_smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Static defense boundary rejects simulation oracle access
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_unprivileged.py | tee static_audit.json
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Dynamic shape check of offline attack harness
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('experiments/matlab'); aefc_native_harness_selftest
+      - name: Build independent official IEEE39 native model
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_build_unprivileged
+      - name: Execute real Simulink smoke using same supervisor
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_unprivileged_joint('smoke')
+      - name: Independent native physical trace audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_unprivileged.py --results results/ieee39_unpriv_r1/smoke | tee smoke_audit.json
+      - name: Archive failure and success evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-fullstate-P0-smoke-${{ github.sha }}
+          path: |
+            results/ieee39_unpriv_r1/
+            results/ieee39_r2024b/unprivileged_model_build.json
+            smoke_audit.json
+            static_audit.json
+            experiments/matlab/AEFCNativeAttackHarness.m
+            experiments/matlab/AEFCNativeController.m
+            configs/ieee39_unpriv_r1.json
+          if-no-files-found: warn
+          retention-days: 90
