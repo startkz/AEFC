@@ -72,7 +72,7 @@ try
           else
             % Native transformer winding currents are logged as i1 and i2.
             tok=regexp(parent,'/Grid/(TF_[^/]+)/(i1|i2)$','tokens','once');
-            if ~isempty(tok) && strcmp(unit,'A')
+            if ~isempty(tok)
               component=tok{1};variable=tok{2};
               category='transformer_current';tfIds{end+1}=component; %#ok<AGROW>
             end
@@ -88,6 +88,9 @@ try
          v=double(values(child));t=double(time(child));
        catch ME
          err=[ME.identifier ': ' ME.message];
+       end
+       if any(strcmp(category,{'line_current','transformer_current'})) && ~strcmp(unit,'A')
+         continue
        end
        finite=~isempty(v)&&all(isfinite(real(v(:))))&&all(isfinite(imag(v(:))));
        mn=NaN;mx=NaN;ma=NaN;ts=NaN;te=NaN;
