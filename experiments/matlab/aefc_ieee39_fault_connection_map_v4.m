@@ -29,13 +29,14 @@ try
   try,h=get_param(p,'PortHandles');catch,continue;end
   for fld={'LConn','RConn'}
    fn=fld{1};if ~isfield(h,fn),continue;end
-   for k=1:numel(h.(fn))
-    lh=-1;try,lh=get_param(h.(fn)(k),'Line');catch,end
+   ports=h.(fn);
+   for k=1:numel(ports)
+    portHandle=ports(k);lh=-1;try,lh=get_param(portHandle,'Line');catch,end
     if isequal(double(lh),double(line))
-     pos=[];try,pos=get_param(h.(fn)(k),'Position');catch,end
+     pos=[];try,pos=get_param(portHandle,'Position');catch,end
      hits(end+1)=struct('block',p,'name',asText(get_param(p,'Name')), ...
        'mask_type',asText(safeParam(p,'MaskType')),'port_kind',fn, ...
-       'port_index',k,'port_handle',double(h.(fn)(k)), ...
+       'port_index',k,'port_handle',double(portHandle), ...
        'line_handle',double(lh),'position',pos); %#ok<AGROW>
     end
    end
