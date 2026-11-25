@@ -265,7 +265,18 @@ t=double(t(:)); d=double(d);
 if ~isreal(d), d=abs(d); end
 d=normalizeTimeMajor(d,numel(t),dim,name);
 [t,ia]=unique(t,'stable'); d=d(ia,:);
-assert(numel(t)>=2,'AEFC:OutputSamples','Signal %s has fewer than two samples.',name);
+if numel(t)==1 && startsWith(name,'AEFC_NATIVE_PREF_BASE_')
+    % In the official R2024b plant the ORIGINAL governor Pref source is a
+    % true constant; To Workspace can save a single initial sample. A
+    % zero-order held constant is the actual physical source behavior.
+    % Deliberately DO NOT permit this exception for DELIVERED Pref,
+    % attacks, protection decisions, or real physical measurements.
+    assert(abs(t(1)-tq(1))<1e-8 && all(isfinite(d),'all'), ...
+        'AEFC:OriginalPrefSingleSample','Single Pref source sample invalid');
+    X=repmat(d(1,:),numel(tq),1);
+    return;
+end
+assert(numel(t)>=2,'AEFC:OutputSamples','Dynamic signal %s has fewer than two samples.',name);
 if numel(t)==numel(tq) && max(abs(t-tq))<=1e-9
     X=d(:,1:dim);
 else
