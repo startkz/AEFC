@@ -27,7 +27,7 @@ def static_audit():
     assert 'function [packet,uPost]=stepImpl(obj,obsPhysical)' in harness
     assert 'aefc_native_execution_contract' in source
     assert 'AEFCNativeAttackHarness' in builder
-    assert 'AEFCNativeUnpriv' in builder
+    assert 'IEEE39BusSystem_AEFCUnpriv' in builder
     cfg=json.loads(CONFIG.read_text())
     assert cfg['native_contract']['full_state_mapping_available'] is False
     assert cfg['native_contract']['independently_validated_error_coverage'] is False
