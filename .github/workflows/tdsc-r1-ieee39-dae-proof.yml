@@ -1,0 +1,35 @@
+name: TDSC-R1 conditionally rigorous semi-explicit DAE one-step and hold-interval proof selftest
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-decisive-evidence-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-dae-proof.yml'
+      - 'analysis/dae_interval_certificate.py'
+      - 'tests/test_dae_interval_certificate.py'
+permissions:
+  contents: read
+jobs:
+  exact_rational_interval_dae:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Exact rational Krawczyk and Picard inclusive algebraic/hold/one-step DAE tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p test_dae_interval_certificate.py -v |& tee dae_exact_proof_test.log
+      - name: Preserve proof source, falsification tests and original logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-DAE-exact-synthetic-conditional-proof-${{ github.sha }}
+          path: |
+            dae_exact_proof_test.log
+            analysis/dae_interval_certificate.py
+            tests/test_dae_interval_certificate.py
+          if-no-files-found: warn
