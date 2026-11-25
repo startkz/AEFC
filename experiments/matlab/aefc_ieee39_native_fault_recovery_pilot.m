@@ -252,6 +252,11 @@ assert(~isempty(v),'AEFC:OutputMissing','Missing output %s',name);
 [t,d]=extractSeries(v);t=double(t(:));d=double(d);
 if ~isreal(d),d=abs(d);end
 d=normalizeTimeMajor(d,numel(t),dim,name);[t,ia]=unique(t,'stable');d=d(ia,:);
+if numel(t)==1 && startsWith(name,'AEFC_NATIVE_PREF_BASE_')
+ assert(abs(t(1)-tq(1))<1e-8 && all(isfinite(d),'all'), ...
+     'AEFC:OriginalPrefSingleSample','Single original Pref sample invalid');
+ X=repmat(d(1,1:dim),numel(tq),1);return;
+end
 assert(numel(t)>=2,'AEFC:OutputSamples','Too few samples for %s',name);
 X=interp1(t,d(:,1:dim),tq,'nearest','extrap');
 assert(isequal(size(X),[numel(tq),dim])&&all(isfinite(X),'all'));
