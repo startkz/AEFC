@@ -125,3 +125,17 @@ DeliveredPref = NativeBasePref + AuthorizedCorrection + PostShieldAttack
 这条路径必须优先于增加对照数量或调整阈值；当前不能把“完成 48 回合仿真”当作“完成真实物理恢复实验”。
 
 **本分支仍应保持 Draft PR，禁止按完成全 IEEE39 P0 审批。**
+
+## 8. 真实全网络安全状态逐谓词覆盖审计与最终验收
+
+基于未更改的原始官方模型块图、xout 原始状态注册表、因果探测的四路 Pref/转速映射，建立 **59 项明确的安全状态—物理量测需求**：10 台机组转速、10 台机组转子角以及 39 母线电压幅值。机组速度可在离线物理模型中观测 10 路，但当前真正由无特权控制器接收的只有 4 路，且这 4 路的独立可信传感器认证与测量误差确定性界仍未证明。转子角和 39 母线电压尚无经过验证的在线观测映射。支路热限、功率潮流与内部控制器安全约束另外列为未核定量数目的全网络要求。**不存在 59/59 的完整在线状态可观测性证明。**
+
+真实独立工作流 [59 项逐谓词覆盖审计](https://github.com/startkz/AEFC/actions/runs/45545636858) 已通过。这表示矩阵来源和缺失项可靠，而不是物理系统已认证。
+
+将原始已复核的 **48 个真实 MATLAB 回合**、59 项安全状态矩阵和原生输出一步包络留出反例全部投入 [最终论文安全主张证据闸门](https://github.com/startkz/AEFC/actions/runs/45545863520)，运行**成功**，实质结果为 **`status=BLOCKED`**、`full_native_ieee39_execution_safety_certified=false`、`reliable_post_attack_recovery_certified=false`、`six_method_recovery_superiority_established=false`。在全电网在线测量、非线性 DAE 包含、连续时间可达集、备份稳健可行域及真实物理恢复事件缺失的情况下，这一拒绝升级结论是必要且正确的。
+
+## 9. 原生执行接线和仿真中间时刻验证进度
+
+已在真实原生 Simulink 的四条 Pref 物理接线增加原始调速器参考值和实际送达参考值的独立日志，并对 `DeliveredPref=OriginalPref+AuthorizedCorrection+PostShieldAttack` 进行采样等式审计；同时保留原始求解器时间戳下的十台机组转速，避免把 1/60 秒的重采样物理监控误当作所有数值求解器中间时刻。首个 CI 失败于原始 Pref 常量源仅保存单个时间样本，被旧读取函数要求至少两个样本。已只对真实原始 Pref 常量源采用零阶保持展开，**不允许对受攻击送达 Pref、控制诊断或物理传感器做相同例外**，重新提交 [原生 Pref 备用路径工作流](https://github.com/startkz/AEFC/actions/runs/45545993086)。在该工作流完成并通过逐迹审计前，这项现场接线证据不得写成验收通过。
+
+真实 MathWorks Simscape 网络代数变量 [物理变量日志探测](https://github.com/startkz/AEFC/actions/runs/45545025290) 和 [本地状态—输出线性化观察诊断](https://github.com/startkz/AEFC/actions/runs/45545265904) 也必须以最终原始工件为准，不能仅凭运行已启动推断已提取全部 39 母线电压或通过全状态安全保证。
