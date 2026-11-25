@@ -1,0 +1,49 @@
+name: TDSC-R1 native 39-bus physical load/branch disturbance hardware-interface discovery
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-disturbance-inventory.yml'
+      - 'experiments/matlab/aefc_ieee39_physical_disturbance_inventory.m'
+permissions:
+  contents: read
+jobs:
+  real_native_physical_event_interfaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Discover original IEEE39 grid load, branch switch, generator Pref sources and their actual wiring
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_physical_disturbance_inventory
+      - name: Enforce no load/line fault declared physically validated until causal native probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          x=json.load(open('results/ieee39_stress_r1/physical_disturbance_source_inventory.json'))
+          print('Status:',x['status'])
+          print('Grid load blocks:',x['grid_load_candidates'])
+          print('Line/switch candidates:',x['grid_line_switch_candidates'])
+          assert not x['validated_exogenous_stressor_available']
+          assert not x['native_physical_disturbance_preserves_safety_contract']
+          assert not x['full_network_safety_certified']
+          PY
+      - name: Archive official physical disturbance port paths and no-oracle assumptions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-native-physical-disturbance-ports-${{ github.sha }}
+          path: |
+            results/ieee39_stress_r1/physical_disturbance_source_inventory.json
+            experiments/matlab/aefc_ieee39_physical_disturbance_inventory.m
+          if-no-files-found: warn
+          retention-days: 90
