@@ -8,7 +8,6 @@ import hashlib
 import json
 import math
 from pathlib import Path
-import numpy as np
 
 ROOT=Path(__file__).resolve().parents[1]
 CONTROLLER=ROOT/'experiments/matlab/AEFCNativeController.m'
@@ -59,8 +58,8 @@ def dynamic_audit(directory:Path):
                    record['scenario']==sc for record in trace)
         assert all(record['full_state_certified'] is False and
                    record['full_state_coverage'] is False for record in trace)
-        base=np.array(trace[0]['all_ten_generator_speed_native'],dtype=float)
-        assert base.shape==(10,) and np.all(np.isfinite(base))
+        base=list(map(float,trace[0]['all_ten_generator_speed_native']))
+        assert len(base)==10 and all(math.isfinite(x) for x in base)
         sample_count=len(trace);sampled_count+=sample_count
         for i,r in enumerate(trace):
             assert len(r['native_speed'])==len(r['speed_normalized'])==4
@@ -71,11 +70,11 @@ def dynamic_audit(directory:Path):
             max_speed=max(abs(x) for x in r['speed_normalized'])
             assert r['sampled_speed_inside_proxy'] == (max_speed<=cfg['normalized_safe_limit']+1e-9)
             if not r['sampled_speed_inside_proxy']:unsafe_proxy+=1
-            all_sp=np.array(r['all_ten_generator_speed_native'],dtype=float)
-            all_z=np.array(r['all_ten_generator_speed_normalized'],dtype=float)
-            assert all_sp.shape==(10,) and all_z.shape==(10,) ...
-                and np.all(np.isfinite(all_sp)) and np.all(np.isfinite(all_z))
-            assert np.allclose(all_z,(all_sp-base)/0.02,rtol=0,atol=1e-9)
+            all_sp=list(map(float,r['all_ten_generator_speed_native']))
+            all_z=list(map(float,r['all_ten_generator_speed_normalized']))
+            assert len(all_sp)==len(all_z)==10
+            assert all(math.isfinite(x) for x in all_sp+all_z)
+            assert max(abs(zz-(vv-bb)/0.02) for zz,vv,bb in zip(all_z,all_sp,base)) <= 1e-9
             all_speed_safe=max(abs(all_z))<=cfg['normalized_safe_limit']+1e-9
             assert r['sampled_all_ten_speed_inside_proxy']==all_speed_safe
             if not all_speed_safe:ten_speed_violations+=1
