@@ -127,7 +127,7 @@ methods(Access=protected)
         if isfinite(proxyMargin),proxyRecordedMargin=proxyMargin;end
         intervention=norm(uShield-proposal,2);
         released=status>0;
-        backupUsed=(status==2 || status==3 || mc==8);
+        backupUsed=released && (status==2 || status==3 || mc==8);
         % Full-state coverage flags stay 0: four speeds cannot certify the
         % native power-network safety set.  Strict no-release means only
         % null additional Pref correction; original generator PI loops remain.
