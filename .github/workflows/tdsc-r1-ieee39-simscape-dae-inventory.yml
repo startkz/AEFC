@@ -1,0 +1,53 @@
+name: TDSC-R1 official IEEE39 Simscape offline algebraic bus/branch physical-variable probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-decisive-evidence-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-simscape-dae-inventory.yml'
+      - 'experiments/matlab/aefc_ieee39_simscape_algebraic_inventory.m'
+permissions:
+  contents: read
+jobs:
+  original_simscape_DAE_variable_tree:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Enable physical Simscape logging on the ORIGINAL official IEEE39 model for 0.05 seconds
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_simscape_algebraic_inventory
+      - name: Audit no offline logging results are treated as trusted online state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('results/ieee39_safety_mapping/native_simscape_algebraic_inventory.json'))
+          assert d['complete_DAE_state_observability_verified'] is False
+          assert d['all_39_bus_voltage_online_validated'] is False
+          assert d['all_branch_thermal_online_validated'] is False
+          assert d['guaranteed_one_step_reachable_tube'] is False
+          assert d['guaranteed_continuous_holding_tube'] is False
+          print(d['status'])
+          if d.get('simscape_log_available'):
+              print(d.get('potential_measurement_node_counts'))
+          else:
+              print(d.get('reason',d.get('error_message')))
+          PY
+      - name: Preserve actual Simscape variable names, constraints and mapping gaps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-simscape-algebraic-inventory-${{ github.sha }}
+          path: |
+            results/ieee39_safety_mapping/native_simscape_algebraic_inventory.json
+            experiments/matlab/aefc_ieee39_simscape_algebraic_inventory.m
+          if-no-files-found: warn
+          retention-days: 90
