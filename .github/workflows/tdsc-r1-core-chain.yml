@@ -6,6 +6,7 @@ on:
       - audit/tdsc-r1-core-chain-20261125
     paths:
       - 'experiments/hydro_valve/run_tdsc_contract_chain.py'
+      - 'analysis/audit_tdsc_contract_run.py'
       - 'tests/test_tdsc_contract_chain.py'
       - 'analysis/audit_tdsc_core_legacy.py'
       - 'docs/TDSC_R1_CORE_CHAIN_AUDIT_20261125.md'
@@ -15,7 +16,16 @@ permissions:
 jobs:
   discrete_contract:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - {tier: pilot_low, stage: exploratory, seed_start: 200, seeds: 5, post: '0.015', load: '0.002'}
+          - {tier: pilot_medium, stage: exploratory, seed_start: 200, seeds: 5, post: '0.025', load: '0.0035'}
+          - {tier: pilot_high, stage: exploratory, seed_start: 200, seeds: 5, post: '0.040', load: '0.005'}
+          - {tier: holdout_medium, stage: frozen-holdout, seed_start: 300, seeds: 20, post: '0.025', load: '0.0035'}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -26,15 +36,25 @@ jobs:
         run: python analysis/audit_tdsc_core_legacy.py | tee legacy_audit.json
       - name: Unit and randomized model inclusion checks
         run: python -m unittest discover -s tests -p test_tdsc_contract_chain.py -v
-      - name: Run ten matched seeds on original HydroPlant
-        run: python -m experiments.hydro_valve.run_tdsc_contract_chain --seed-start 240 --seeds 10 --output results/tdsc_core_chain_v1 | tee run_summary.json
-      - name: Upload complete original traces (including negative outcomes)
+      - name: Run frozen tier with original HydroPlant
+        run: |
+          python -m experiments.hydro_valve.run_tdsc_contract_chain \
+            --seed-start ${{ matrix.seed_start }} --seeds ${{ matrix.seeds }} \
+            --post-attack-strength ${{ matrix.post }} --load-stress ${{ matrix.load }} \
+            --stage ${{ matrix.stage }} --output results/tdsc_core_${{ matrix.tier }} | tee run_summary.json
+      - name: Independently recompute every raw trace and certificate
+        run: python analysis/audit_tdsc_contract_run.py --input results/tdsc_core_${{ matrix.tier }} | tee raw_audit.json
+      - name: Upload all raw traces and executable source (including negative outcomes)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: TDSC-R1-core-chain-${{ github.sha }}
+          name: TDSC-R1-${{ matrix.tier }}-${{ github.sha }}
           path: |
-            results/tdsc_core_chain_v1/
+            results/tdsc_core_${{ matrix.tier }}/
             legacy_audit.json
             run_summary.json
+            raw_audit.json
+            experiments/hydro_valve/run_hydro_valve_cps.py
+            experiments/hydro_valve/run_tdsc_contract_chain.py
+            analysis/audit_tdsc_contract_run.py
           if-no-files-found: warn
