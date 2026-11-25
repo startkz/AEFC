@@ -1,0 +1,60 @@
+name: TDSC-R1 native IEEE39 four-online-sensor versus ten-offline-sensor observability v8
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-observability-v8.yml'
+      - 'experiments/matlab/aefc_ieee39_local_observability_probe_v8.m'
+permissions:
+  contents: read
+jobs:
+  native_local_ABCD_online_vs_offline_v8:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical Simulink_Control_Design
+          cache: true
+      - name: Linearize four Pref correction inputs and both four-online/ten-offline speed outputs
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_local_observability_probe_v8
+      - name: Audit actual online observability separately from offline ten-speed upper bound
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s results/ieee39_safety_mapping/native_local_observability_probe_v8.json
+          python - <<'PY'
+          import json
+          q=json.load(open('results/ieee39_safety_mapping/native_local_observability_probe_v8.json'))
+          print(json.dumps(q,indent=2))
+          assert q['status']=='DIAGNOSTIC_ATTEMPTS_COMPLETED'
+          assert len(q.get('attempts',[]))==2
+          for a in q['attempts']:
+              assert a['physical_input_channels']==4
+              assert a['observed_online_channels']==4
+              assert a['observed_speed_channels']==10
+              assert a['finite_linearization']
+              assert a['status']=='LOCAL_DIAGNOSTIC_ONLY'
+              assert 'local_online_observability_rank' in a
+              assert 'local_all10_observability_rank' in a
+          assert q['online_observation_generator_keys']==['Gen10@Bus30','Gen1@Bus39','Gen2@Bus31','Gen3@Bus32']
+          assert q['full_network_observer_verified'] is False
+          assert q['bounded_nonlinear_model_residual_verified'] is False
+          assert q['guaranteed_intersample_tube'] is False
+          PY
+      - name: Archive online/offline output matrices and local ranks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-four-vs-ten-observability-v8-${{ github.sha }}
+          path: |
+            results/ieee39_safety_mapping/native_local_observability_probe_v8.json
+            results/ieee39_safety_mapping/native_local_abc_t*.mat
+            experiments/matlab/aefc_ieee39_local_observability_probe_v8.m
+          if-no-files-found: warn
+          retention-days: 90
