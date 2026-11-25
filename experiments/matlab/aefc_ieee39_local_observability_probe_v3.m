@@ -29,15 +29,17 @@ try
         % Four physically independent Pref correction channels are the
         % DEMUX's four scalar output signals (previous v2 incorrectly
         % sampled one port of this multi-channel signal).
-        io=linio.empty;
-        for kk=1:4
+        io(1)=linio([model '/AEFC_SHIELD_DEMUX'],1,'output');
+        for kk=2:4
             io(kk)=linio([model '/AEFC_SHIELD_DEMUX'],kk,'output');
         end
         io(5)=linio([model '/AEFC_GENALL_MUX'],1,'output');
         times=[0.10,0.35];
         attempts=struct('time',{},'status',{},'identifier',{},'error_message',{}, ...
             'full_model_state_dimension',{},'physical_input_channels',{}, ...
-            'observed_speed_channels',{},'finite_linearization',{});
+            'observed_speed_channels',{},'finite_linearization',{}, ...
+            'local_observability_rank',{},'rank_tolerance',{}, ...
+            'global_full_state_observable',{});
         for k=1:numel(times)
             e=struct('time',times(k),'status','NOT_RUN','identifier','', ...
                 'error_message','','full_model_state_dimension',0, ...
