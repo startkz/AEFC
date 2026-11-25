@@ -230,10 +230,10 @@ while head<=numel(stack) && visited<80000
    % The IEEE39 native line model exposes three phase currents through
    % transmission_line/inductor_{a,b,c}/i. Do not count shunt capacitor
    % currents as the series branch current.
-   tok=regexp(parent,'/Grid/([^/]+)/transmission_line/(inductor_[abc])/i$','tokens','once');
+   tok=regexp(parent,'/Grid/([^/]+)/transmission_line/(inductor_[abc])/i/amplitude$','tokens','once');
    if ~isempty(tok) && strcmp(unit,'A')
     branch(end+1)=struct('path',[parent '/' key],'component',tok{1}, ...
-       'variable',tok{2},'unit',unit,'time',t,'values',v); %#ok<AGROW>
+       'variable',[tok{2} '/i/amplitude'],'unit',unit,'time',t,'values',v); %#ok<AGROW>
     continue
    end
    % Both transformer winding currents are logged natively in amperes.
