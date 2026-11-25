@@ -16,10 +16,11 @@ try
     set_param(model,'SaveState','on','StateSaveName','AEFC_NATIVE_XOUT', ...
         'SaveFormat','Dataset','ReturnWorkspaceOutputs','on');
     in=Simulink.SimulationInput(model);
-    in=in.setBlockParameter([model '/AEFC_NATIVE_CONTROLLER'], ...
-        'MethodCode','8','ExploratoryMode','false');
-    in=in.setBlockParameter([model '/AEFC_NATIVE_ATTACK_SOURCE'], ...
-        'ScenarioCode','1','Seed','0','AttackScale','1');
+    in=in.setBlockParameter([model '/AEFC_NATIVE_CONTROLLER'],'MethodCode','8');
+    in=in.setBlockParameter([model '/AEFC_NATIVE_CONTROLLER'],'ExploratoryMode','false');
+    in=in.setBlockParameter([model '/AEFC_NATIVE_ATTACK_SOURCE'],'ScenarioCode','1');
+    in=in.setBlockParameter([model '/AEFC_NATIVE_ATTACK_SOURCE'],'Seed','0');
+    in=in.setBlockParameter([model '/AEFC_NATIVE_ATTACK_SOURCE'],'AttackScale','1');
     in=in.setModelParameter('StopTime','0.1');
     out=sim(in);
     x=[];
