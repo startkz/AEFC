@@ -219,7 +219,8 @@ def in_recovery(x: np.ndarray, c: Config, flow_tol: float, speed_tol: float):
 
 
 def run_episode(seed: int, scenario: str, c: Config, output: Path,
-                flow_tol=0.012, speed_tol=0.008, hold=20):
+                flow_tol=0.012, speed_tol=0.008, hold=20,
+                post_attack_strength=0.08, load_stress=0.010):
     """Attack schedule and physical truth exist ONLY in this simulation harness."""
     plant=HydroPlant(c)
     controller=UnprivilegedController(c)
@@ -259,9 +260,9 @@ def run_episode(seed: int, scenario: str, c: Config, output: Path,
                               recovery=in_recovery(true_before,c,flow_tol,speed_tol)))
             break
         # Post-shield corruption is bounded and unknown to the controller.
-        post=np.array([-c.command_attack_bound,-c.command_attack_bound]) if physical else np.zeros(2)
+        post=np.array([-post_attack_strength,-post_attack_strength]) if physical else np.zeros(2)
         # Recoverable bounded load disturbance induces a genuine physical deviation.
-        load=float(tape['load'][t])+(0.010 if physical else 0.0)
+        load=float(tape['load'][t])+(load_stress if physical else 0.0)
         qin=float(tape['qin'][t])
         exogenous_covered=(abs(qin-c.qin_nominal)<=c.qin_uncertainty+1e-12
                             and abs(load-c.load_nominal)<=c.load_uncertainty+1e-12)
@@ -307,16 +308,22 @@ def main():
     p.add_argument('--seed-start',type=int,default=240)
     p.add_argument('--seeds',type=int,default=10)
     p.add_argument('--steps',type=int,default=480)
+    p.add_argument('--post-attack-strength',type=float,default=0.08)
+    p.add_argument('--load-stress',type=float,default=0.010)
+    p.add_argument('--stage',choices=('exploratory','frozen-holdout'),default='exploratory')
     a=p.parse_args()
     if a.seeds < 1 or a.steps < 100: p.error('invalid run horizon')
     # Exogenous stochastic draws and transient load are within declared bounds.
     c=replace(Config(),steps=a.steps,qin_uncertainty=0.008,load_uncertainty=0.020)
+    if not (0<=a.post_attack_strength<=c.command_attack_bound and 0<=a.load_stress<=0.012):
+        p.error('physical stress must remain within the certified attack and exogenous load bounds')
     path=Path(a.output)
     if path.exists() and any(path.iterdir()):
         raise RuntimeError('Output directory must be empty to prevent evidence overwrite')
     path.mkdir(parents=True,exist_ok=True)
     cases=('clean','knowledge','physical','joint')
-    rows=[run_episode(seed,sc,c,path) for sc in cases
+    rows=[run_episode(seed,sc,c,path,post_attack_strength=a.post_attack_strength,
+                      load_stress=a.load_stress) for sc in cases
           for seed in range(a.seed_start,a.seed_start+a.seeds)]
     with (path/'summary.csv').open('w',newline='') as fp:
         w=csv.DictWriter(fp,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
@@ -327,7 +334,8 @@ def main():
                   trusted_inputs='PLC-local bounded observation; known plant bounds and reference controller',
                   attacker_truth_to_controller=False,oracle_shadow_to_controller=False,
                   seed_start=a.seed_start,seeds=a.seeds,scenarios=cases,
-                  steps=a.steps,physical_load_stress=0.010,
+                  steps=a.steps,stage=a.stage,
+                  physical_load_stress=a.load_stress,physical_post_attack_strength=a.post_attack_strength,
                   attack_step_start=c.attack_start,attack_step_end=c.attack_end,
                   recovery_flow_tolerance=0.012,recovery_speed_tolerance=0.008,
                   consecutive_recovery_samples=20,results=rows,
