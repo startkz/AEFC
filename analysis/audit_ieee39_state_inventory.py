@@ -13,10 +13,37 @@ def audit(path: Path):
     total=info.get('n_scalar_dynamic_components_estimate',0)
     n_entries=info.get('n_state_entries',0)
     assert total>=0 and n_entries>=0
+    groups={
+        'generator_avr_exciter':{'entries':0,'scalar_values':0},
+        'generator_governor':{'entries':0,'scalar_values':0},
+        'grid_solver_internal':{'entries':0,'scalar_values':0},
+        'other_logged_items':{'entries':0,'scalar_values':0},
+    }
+    entries=info.get('state_entries',[])
+    for entry in entries:
+        path=entry.get('blockpath','')
+        if '/Generators/' in path and '/AVR and Exciter/' in path:
+            group='generator_avr_exciter'
+        elif '/Generators/' in path and '/Governor and' in path:
+            group='generator_governor'
+        elif '/Grid/Solver Configuration/' in path:
+            group='grid_solver_internal'
+        else:
+            group='other_logged_items'
+        groups[group]['entries']+=1
+        groups[group]['scalar_values']+=int(entry.get('n_signal_components',0))
+    assert sum(x['entries'] for x in groups.values())==n_entries
+    assert sum(x['scalar_values'] for x in groups.values())==total
+    grid_largest=max((int(x.get('n_signal_components',0))
+                      for x in entries if '/Grid/Solver Configuration/' in x.get('blockpath','')),default=0)
     evidence=dict(
         audit_status=info['audit_status'],
         logged_dynamic_state_entries=n_entries,
         estimated_logged_scalar_components=total,
+        logged_entries_by_source=groups,
+        largest_grid_solver_internal_vector_components=grid_largest,
+        estimated_independent_physical_dynamic_state_dimensions=None,
+        reason='Saved solver-internal states/inputs cannot automatically be counted as physical differential states',
         trusted_online_rotor_speed_sensors=info['sensor_count_online'],
         observed_speed_mapping_per_state_inventoried=False,
         complete_network_observability_proven=False,
