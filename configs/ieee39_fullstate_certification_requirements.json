@@ -73,5 +73,7 @@
     "full_state_execution_safety_certified": false,
     "accepted_real_ieee39_recovery_paired_holdout": false,
     "explicit_note": "Offline simulator state logging, empirical holdout coverage, or a green MATLAB workflow alone cannot satisfy these flags"
-  }
+  },
+  "verified_native_mat_file": null,
+  "verified_native_mat_sha256": null
 }
