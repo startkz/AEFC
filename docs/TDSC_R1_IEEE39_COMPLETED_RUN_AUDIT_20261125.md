@@ -188,3 +188,29 @@ The actual four online measurements are the rotor-speed outputs of `Gen10@Bus30`
 - The native Bus16_1 fault pilot is still a two-seed exploratory test; it must establish actual recovery-set exposure before a ten-seed confirmatory run is justified.
 - The full-network safety gate remains **BLOCKED**. No current run verifies trusted online full-state observation, validated branch thermal limits, nonlinear DAE reachable tubes, or continuous intersample safety.
 - Do not change the preregistered 5% bus-voltage tolerance, normalized ten-generator speed bound, 20-sample hold, fault window, or right-censoring rule after observing the pilot.
+
+
+### 8.5 Local four-sensor observability and four-action controllability results
+
+[Local observability v9](https://github.com/startkz/AEFC/actions/runs/45583683445) completed successfully at two prefault operating points (0.10 s and 0.35 s). The linearized model has 285 states, four action inputs, four actual online speed outputs, and ten offline generator-speed outputs. The four online measurements are Gen10@Bus30, Gen1@Bus39, Gen2@Bus31, and Gen3@Bus32.
+
+| Local diagnostic | 0.10 s | 0.35 s |
+|---|---:|---:|
+| Four-online-speed observability rank (machine precision) | 112/285 | 113/285 |
+| Ten-offline-speed observability rank (machine precision) | 139/285 | 140/285 |
+| Four-action controllability rank (machine precision) | 72/285 | 72/285 |
+| Four-online-speed rank at relative tolerance (10^{-8}) | 80/285 | 80/285 |
+| Ten-offline-speed rank at relative tolerance (10^{-8}) | 135/285 | 135/285 |
+| Four-action controllability rank at relative tolerance (10^{-8}) | 36/285 | 36/285 |
+
+The additional six offline speed channels increase the local numerical observability rank, but neither four nor ten speed outputs make the 285-state linearized model fully observable. The four Pref correction actions likewise do not make the full state controllable.
+
+The singular spectra are severely ill-conditioned: observed condition numbers are approximately (10^{40})–(10^{43}) for observability and (10^{35}) for controllability. Therefore, the machine-precision ranks are tolerance-sensitive numerical diagnostics, not robust structural-rank claims. At a relative (10^{-8}) threshold, the effective ranks are materially lower. The reproducible threshold audit is stored in `results/ieee39_safety_mapping/local_rank_spectrum_audit_v9.json`; the raw MATLAB matrices are archived in the v9 workflow artifact.
+
+This evidence supports a limited conclusion: the present four-generator measurement set and four Pref action channels expose only partial local state information and actuation authority. It does **not** prove global nonlinear/DAE unobservability, nor does it establish safety. It does, however, rule out treating the current four-speed observation vector as a full-state measurement.
+
+### 8.6 Fault-pilot v4 failure and corrected v5 rerun
+
+[Fault pilot v4](https://github.com/startkz/AEFC/actions/runs/45583843924) reached the MATLAB execution stage but failed before simulation because the script attempted to change `SimscapeLogName` through `SimulationInput` after enabling Fast Restart. MATLAB prohibits this parameter change while the model is initialized in Fast Restart. This is another execution-configuration failure, not a physical fault or recovery result.
+
+Pilot v5 configures `SimscapeLogType` and `SimscapeLogName` once before enabling Fast Restart, preserves the four actual online observations in every JSONL record, and records the verified Bus16_1/B16-to-B17 location in the run manifest. The v5 run is the current physical-fault pilot; no recovery result should be claimed until its artifact is audited.
