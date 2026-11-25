@@ -38,9 +38,17 @@ methods(Access=protected)
         obj.resetRuntimeState();
     end
     function resetImpl(obj)
+        if ~isstruct(obj.cfg) || ~isequal(size(obj.Bn),[4 4]) || ...
+            numel(obj.center)~=4 || numel(obj.scale)~=4
+            obj.loadRuntimeConfig();
+        end
         obj.resetRuntimeState();
     end
     function [uShield,diagOut]=stepImpl(obj,localPhysical,packet)
+        % Interpreted Simulink MATLAB System objects can restore with empty
+        % private configuration under Fast Restart. Never use an unbuilt
+        % model nor silently carry invalid state across episodes.
+        obj.ensureRuntimeState();
         zNative=double(localPhysical(:));
         packet=double(packet(:));
         assert(numel(zNative)==4 && numel(packet)==67 && ...
@@ -198,9 +206,29 @@ methods(Access=protected)
         if isfield(s,'previousCertifiedCommand'),obj.previousCertifiedCommand=s.previousCertifiedCommand;end
         if isfield(s,'modelCertificateStatus'),obj.modelCertificateStatus=s.modelCertificateStatus;end
         loadObjectImpl@matlab.System(obj,s,wasLocked);
+        obj.ensureRuntimeState();
     end
 end
 methods(Access=private)
+    function ensureRuntimeState(obj)
+        ready=isstruct(obj.cfg) && ...
+              numel(obj.center)==4 && numel(obj.scale)==4 && ...
+              isequal(size(obj.Bn),[4 4]);
+        if ~ready
+            obj.loadRuntimeConfig();
+            obj.resetRuntimeState();
+        end
+        if ~isnumeric(obj.belief) || numel(obj.belief)~=4
+            obj.belief=zeros(4,1);
+        end
+        if ~isnumeric(obj.theta) || numel(obj.theta)~=4
+            obj.theta=zeros(4,1);
+        end
+        if ~isnumeric(obj.previousCertifiedCommand) || ...
+                numel(obj.previousCertifiedCommand)~=4
+            obj.previousCertifiedCommand=zeros(4,1);
+        end
+    end
     function loadRuntimeConfig(obj)
         obj.cfg=jsondecode(fileread(obj.ConfigPath));
         obj.mapping=jsondecode(fileread(obj.MappingPath));
