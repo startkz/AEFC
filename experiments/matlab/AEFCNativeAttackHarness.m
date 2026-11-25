@@ -4,7 +4,7 @@ classdef AEFCNativeAttackHarness < matlab.System
 % Its packet contains only potentially adversarial messages, not
 % attacker identities, clean trajectories or attack-on flags.
 properties(Nontunable)
-    ConfigPath = 'configs/ieee39_joint20.json'
+    ConfigPath = 'configs/ieee39_unpriv_r1.json'
     MappingPath = 'results/ieee39_r2024b/interface_mapping.json'
 end
 properties
