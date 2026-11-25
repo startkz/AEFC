@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import numpy as np
 
 ROOT=Path(__file__).resolve().parents[1]
 CONTROLLER=ROOT/'experiments/matlab/AEFCNativeController.m'
@@ -46,6 +47,7 @@ def dynamic_audit(directory:Path):
     assert len({(r['seed'],r['method'],r['scenario'],r['attack_scale']) for r in rows})==len(rows)
     assert all(r['full_state_certified_count']=='0' for r in rows)
     sampled_count=0;exposed_count=0;restored=0;unsafe_proxy=0;status_negative=0
+    all_ten_exposed=0;all_ten_recovered=0;ten_speed_violations=0
     findings=[];by_method={}
     for row in rows:
         scale=float(row['attack_scale']);seed=int(row['seed']);sc=row['scenario'];met=row['method']
@@ -57,6 +59,8 @@ def dynamic_audit(directory:Path):
                    record['scenario']==sc for record in trace)
         assert all(record['full_state_certified'] is False and
                    record['full_state_coverage'] is False for record in trace)
+        base=np.array(trace[0]['all_ten_generator_speed_native'],dtype=float)
+        assert base.shape==(10,) and np.all(np.isfinite(base))
         sample_count=len(trace);sampled_count+=sample_count
         for i,r in enumerate(trace):
             assert len(r['native_speed'])==len(r['speed_normalized'])==4
@@ -67,6 +71,14 @@ def dynamic_audit(directory:Path):
             max_speed=max(abs(x) for x in r['speed_normalized'])
             assert r['sampled_speed_inside_proxy'] == (max_speed<=cfg['normalized_safe_limit']+1e-9)
             if not r['sampled_speed_inside_proxy']:unsafe_proxy+=1
+            all_sp=np.array(r['all_ten_generator_speed_native'],dtype=float)
+            all_z=np.array(r['all_ten_generator_speed_normalized'],dtype=float)
+            assert all_sp.shape==(10,) and all_z.shape==(10,) ...
+                and np.all(np.isfinite(all_sp)) and np.all(np.isfinite(all_z))
+            assert np.allclose(all_z,(all_sp-base)/0.02,rtol=0,atol=1e-9)
+            all_speed_safe=max(abs(all_z))<=cfg['normalized_safe_limit']+1e-9
+            assert r['sampled_all_ten_speed_inside_proxy']==all_speed_safe
+            if not all_speed_safe:ten_speed_violations+=1
             status_negative+=int(r['proxy_status']<0)
         idx=cfg['attack_end_step']
         threshold=cfg['normalized_recovery_limit']
@@ -83,14 +95,35 @@ def dynamic_audit(directory:Path):
         if corrected:
             assert abs(float(row['time_from_attack_stop'])-(trace[first]['time']-trace[idx]['time']))<=1e-7
         exposed_count+=int(exposed);restored+=int(corrected)
+        ten_exposed=max(abs(z) for z in trace[idx]['all_ten_generator_speed_normalized']) > threshold
+        ten_first=None
+        if ten_exposed:
+            for k in range(idx+1,len(trace)-19):
+                if all(max(abs(z) for z in trace[j]['all_ten_generator_speed_normalized'])<=threshold
+                       for j in range(k,k+20)):
+                    ten_first=k;break
+        ten_corrected=ten_first is not None
+        assert (row['all_ten_speed_exposed_at_attack_stop']=='1')==ten_exposed
+        assert (row['all_ten_speed_strict_recovered']=='1')==ten_corrected
+        if ten_corrected:
+            assert abs(float(row['all_ten_speed_recovery_time'])-
+                       (trace[ten_first]['time']-trace[idx]['time']))<=1e-7
+        all_ten_exposed+=int(ten_exposed);all_ten_recovered+=int(ten_corrected)
         by_method.setdefault(met,dict(episodes=0,exposed=0,recovered=0,surrogate_proxy_releases=0))
         by_method[met]['episodes']+=1
         by_method[met]['exposed']+=int(exposed)
         by_method[met]['recovered']+=int(corrected)
+        by_method[met].setdefault('ten_generator_exposed',0)
+        by_method[met].setdefault('ten_generator_recovered',0)
+        by_method[met]['ten_generator_exposed']+=int(ten_exposed)
+        by_method[met]['ten_generator_recovered']+=int(ten_corrected)
         by_method[met]['surrogate_proxy_releases']+=sum(int(x['surrogate_released']) for x in trace)
     audit=dict(state='PASS_WITH_INCOMPLETE_FULL_STATE_CERTIFICATION',episodes=len(rows),
                samples=sampled_count,exposed=exposed_count,recovered=restored,
                speed_proxy_violations=unsafe_proxy,proxy_rejections=status_negative,
+               all_ten_generator_exposed=all_ten_exposed,
+               all_ten_generator_recovered=all_ten_recovered,
+               all_ten_speed_proxy_violations=ten_speed_violations,
                by_method=by_method,findings=findings,
                important='No complete IEEE39 state, no certified nonlinear reachability, no formal full-state safety or recovery claim')
     (directory/'audit.json').write_text(json.dumps(audit,indent=2)+'\n')
