@@ -1,0 +1,54 @@
+name: TDSC-R1 original Simscape 22413 nodes unique generator/bus physical evidence audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-decisive-evidence-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-simscape-reclassify.yml'
+      - 'analysis/reclassify_ieee39_simscape_candidates.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  exact_original_logged_physical_classification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download original 22413-node native Simscape inventory; do not rerun or rewrite model
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45545025290
+          name: TDSC-R1-native-IEEE39-simscape-algebraic-inventory-685439f151fe376d48ad6405c3b5b024db952d8c
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: real_original
+      - name: Distinguish actual ten unique generator terminal and rotor angle signals from 70 repeated physical nodes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/reclassify_ieee39_simscape_candidates.py \
+            --original real_original/results/ieee39_safety_mapping/native_simscape_algebraic_inventory.json \
+            --output native_IEEE39_generator_unique_physical_log_paths.json
+          python - <<'PY'
+          import json
+          x=json.load(open('native_IEEE39_generator_unique_physical_log_paths.json'))
+          assert x['unique_generator_terminal_voltage_signal_candidates']==10
+          assert x['unique_generator_rotor_angle_signal_candidates']==10
+          assert x['unique_generator_reactive_power_INITIALIZATION_parameters']==10
+          assert x['generator_terminal_bus_ids']==list(range(30,40))
+          assert x['full_39_bus_voltage_online_paths_verified']==0
+          assert x['complete_online_CPS_state_observability_proven'] is False
+          print('TRUE physical generator paths found, no false 39-bus online certificate')
+          PY
+      - name: Archive physical-variable provenance and real missing 29 other bus voltages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-unique-physical-generator-signals-${{ github.sha }}
+          path: |
+            native_IEEE39_generator_unique_physical_log_paths.json
+            analysis/reclassify_ieee39_simscape_candidates.py
+          if-no-files-found: warn
