@@ -17,7 +17,7 @@ try,set_param(model,'SignalLogging','off');catch,end
 ctrl=[model '/AEFC_NATIVE_CONTROLLER'];harness=[model '/AEFC_NATIVE_ATTACK_SOURCE'];
 if strcmp(mode,'smoke')
     methods={'AEFC-Full','Supervisor-only'};mCodes=[7 8];
-    scenarios={'physical','joint'};scCodes=[3 4];seeds=0:1;scales=1;
+    scenarios={'physical','joint'};scCodes=[3 4];seeds=0:1;scales=[1 3];
 elseif strcmp(mode,'strict')
     methods={'AEFC-Full','Supervisor-only'};mCodes=[7 8];
     scenarios={'physical','joint'};scCodes=[3 4];seeds=0:1;scales=1;
