@@ -1,0 +1,70 @@
+name: TDSC-R1 IEEE39 native no-oracle smoke and strict safety boundary
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-native-20261125]
+    paths:
+      - 'experiments/matlab/AEFCNativeController.m'
+      - 'experiments/matlab/AEFCNativeAttackHarness.m'
+      - 'experiments/matlab/aefc_ieee39_build_unprivileged.m'
+      - 'experiments/matlab/aefc_ieee39_unprivileged_joint.m'
+      - 'experiments/matlab/aefc_native_execution_contract.m'
+      - 'analysis/audit_ieee39_unprivileged.py'
+      - 'configs/ieee39_unpriv_r1.json'
+      - '.github/workflows/tdsc-r1-ieee39-native.yml'
+permissions:
+  contents: read
+jobs:
+  native_ieee39_unprivileged:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Forbid oracle data in online MATLAB controller
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_unprivileged.py | tee static_audit.json
+      - name: Setup MATLAB R2024b and native IEEE39 dependencies
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Build new separate native IEEE39 model and harness
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_build_unprivileged
+      - name: Real Simulink smoke: same supervisor, attacked physical and joint cases
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_unprivileged_joint('smoke')
+      - name: Strict full-state no-certificate path; corrections withheld
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_unprivileged_joint('strict')
+      - name: Independent recovery and trace integrity audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_unprivileged.py --results results/ieee39_unpriv_r1/smoke | tee smoke_audit.json
+          python analysis/audit_ieee39_unprivileged.py --results results/ieee39_unpriv_r1/strict | tee strict_audit.json
+      - name: Archive full original MATLAB traces, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-unpriv-${{ github.sha }}
+          path: |
+            results/ieee39_unpriv_r1/
+            results/ieee39_r2024b/unprivileged_model_build.json
+            static_audit.json
+            smoke_audit.json
+            strict_audit.json
+            configs/ieee39_unpriv_r1.json
+            experiments/matlab/AEFCNativeController.m
+            experiments/matlab/AEFCNativeAttackHarness.m
+          if-no-files-found: warn
+          retention-days: 90
