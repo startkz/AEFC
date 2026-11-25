@@ -42,11 +42,16 @@ jobs:
         uses: matlab-actions/run-command@v3
         with:
           command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_unprivileged_joint('smoke')
-      - name: Independent native physical trace audit
+      - name: Verify native full-state refusal when observer/network evidence is absent
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_unprivileged_joint('strict')
+      - name: Independent native four-speed and all-ten-generator trace audits
         shell: bash
         run: |
           set -euo pipefail
           python analysis/audit_ieee39_unprivileged.py --results results/ieee39_unpriv_r1/smoke | tee smoke_audit.json
+          python analysis/audit_ieee39_unprivileged.py --results results/ieee39_unpriv_r1/strict | tee strict_audit.json
       - name: Archive failure and success evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,6 +61,7 @@ jobs:
             results/ieee39_unpriv_r1/
             results/ieee39_r2024b/unprivileged_model_build.json
             smoke_audit.json
+            strict_audit.json
             static_audit.json
             experiments/matlab/AEFCNativeAttackHarness.m
             experiments/matlab/AEFCNativeController.m
