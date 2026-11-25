@@ -1,0 +1,35 @@
+name: TDSC-R1 resolve native IEEE39 fault physical connection through branched line segments v5
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-fault-connection-v5.yml'
+      - 'experiments/matlab/aefc_ieee39_fault_connection_map_v5.m'
+permissions:
+  contents: read
+jobs:
+  native_fault_parent_child_line_mapping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Inspect all parent and child connection segments and physical port endpoints
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_fault_connection_map_v5
+      - name: Archive endpoint evidence without assuming a bus location
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-fault-parent-child-connection-v5-${{ github.sha }}
+          path: |
+            results/ieee39_stress_r1/fault_connection_map_v5.json
+            experiments/matlab/aefc_ieee39_fault_connection_map_v5.m
+          if-no-files-found: warn
+          retention-days: 90
