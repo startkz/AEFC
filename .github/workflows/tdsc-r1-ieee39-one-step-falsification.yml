@@ -1,0 +1,54 @@
+name: TDSC-R1 native ten-generator observed one-step error held-out falsification
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-decisive-evidence-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-one-step-falsification.yml'
+      - 'analysis/audit_ieee39_empirical_increment.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original_untouched_native_data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download immutable full six-method original native R2024b physical trajectories
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45540058143
+          name: TDSC-R1-IEEE39-sixmethod-10gen-short-30eb3a58bf9d092e1303e7be3492b36f6458382e
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original
+      - name: Independent seed 1 observed one-step physical inclusion check versus seed 0 envelopes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_empirical_increment.py \
+            --results original/results/ieee39_unpriv_r1/pilot_short \
+            --output empirical_one_step_increment_holdout.json | tee diagnostic.log
+          python - <<'PY'
+          import json
+          x=json.load(open('empirical_one_step_increment_holdout.json'))
+          assert len(x['comparison_cells'])==12
+          assert len(x['overall'])==3
+          assert not x['formal_IEEE39_one_step_certificate']
+          assert not x['formal_IEEE39_continuous_tube_certificate']
+          assert all(c['checked']==21600 for c in x['overall'])
+          print('No formal IEEE39 one-step/intersample proof claimed.')
+          PY
+      - name: Archive preserved original-increment falsification table
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-heldout-output-one-step-diagnostic-${{ github.sha }}
+          path: |
+            empirical_one_step_increment_holdout.json
+            diagnostic.log
+            analysis/audit_ieee39_empirical_increment.py
+          if-no-files-found: warn

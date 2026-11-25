@@ -1,0 +1,85 @@
+name: TDSC-R1 immutable native IEEE39 trace re-audit and paired six-method evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-decisive-evidence-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-frozen-replay.yml'
+      - 'analysis/audit_ieee39_unprivileged.py'
+      - 'analysis/compare_ieee39_unprivileged.py'
+      - 'analysis/audit_ieee39_backup_evidence.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  independent_original_frozen_reaudit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download EXACT original successful-MATLAB smoke and strict episodes (no resimulation)
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45540058141
+          name: TDSC-R1-IEEE39-fullstate-P0-smoke-30eb3a58bf9d092e1303e7be3492b36f6458382e
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_smoke
+      - name: Download EXACT original 24-episode six-method pilot (no resimulation)
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45540058143
+          name: TDSC-R1-IEEE39-sixmethod-10gen-short-30eb3a58bf9d092e1303e7be3492b36f6458382e
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_sixmethod
+      - name: Freeze original artifact SHA-256 and ensure original distinct paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,glob,json
+          p=glob.glob('original_smoke/results/ieee39_unpriv_r1/**/*jsonl',recursive=True)
+          q=glob.glob('original_sixmethod/results/ieee39_unpriv_r1/**/*jsonl',recursive=True)
+          assert len(p)==24 and len(q)==24,(len(p),len(q))
+          assert len({x.split('/')[-2] for x in q})==6
+          for path in p+q:
+            assert path.endswith('.jsonl')
+          out=dict(original_smoke_episodes=len(p),
+                   original_sixmethod_episodes=len(q),
+                   source_commit='30eb3a58bf9d092e1303e7be3492b36f6458382e',
+                   jsonl_sha256={x:hashlib.sha256(open(x,'rb').read()).hexdigest() for x in sorted(p+q)})
+          open('original_sha256_manifest.json','w').write(json.dumps(out,indent=2)+'\n')
+          print('Immutable native artifacts:',len(p),len(q))
+          PY
+      - name: Audit every actual physical speed and recovery criterion in frozen original files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_unprivileged.py --results original_smoke/results/ieee39_unpriv_r1/smoke | tee raw_smoke_audit.json
+          python analysis/audit_ieee39_unprivileged.py --results original_smoke/results/ieee39_unpriv_r1/strict | tee raw_strict_audit.json
+          python analysis/audit_ieee39_unprivileged.py --results original_sixmethod/results/ieee39_unpriv_r1/pilot_short | tee raw_sixmethod_audit.json
+          python analysis/compare_ieee39_unprivileged.py --results original_sixmethod/results/ieee39_unpriv_r1/pilot_short | tee raw_paired_sixmethod.json
+          python analysis/audit_ieee39_backup_evidence.py \
+            --smoke original_smoke/results/ieee39_unpriv_r1/smoke \
+            --strict original_smoke/results/ieee39_unpriv_r1/strict \
+            --sixmethod original_sixmethod/results/ieee39_unpriv_r1/pilot_short \
+            --output forensic_backup_recovery.json
+      - name: Archive all independently computed immutable audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-FROZEN-replay-audited-${{ github.sha }}
+          path: |
+            original_sha256_manifest.json
+            raw_smoke_audit.json
+            raw_strict_audit.json
+            raw_sixmethod_audit.json
+            raw_paired_sixmethod.json
+            forensic_backup_recovery.json
+            analysis/audit_ieee39_unprivileged.py
+            analysis/audit_ieee39_backup_evidence.py
+            analysis/compare_ieee39_unprivileged.py
+          if-no-files-found: warn
+          retention-days: 90

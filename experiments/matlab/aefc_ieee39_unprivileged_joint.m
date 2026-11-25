@@ -77,7 +77,31 @@ for ai=1:numel(scales)
                 diagv=sampleOutput(out,'AEFC_DIAG',tq,16);
                 ushield=sampleOutput(out,'AEFC_SHIELD_VECTOR',tq,4);
                 upost=sampleOutput(out,'AEFC_POST_ATTACK_VECTOR',tq,4);
+                nativeBasePref=zeros(numel(tq),4);
+                nativeDeliveredPref=zeros(numel(tq),4);
+                for prefIndex=1:4
+                    nativeBasePref(:,prefIndex)=sampleOutput(out,...
+                        sprintf('AEFC_NATIVE_PREF_BASE_%02d',prefIndex),tq,1);
+                    nativeDeliveredPref(:,prefIndex)=sampleOutput(out,...
+                        sprintf('AEFC_NATIVE_PREF_DELIVERED_%02d',prefIndex),tq,1);
+                end
+                prefResidual=nativeDeliveredPref-nativeBasePref-ushield-upost;
+                % Double precision physical edge identity, not a proof of
+                % nonlinear grid-wide actuator dynamics or backup viability.
+                prefTol=1e-6+1e-6*max(abs(nativeDeliveredPref),[],'all');
+                assert(all(abs(prefResidual)<prefTol,'all'), ...
+                    'AEFC:NativePrefInterposition', ...
+                    'Actual delivered Pref must equal original + correction + downstream attack');
                 allgen=sampleOutput(out,'AEFC_NATIVE_GEN_ALL_10',tq,10);
+                rawGenSignal=out.get('AEFC_NATIVE_GEN_ALL_10');
+                [tRaw,genRaw]=extractSeries(rawGenSignal);
+                tRaw=double(tRaw(:));
+                genRaw=normalizeTimeMajor(double(genRaw),numel(tRaw),10, ...
+                    'AEFC_NATIVE_GEN_ALL_10_RAW');
+                [tRaw,ia]=unique(tRaw,'stable');genRaw=genRaw(ia,:);
+                assert(all(isfinite(tRaw)) && all(isfinite(genRaw),'all') && ...
+                    all(diff(tRaw)>0),...
+                    'AEFC:RawPhysicalTime','Nonfinite/unsorted native monitor samples');
                 assert(isequal(size(allgen),[numel(tq),10]) && all(isfinite(allgen),'all'), ...
                     'AEFC:TenSpeedMissing','All ten real generator speed channels must be recorded');
                 % Initial pre-attack operating reference is observed at t=0,
@@ -86,6 +110,24 @@ for ai=1:numel(scales)
                 zAll=(allgen-allgenReference)/0.02;
                 allgenMax=max(abs(zAll),[],2);
                 tenSafe=allgenMax<=cfg.normalized_safe_limit+1e-9;
+                rawNorm=(genRaw-allgenReference)/0.02;
+                rawSpeedMax=max(abs(rawNorm),[],2);
+                rawSafe=rawSpeedMax<=cfg.normalized_safe_limit+1e-9;
+                rawRecordName=sprintf('seed_%02d.raw-solver.jsonl',seed);
+                rawRecordPath=fullfile(runDir,rawRecordName);
+                assert(exist(rawRecordPath,'file')~=2,'AEFC:RawOverwrite', ...
+                    'Native original physical solver samples already archived');
+                rawFile=fopen(rawRecordPath,'w');
+                assert(rawFile>0,'AEFC:RawIO','Cannot write unresampled physical monitor');
+                for rawIndex=1:numel(tRaw)
+                    rawRecord=struct('time',tRaw(rawIndex), ...
+                        'all_ten_generator_speed_native',genRaw(rawIndex,:), ...
+                        'all_ten_speed_normalized',rawNorm(rawIndex,:), ...
+                        'all_ten_speed_inside_proxy',logical(rawSafe(rawIndex)));
+                    fwrite(rawFile,jsonencode(rawRecord),'char');
+                    fwrite(rawFile,sprintf('\n'),'char');
+                end
+                fclose(rawFile);
                 assert(all(diagv(:,11)==0) && all(diagv(:,12)==0), ...
                     'AEFC:FalseCertification','Four-channel experiment must not mark full state certified');
                 assert(all(abs(upost(:))<=double(cfg.native_contract.post_shield_attack_upper)+1e-9), ...
@@ -144,6 +186,9 @@ for ai=1:numel(scales)
                         'proxy_pass',logical(diagv(k,15)>0.5),...
                         'shield_action',ushield(k,:),'post_shield_attack',upost(k,:),...
                         'executed_correction',ushield(k,:)+upost(k,:), ...
+                        'original_governor_pref_reference',nativeBasePref(k,:), ...
+                        'native_delivered_pref_reference',nativeDeliveredPref(k,:), ...
+                        'pref_interposition_error',prefResidual(k,:), ...
                         'sampled_speed_inside_proxy',logical(safeObserved(k)),...
                         'all_ten_generator_speed_native',allgen(k,:), ...
                         'all_ten_generator_speed_normalized',zAll(k,:), ...
@@ -168,6 +213,9 @@ for ai=1:numel(scales)
                 rows(counter).proxy_refusal_count=sum(diagv(:,8)<0);
                 rows(counter).backup_used_count=sum(diagv(:,13)>0.5);
                 rows(counter).full_state_certified_count=0;
+                rows(counter).max_abs_pref_interposition_error=max(abs(prefResidual),[],'all');
+                rows(counter).original_governor_pref_path_logged=1;
+                rows(counter).native_backup_governor_reachability_certified=0;
                 rows(counter).mean_native_speed_error=mean(maxabs);
                 rows(counter).all_ten_speed_exposed_at_attack_stop=double(tenExposed);
                 rows(counter).all_ten_speed_strict_recovered=double(tenRecovered);
@@ -177,6 +225,10 @@ for ai=1:numel(scales)
                     rows(counter).all_ten_speed_recovery_time=NaN;
                 end
                 rows(counter).all_ten_speed_sampled_violation_steps=sum(~tenSafe);
+                rows(counter).raw_solver_speed_monitor_samples=numel(tRaw);
+                rows(counter).raw_solver_max_ten_speed_normalized=max(rawSpeedMax);
+                rows(counter).raw_solver_ten_speed_violation_count=sum(~rawSafe);
+                rows(counter).raw_solver_intersample_coverage_proven=0;
                 rows(counter).mean_all_ten_speed_error=mean(allgenMax);
                 saveSummary(fullfile(runDir,sprintf('seed_%02d.summary.json',seed)),rows(counter));
             end
@@ -195,6 +247,10 @@ manifest=struct('backend','MATLAB R2024b original native IEEE39 instrumented cop
     'recovery_criterion','outside 0.25 normalized speed at attack stop; then inside for 20 full samples', ...
     'statistical_unit','seed; deterministic phases are not iid independent trials', ...
     'full_state_certified',false,'all_ten_generators_speed_monitored',true, ...
+    'pref_setpoint_interposition_monitored',true, ...
+    'unaltered_native_solver_time_physical_monitor',true, ...
+    'intersample_coverage_proven',false, ...
+    'original_governor_backup_certified',false, ...
     'all_ten_speed_recovery_normalization','each generator preattack observed t=0 rotor-speed; divisor 0.02 p.u.', ...
     'proxy_bounds_unvalidated',true);
 saveSummary(fullfile(outRoot,'manifest.json'),manifest);
@@ -209,7 +265,18 @@ t=double(t(:)); d=double(d);
 if ~isreal(d), d=abs(d); end
 d=normalizeTimeMajor(d,numel(t),dim,name);
 [t,ia]=unique(t,'stable'); d=d(ia,:);
-assert(numel(t)>=2,'AEFC:OutputSamples','Signal %s has fewer than two samples.',name);
+if numel(t)==1 && startsWith(name,'AEFC_NATIVE_PREF_BASE_')
+    % In the official R2024b plant the ORIGINAL governor Pref source is a
+    % true constant; To Workspace can save a single initial sample. A
+    % zero-order held constant is the actual physical source behavior.
+    % Deliberately DO NOT permit this exception for DELIVERED Pref,
+    % attacks, protection decisions, or real physical measurements.
+    assert(abs(t(1)-tq(1))<1e-8 && all(isfinite(d),'all'), ...
+        'AEFC:OriginalPrefSingleSample','Single Pref source sample invalid');
+    X=repmat(d(1,:),numel(tq),1);
+    return;
+end
+assert(numel(t)>=2,'AEFC:OutputSamples','Dynamic signal %s has fewer than two samples.',name);
 if numel(t)==numel(tq) && max(abs(t-tq))<=1e-9
     X=d(:,1:dim);
 else

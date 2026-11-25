@@ -1,0 +1,66 @@
+name: TDSC-R1 native 59-predicate safety-state and genuine online sensor provenance matrix
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-decisive-evidence-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-state-sensor-matrix.yml'
+      - 'analysis/build_ieee39_safety_state_sensor_matrix.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native_complete_physical_state_to_sensor_mapping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Get original native xout and ten generator measurement source hashes
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45540806356
+          name: TDSC-R1-IEEE39-xout-physical-taxonomy-f89151d6d57e5f3f54cd9478060ac60b9c1545e9
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_state_registry
+      - name: Get true official IEEE39 bus/branch physical signal graph census
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45544601546
+          name: TDSC-R1-native-IEEE39-safety-sensor-census-e1921b2de22054839770076561db932e680d4292
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: official_native_census
+      - name: Match ALL safety-relevant state requirements with original physical measurement evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/build_ieee39_safety_state_sensor_matrix.py \
+            --census official_native_census/results/ieee39_safety_mapping/native_safety_signal_census.json \
+            --registry original_state_registry/native_review_state_registry.json \
+            --mapping results/ieee39_r2024b/interface_mapping.json \
+            --output ieee39_state_sensor_coverage_matrix.json
+          python - <<'PY'
+          import json
+          x=json.load(open('ieee39_state_sensor_coverage_matrix.json'))
+          c=x['counts']
+          assert len(x['individual_safety_predicates'])==59
+          assert c['generator_speed_monitored_offline']==10
+          assert c['generator_speed_current_online_accepted']==4
+          assert c['bus_voltage_channels_required']==39
+          assert c['bus_voltage_channels_mapped']==0
+          assert c['trusted_sensor_error_bounds_proven']==0
+          assert not x['full_native_state_observation_complete']
+          assert x['outcome']=='BLOCKED_INCOMPLETE_GENUINE_IEEE39_SENSOR_COVERAGE'
+          print('Native all-CPS sensor-mapping evidence remains INCOMPLETE')
+          PY
+      - name: Archive proof-linked 59-variable sensor-state truth matrix
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-59-safety-state-sensor-matrix-${{ github.sha }}
+          path: |
+            ieee39_state_sensor_coverage_matrix.json
+            analysis/build_ieee39_safety_state_sensor_matrix.py
+          if-no-files-found: warn
