@@ -1,0 +1,58 @@
+name: IEEE39 offline xout provenance and true physical-state classification
+on:
+  workflow_dispatch:
+  push:
+    branches: [audit/tdsc-r1-ieee39-fullstate-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-xout-audit.yml'
+      - 'analysis/audit_ieee39_state_inventory.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  classify_original_unchanged_xout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download original official R2024b 201-entry state inventory (no resimulation)
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45538622715
+          name: TDSC-R1-IEEE39-offline-state-inventory-fe9dde9c8d0a1cb43dd88c1786bebcfe834df655
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_artifact
+      - name: Independently classify AVR, governor and solver-internal states
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_state_inventory.py \
+            original_artifact/results/ieee39_fullstate_p0/original_native_state_inventory.json \
+            | tee state_taxonomy_audit.json
+          python - <<'PY'
+          import json
+          q=json.load(open('state_taxonomy_audit.json'))
+          assert q['logged_dynamic_state_entries']==201
+          assert q['estimated_logged_scalar_components']==976
+          groups=q['logged_entries_by_source']
+          assert groups['generator_avr_exciter']=={'entries':150,'scalar_values':150}
+          assert groups['generator_governor']=={'entries':30,'scalar_values':30}
+          assert groups['grid_solver_internal']=={'entries':21,'scalar_values':796}
+          assert q['largest_grid_solver_internal_vector_components']==756
+          assert q['real_native_full_state_certificate'] is False
+          assert q['estimated_independent_physical_dynamic_state_dimensions'] is None
+          print('PROVENANCE CLASSIFICATION PASS; no inference of 976 physical DoF')
+          PY
+      - name: Save derived audit with unchanged raw original data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-xout-physical-taxonomy-${{ github.sha }}
+          path: |
+            original_artifact/results/ieee39_fullstate_p0/original_native_state_inventory.json
+            state_taxonomy_audit.json
+            analysis/audit_ieee39_state_inventory.py
+          if-no-files-found: warn
