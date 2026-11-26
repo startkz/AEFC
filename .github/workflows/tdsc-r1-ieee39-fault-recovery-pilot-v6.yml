@@ -1,18 +1,18 @@
-name: TDSC-R1 native IEEE39 Bus16 fault recovery pilot v6 with scalar seed execution and explicit Bus16 diagnostics
+name: TDSC-R1 native IEEE39 Bus16 fault recovery pilot v7 with normalized Simscape line matching and Ubuntu 24.04
 on:
   workflow_dispatch:
   push:
     branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
     paths:
       - '.github/workflows/tdsc-r1-ieee39-fault-recovery-pilot-v6.yml'
-      - 'experiments/matlab/aefc_ieee39_native_fault_recovery_pilot_v6.m'
+      - 'experiments/matlab/aefc_ieee39_native_fault_recovery_pilot_v7.m'
       - 'configs/ieee39_native_fault_recovery_protocol_r1.json'
       - 'configs/ieee39_native_fault_recovery_protocol_r1_location_addendum.json'
 permissions:
   contents: read
 jobs:
-  native_bus16_fault_recovery_pilot_v5:
-    runs-on: ubuntu-latest
+  native_bus16_fault_recovery_pilot_v7:
+    runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
       - uses: actions/checkout@v4
@@ -27,14 +27,14 @@ jobs:
       - name: Run original Bus16_1 three-phase fault with Simscape logging configured before Fast Restart
         uses: matlab-actions/run-command@v3
         with:
-          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_native_fault_recovery_pilot_v6
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_native_fault_recovery_pilot_v7
       - name: Audit paired episodes and full-grid physical channels
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import csv,json
-          root='results/ieee39_fault_recovery_r1/pilot_v6'
+          import csv,json,re
+          root='results/ieee39_fault_recovery_r1/pilot_v7'
           m=json.load(open(root+'/manifest.json'))
           gate=json.load(open(root+'/pilot_gate.json'))
           rows=list(csv.DictReader(open(root+'/summary.csv')))
@@ -48,7 +48,9 @@ jobs:
           assert m['full_network_safety_certified'] is False
           assert m['offline_simscape_oracle_only'] is True
           assert m['bus16_logical_id']==16 and m['bus16_physical_section_count']>=1
-          assert len(m['adjacent_line_current_phase_variables'])==3
+          assert m['adjacent_line_match_key']=='b16tob17'
+          assert re.sub(r'[^a-z0-9]','',m['adjacent_line_simscape_component'].lower())=='b16tob17'
+          assert set(m['adjacent_line_current_phase_variables'])=={'inductor_a/i/amplitude','inductor_b/i/amplitude','inductor_c/i/amplitude'}
           assert m['generator_speed_channels']==10
           assert gate['confirmatory_experiment_started'] is False
           assert gate['formal_confirmatory_seeds']==list(range(80,90))
@@ -67,11 +69,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: TDSC-R1-native-IEEE39-Bus16-fault-recovery-pilot-v6-${{ github.sha }}
+          name: TDSC-R1-native-IEEE39-Bus16-fault-recovery-pilot-v7-${{ github.sha }}
           path: |
-            results/ieee39_fault_recovery_r1/pilot_v5/
+            results/ieee39_fault_recovery_r1/pilot_v7/
             configs/ieee39_native_fault_recovery_protocol_r1.json
             configs/ieee39_native_fault_recovery_protocol_r1_location_addendum.json
-            experiments/matlab/aefc_ieee39_native_fault_recovery_pilot_v5.m
+            experiments/matlab/aefc_ieee39_native_fault_recovery_pilot_v7.m
           if-no-files-found: warn
           retention-days: 90
