@@ -1,0 +1,118 @@
+name: TDSC-R1 native IEEE39 Bus16 strict fail-closed recovery pilot v1
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-fault-recovery-strict-pilot-v1.yml'
+      - 'experiments/matlab/aefc_ieee39_native_fault_recovery_strict_pilot_v1.m'
+      - 'experiments/matlab/AEFCNativeController.m'
+      - 'experiments/matlab/aefc_native_certified_execution_step.m'
+      - 'experiments/matlab/aefc_native_load_verified_state_contract.m'
+      - 'configs/ieee39_native_fault_recovery_protocol_r1.json'
+      - 'configs/ieee39_native_fault_recovery_protocol_r1_location_addendum.json'
+permissions:
+  contents: read
+jobs:
+  native_bus16_strict_refusal_pilot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Run original Bus16_1 three-phase fault with strict fail-closed execution
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_native_fault_recovery_strict_pilot_v1
+      - name: Audit fail-closed action refusal and unchanged native governor reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv, json, os
+          root='results/ieee39_fault_recovery_r1/strict_pilot_v1'
+          gate=json.load(open(os.path.join(root,'strict_refusal_gate.json')))
+          manifest=json.load(open(os.path.join(root,'manifest.json')))
+          rows=list(csv.DictReader(open(os.path.join(root,'summary.csv'))))
+          def truth(v): return str(v).strip().lower() in ('true','1')
+          assert gate['passed'] is True, gate
+          assert gate['all_added_pref_corrections_zero'] is True
+          assert gate['all_execution_releases_zero'] is True
+          assert gate['all_backup_actions_zero'] is True
+          assert gate['all_pairs_common_exposed'] is True
+          assert gate['all_pairs_recovered_after_fault'] is True
+          assert gate['confirmatory_experiment_started'] is False
+          assert manifest['execution_mode']=='strict_fail_closed'
+          assert manifest['exploratory_mode'] is False
+          assert manifest['full_network_safety_certified'] is False
+          assert manifest['independent_governor_viability_certified'] is False
+          assert len(rows)==4, len(rows)
+          for r in rows:
+              assert float(r['max_added_pref_correction']) < 1e-12, r
+              assert int(r['execution_released_samples']) == 0, r
+              assert int(r['backup_action_used_samples']) == 0, r
+              assert int(r['full_state_certified_samples']) == 0, r
+              assert int(r['proxy_contract_pass_samples']) == 0, r
+              assert truth(r['exposed_during_fault']), r
+              assert truth(r['recovered_after_fault']), r
+          def flat(x):
+              if isinstance(x,list):
+                  for y in x: yield from flat(y)
+              else: yield float(x)
+          def assert_same(a,b,key,seed):
+              aa=list(flat(a[key]));bb=list(flat(b[key]))
+              assert len(aa)==len(bb),(key,seed,len(aa),len(bb))
+              err=max((abs(x-y) for x,y in zip(aa,bb)),default=0.0)
+              assert err<=1e-10,(key,seed,err)
+          for seed in (0,1):
+              traces={}
+              for method in ('AEFC-Full','Supervisor-only'):
+                  p=os.path.join(root,method,f'seed_{seed:02d}.jsonl')
+                  traces[method]=[json.loads(line) for line in open(p) if line.strip()]
+                  assert len(traces[method])>0
+                  for x in traces[method]:
+                      assert x['execution_released'] is False, (method,seed,x['time'])
+                      assert x['backup_action_used'] is False, (method,seed,x['time'])
+                      assert x['full_state_certified'] is False, (method,seed,x['time'])
+                      assert x['proxy_contract_pass'] is False, (method,seed,x['time'])
+                      assert_same(x,{'original_governor_pref':x['delivered_pref']},
+                                  'original_governor_pref',seed)
+              a=traces['AEFC-Full'];b=traces['Supervisor-only']
+              assert len(a)==len(b),(seed,len(a),len(b))
+              keys=('bus_vt_sections','all_ten_generator_speed',
+                    'adjacent_B16_B17_current_A','original_governor_pref','delivered_pref')
+              for xa,xb in zip(a,b):
+                  assert abs(float(xa['time'])-float(xb['time']))<=1e-12
+                  for key in keys: assert_same(xa,xb,key,seed)
+          print(json.dumps({
+              'episodes':len(rows),
+              'strict_added_pref_correction':'zero',
+              'surrogate_contract_releases':0,
+              'backup_actions':0,
+              'native_governor_reference':'retained unchanged',
+              'paired_physical_traces':'identical under strict refusal',
+              'fault_exposure_and_sampled_recovery':'observed',
+              'full_network_safety_certified':False,
+              'formal_seeds_80_89_started':False
+          },indent=2))
+          PY
+      - name: Archive strict refusal trajectories and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-Bus16-strict-refusal-pilot-v1-${{ github.sha }}
+          path: |
+            results/ieee39_fault_recovery_r1/strict_pilot_v1/
+            experiments/matlab/aefc_ieee39_native_fault_recovery_strict_pilot_v1.m
+            experiments/matlab/AEFCNativeController.m
+            experiments/matlab/aefc_native_certified_execution_step.m
+            configs/ieee39_native_fault_recovery_protocol_r1.json
+          if-no-files-found: warn
+          retention-days: 90
