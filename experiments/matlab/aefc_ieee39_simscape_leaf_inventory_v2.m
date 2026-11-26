@@ -73,15 +73,15 @@ while head<=numel(stack) && visited<maxNodes
             end
             if isempty(tt) || isempty(vv),continue;end
             tt=double(tt(:));vv=double(vv);
+            if size(vv,1)~=numel(tt) && size(vv,2)==numel(tt),vv=vv.';end
             if ~isreal(vv),vv=abs(vv);end
-            vv=double(vv(:));
-            if numel(vv)~=numel(tt) || any(~isfinite(tt)) || any(~isfinite(vv))
+            if size(vv,1)~=numel(tt) || any(~isfinite(tt)) || any(~isfinite(vv(:)))
                 continue
             end
-            [tt,ia]=unique(tt,'stable');vv=vv(ia);
+            [tt,ia]=unique(tt,'stable');vv=vv(ia,:);
             if numel(tt)<2,continue;end
             fullPath=[parent '/' key];
-            lo=min(vv);hi=max(vv);ma=max(abs(vv));ns=numel(tt);
+            lo=min(vv(:));hi=max(vv(:));ma=max(abs(vv(:)));ns=numel(tt);
 
             % Physical bus voltage leaf. Keep logical ID and split section.
             tok=regexp(parent,'/Grid/Bus([^/]+)/Vt$','tokens','once');
