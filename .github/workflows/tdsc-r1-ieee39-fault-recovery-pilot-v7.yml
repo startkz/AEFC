@@ -1,0 +1,79 @@
+name: TDSC-R1 native IEEE39 Bus16 fault recovery pilot v7 with normalized Simscape line matching and Ubuntu 24.04
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-fault-recovery-pilot-v7.yml'
+      - 'experiments/matlab/aefc_ieee39_native_fault_recovery_pilot_v7.m'
+      - 'configs/ieee39_native_fault_recovery_protocol_r1.json'
+      - 'configs/ieee39_native_fault_recovery_protocol_r1_location_addendum.json'
+permissions:
+  contents: read
+jobs:
+  native_bus16_fault_recovery_pilot_v7:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Run original Bus16_1 three-phase fault with Simscape logging configured before Fast Restart
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_native_fault_recovery_pilot_v7
+      - name: Audit paired episodes and full-grid physical channels
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv,json,re
+          root='results/ieee39_fault_recovery_r1/pilot_v7'
+          m=json.load(open(root+'/manifest.json'))
+          gate=json.load(open(root+'/pilot_gate.json'))
+          rows=list(csv.DictReader(open(root+'/summary.csv')))
+          assert len(rows)==4
+          assert sorted({int(r['seed']) for r in rows})==[0,1]
+          assert {r['method'] for r in rows}=={'AEFC-Full','Supervisor-only'}
+          assert m['fault_parameters_verified_at_runtime'] is True
+          assert m['verified_fault_bus_section'].endswith('/Bus16_1')
+          assert m['verified_adjacent_line'].endswith('/B16 to B17')
+          assert m['online_observation_generator_keys']==['Gen10@Bus30','Gen1@Bus39','Gen2@Bus31','Gen3@Bus32']
+          assert m['full_network_safety_certified'] is False
+          assert m['offline_simscape_oracle_only'] is True
+          assert m['bus16_logical_id']==16 and m['bus16_physical_section_count']>=1
+          assert m['adjacent_line_match_key']=='b16tob17'
+          assert re.sub(r'[^a-z0-9]','',m['adjacent_line_simscape_component'].lower())=='b16tob17'
+          assert set(m['adjacent_line_current_phase_variables'])=={'inductor_a/i/amplitude','inductor_b/i/amplitude','inductor_c/i/amplitude'}
+          assert m['generator_speed_channels']==10
+          assert gate['confirmatory_experiment_started'] is False
+          assert gate['formal_confirmatory_seeds']==list(range(80,90))
+          assert gate['thresholds_changed'] is False and gate['fault_parameters_changed'] is False
+          for r in rows:
+              assert int(r['bus_logical_ids'])==39
+              assert int(r['bus_physical_sections'])==41
+              assert int(r['branch_current_series'])>=126
+              assert int(r['bus16_physical_sections'])>=1
+              assert int(r['B16_B17_phase_current_series'])==3
+              assert int(r['generator_speed_channels'])==10
+          print(json.dumps({'episodes':rows,'pilot_gate':gate},indent=2))
+          print('PILOT_EXPOSURE_GATE_PASSED' if gate['passed'] else 'PILOT_EXPOSURE_GATE_NOT_PASSED')
+          PY
+      - name: Archive raw online observations, offline bus voltages, all speeds and branch currents
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-Bus16-fault-recovery-pilot-v7-${{ github.sha }}
+          path: |
+            results/ieee39_fault_recovery_r1/pilot_v7/
+            configs/ieee39_native_fault_recovery_protocol_r1.json
+            configs/ieee39_native_fault_recovery_protocol_r1_location_addendum.json
+            experiments/matlab/aefc_ieee39_native_fault_recovery_pilot_v7.m
+          if-no-files-found: warn
+          retention-days: 90
