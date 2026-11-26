@@ -34,7 +34,7 @@ try
     if isfinite(lh)&&lh>0
      lineSet=lh;
      try,lineSet=[lineSet;double(get_param(lh,'LineParent'))];catch,end
-     try,lineSet=[lineSet;double(get_param(lh,'LineChildren'))(:)];catch,end
+     try,lc=get_param(lh,'LineChildren');lineSet=[lineSet;double(lc(:))];catch,end
      lineSet=unique(lineSet(isfinite(lineSet)&lineSet>0));
     end
     currentCandidate='';
