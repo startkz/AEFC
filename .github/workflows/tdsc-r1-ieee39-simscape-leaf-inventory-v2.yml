@@ -1,0 +1,79 @@
+name: TDSC-R1 native IEEE39 Simscape leaf-series inventory v2
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-simscape-leaf-inventory-v2.yml'
+      - 'experiments/matlab/aefc_ieee39_simscape_leaf_inventory_v2.m'
+      - 'experiments/matlab/aefc_ieee39_build_stress.m'
+      - 'experiments/matlab/AEFCNativeController.m'
+permissions:
+  contents: read
+jobs:
+  native_simscape_leaf_inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Enumerate native Simscape Series leaves on the IEEE39 AEFC plant copy
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_simscape_leaf_inventory_v2
+      - name: Audit bus, line, transformer and offline candidate coverage without promoting safety claims
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          p='results/ieee39_safety_mapping/native_simscape_leaf_inventory_v2.json'
+          d=json.load(open(p))
+          assert d['simscape_log_available'] is True
+          assert d['logical_bus_voltage_ids']==39, d['logical_bus_voltage_ids']
+          assert d['physical_bus_voltage_sections']>=39, d['physical_bus_voltage_sections']
+          assert d['line_component_count']==34, d['line_component_count']
+          assert d['transformer_component_count']==12, d['transformer_component_count']
+          assert d['line_phase_current_series']==102, d['line_phase_current_series']
+          assert d['transformer_winding_current_series']==24, d['transformer_winding_current_series']
+          assert d['total_branch_current_series']==126, d['total_branch_current_series']
+          assert d['online_controller_input_channels']==4
+          assert d['trusted_online_sensor_integrity_verified'] is False
+          assert d['sensor_error_bounds_verified']==0
+          assert d['complete_DAE_state_observability_verified'] is False
+          assert d['sampled_one_step_reachable_tube_verified'] is False
+          assert d['continuous_intersample_tube_verified'] is False
+          assert d['full_network_safety_certified'] is False
+          print(json.dumps({
+              'logical_buses':d['logical_bus_voltage_ids'],
+              'physical_voltage_sections':d['physical_bus_voltage_sections'],
+              'transmission_lines':d['line_component_count'],
+              'line_phase_current_series':d['line_phase_current_series'],
+              'transformers':d['transformer_component_count'],
+              'transformer_winding_current_series':d['transformer_winding_current_series'],
+              'total_branch_current_series':d['total_branch_current_series'],
+              'rotor_angle_candidates':d['generator_rotor_angle_candidate_count'],
+              'terminal_voltage_candidates':d['generator_terminal_voltage_candidate_count'],
+              'online_sensor_integrity_verified':d['trusted_online_sensor_integrity_verified'],
+              'full_network_safety_certified':d['full_network_safety_certified']
+          },indent=2))
+          PY
+      - name: Archive native leaf registry and exact model source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-Simscape-leaf-inventory-v2-\${{ github.sha }}
+          path: |
+            results/ieee39_safety_mapping/native_simscape_leaf_inventory_v2.json
+            results/ieee39_r2024b/unprivileged_model_build.json
+            experiments/matlab/aefc_ieee39_simscape_leaf_inventory_v2.m
+            experiments/matlab/aefc_ieee39_build_stress.m
+          if-no-files-found: warn
+          retention-days: 90
