@@ -209,7 +209,6 @@ fprintf('Native Simscape leaf inventory v2: %d bus sections, %d branch-current s
 try,set_param(model,'FastRestart','off');catch,end
 try,close_system(model,0);catch,end
 end
-,'tokens','once');
             if ~isempty(tok) && strcmp(unit,'A')
                 branch(end+1)=struct('path',fullPath,'component',tok{1}, ...
                     'component_type','transformer','variable',tok{2}, ...
