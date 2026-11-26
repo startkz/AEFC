@@ -69,7 +69,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: TDSC-R1-native-IEEE39-Simscape-leaf-inventory-v2-\${{ github.sha }}
+          name: TDSC-R1-native-IEEE39-Simscape-leaf-inventory-v2-${{ github.sha }}
           path: |
             results/ieee39_safety_mapping/native_simscape_leaf_inventory_v2.json
             results/ieee39_r2024b/unprivileged_model_build.json
