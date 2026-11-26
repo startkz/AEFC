@@ -110,7 +110,7 @@ while head<=numel(stack) && visited<maxNodes
             end
 
             % Both native winding currents for each transformer.
-            tok=regexp(parent,'/Grid/(TF_[^/]+|TF [^/]+)/(i1|i2)
+            tok=regexp(parent,'/Grid/(TF_[^/]+|TF [^/]+)/(i1|i2)$','tokens','once');
             if ~isempty(tok) && strcmp(unit,'A')
                 branch(end+1)=struct('path',fullPath,'component',tok{1}, ...
                     'component_type','transformer','variable',tok{2}, ...
