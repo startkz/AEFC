@@ -30,14 +30,14 @@ def as_list(value):
 def count_ports(x):
     return sum(len(as_list(y.get("port_handles",[]))) for y in as_list(x))
 candidates=as_list(d["measurement_or_converter_candidate_blocks"])
-ps=[x for x in candidates if x.get("mask_type")=="PS-Simulink\\nConverter"]
-sps=[x for x in candidates if x.get("mask_type")=="Simulink-PS\\nConverter"]
-sm=[x for x in candidates if x.get("mask_type")=="Synchronous Machine\\nMeasurement"]
+ps=[x for x in candidates if x.get("mask_type")=="PS-Simulink\nConverter"]
+sps=[x for x in candidates if x.get("mask_type")=="Simulink-PS\nConverter"]
+sm=[x for x in candidates if x.get("mask_type")=="Synchronous Machine\nMeasurement"]
 ps_grid=[x for x in ps if "/Grid/" in x.get("path","")]
 ps_generators=[x for x in ps if "/Generators/" in x.get("path","")]
-gen_angle=[x for x in ps_generators if x.get("path","").endswith("/PS-Simulink\\nConverter1")]
-gen_speed=[x for x in ps_generators if x.get("path","").endswith("/PS-Simulink\\nConverter11")]
-gen_terminal_v=[x for x in ps_generators if x.get("path","").endswith("/PS-Simulink\\nConverter12")]
+gen_angle=[x for x in ps_generators if x.get("path","").endswith("/PS-Simulink\nConverter1")]
+gen_speed=[x for x in ps_generators if x.get("path","").endswith("/PS-Simulink\nConverter11")]
+gen_terminal_v=[x for x in ps_generators if x.get("path","").endswith("/PS-Simulink\nConverter12")]
 def signal_port_count(components):
     return sum(1 for c in as_list(components) for p in as_list(c.get("port_handles",[]))
                if p.get("field") not in ("LConn","RConn"))
