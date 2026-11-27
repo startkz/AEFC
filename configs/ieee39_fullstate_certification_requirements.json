@@ -381,31 +381,11 @@
     "Re-run the full-state promotion gate and the six-method independent recovery holdout only after all required predicates are evidenced."
   ],
   "latest_promotion_gate_recheck": {
-    "run_id": 45954777797,
+    "run_id": 45955567123,
     "status": "BLOCKED",
     "full_network_certified": false,
     "blocking_requirement_count": 18,
-    "blockers": [
-      "NO_INDEPENDENT_NATIVE_STATE_INVENTORY",
-      "NO_FULLSTATE_ONLINE_OBSERVER_COVERAGE_PROOF",
-      "NO_OBSERVER_ERROR_BOUND_PROOF",
-      "NO_ALL_STATE_MEASUREMENT_MAP",
-      "UNVERIFIED_PHYSICAL_PREDICATE:generator_rotor_speed_all_machines",
-      "UNVERIFIED_PHYSICAL_PREDICATE:generator_rotor_angle_stability",
-      "UNVERIFIED_PHYSICAL_PREDICATE:bus_voltage_limits_all_buses",
-      "UNVERIFIED_PHYSICAL_PREDICATE:branch_thermal_power_loading",
-      "UNVERIFIED_PHYSICAL_PREDICATE:actuator_governor_pref_and_rate_limits",
-      "NO_VALIDATED_FULL_NETWORK_SAMPLED_REACHABLE_TUBE",
-      "NO_FORMAL_DISCRETE_MODEL_RESIDUAL_ENVELOPE",
-      "NO_FULL_NONLINEAR_INTERSAMPLE_REACHABILITY",
-      "UNCERTIFIED_EMERGENCY_CONTROL:emergency_actuator_authority_verified",
-      "UNCERTIFIED_EMERGENCY_CONTROL:fallback_reachable_set_feasible",
-      "UNCERTIFIED_EMERGENCY_CONTROL:deadline_and_solver_timeout_verified",
-      "UNCERTIFIED_EMERGENCY_CONTROL:original_governors_independently_certified",
-      "NO_HASH_PINNED_NATIVE_FULLSTATE_MODEL_ARTIFACT",
-      "NO_INDEPENDENT_SIX_METHOD_RECOVERY_HOLDOUT"
-    ],
-    "interpretation": "A green audit workflow means the gate evaluation completed; the full IEEE39 safety promotion decision remains blocked."
+    "interpretation": "The gate script completed successfully, but 18 material evidence predicates remain unsatisfied."
   },
   "online_sensor_insertion_pilot": {
     "run_id": 45955471023,
@@ -450,5 +430,22 @@
     "sensor_error_bounds_verified": false,
     "plant_nonperturbation_verified": false,
     "full_network_safety_certified": false
+  },
+  "online_controller_oracle_independence": {
+    "source_run_id": 45955789106,
+    "status": "PASS_NO_ATTACK_TRUTH_OR_CLEAN_SHADOW_DEPENDENCY",
+    "online_step_signature": "stepImpl(obj,localPhysical,packet)",
+    "online_physical_measurement_channels": 4,
+    "online_packet_fields": 67,
+    "cleanBelief_dependency": false,
+    "attack_identity_truth_dependency": false,
+    "true_state_dependency": false,
+    "offline_simscape_log_dependency": false,
+    "exploratory_mode_default": false,
+    "strict_mode_uses_full_state_certified_execution_step": true,
+    "full_state_certificate_loader_defaults_all_coverage_flags_false": true,
+    "original_governors_certified": false,
+    "full_network_safety_certified": false,
+    "interpretation": "Static source audit only; the four-speed online interface is not sufficient for full IEEE39 safety certification. Strict mode remains fail-closed."
   }
 }
