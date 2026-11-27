@@ -3,6 +3,7 @@
 from __future__ import annotations
 import json
 import pathlib
+from collections import Counter
 import numpy as np
 
 ROOT = pathlib.Path(".")
@@ -90,6 +91,8 @@ def main():
     assert len(transformer_checks) == 24
     max_transformer_linear_error = max(float(x["best_linear"]["linear_error"]) for x in transformer_checks)
     assert max_transformer_linear_error <= 1e-10
+    transformer_direct_matches = sum(float(x["best_direct"]["direct_error"]) <= 1e-10 for x in transformer_checks)
+    transformer_fit_ranks = dict(sorted(Counter(str(int(x["best_linear"]["linear_rank"])) for x in transformer_checks).items()))
 
     line_phase_nonzero = [0, 0, 0]
     line_maxima = []
@@ -148,7 +151,9 @@ def main():
         "bus_port_current_series": c["bus_port_current_count"],
         "bus_port_current_variable_mapping": "123/123 resolved with I_(2k-1)=LConn_k and I_(2k)=RConn_k",
         "single_component_line_port_direct_matches": "65/65 exact signed three-phase matches",
-        "transformer_winding_endpoint_linear_consistency": "24/24",
+        "transformer_winding_endpoint_direct_signed_phase_matches": transformer_direct_matches,
+        "transformer_winding_endpoint_sampled_linear_consistency": "24/24",
+        "transformer_sampled_linear_fit_rank_distribution": transformer_fit_ranks,
         "line_terminal_current_vectors": c["line_terminal_current_count"],
         "line_components": c["line_component_count"],
         "line_terminal_phase_nonzero_vectors": line_phase_nonzero,
@@ -174,9 +179,12 @@ def main():
         "interpretation": (
             "All five multi-component busbar ports are accounted for by exact three-phase KCL "
             "at the Bus16/Bus26 split nodes and at the faulted Bus16_1/RConn1 node. The 65 single-"
-            "component line references directly match, and 24 transformer winding endpoints satisfy "
-            "their fitted linear current-vector consistency checks. These are offline native Simscape "
-            "topology/current-mapping results only; they do not authenticate online sensors, supply "
+            "component line references directly match. All 24 transformer winding endpoints satisfy "
+            "sampled linear current-vector consistency, but only 11/24 are direct signed phase matches; "
+            "the remaining fitted maps are trajectory-specific, with rank-2 fits for balanced-current "
+            "subspaces and must not be treated as unique full-rank physical transformations. These are "
+            "offline native Simscape topology/current-mapping results only; they do not authenticate "
+            "online sensors, supply "
             "branch ampacity limits, or certify full-grid or intersample safety."
         ),
     }
