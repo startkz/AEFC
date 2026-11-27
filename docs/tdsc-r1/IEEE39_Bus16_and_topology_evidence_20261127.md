@@ -113,7 +113,7 @@
 
 ## 8. Final 123-port physical and current-variable map
 
-The terminal-signature join [Actions run 45928276856](https://github.com/startkz/AEFC/actions/runs/45928276856) resolves all 123 physical Busbar ports to the native Simscape current-variable series. The empirically supported ordering is interleaved:
+The terminal-signature join [Actions run 45928276856](https://github.com/startkz/AEFC/actions/runs/45928276856) resolves all 123 physical Busbar ports to the native Simscape current-variable series. The independent original-model rebuild [Actions run 45928516528](https://github.com/startkz/AEFC/actions/runs/45928516528) also confirms 41 Busbar blocks, 123 physical ports, 34 lines, 12 transformers, and the same interleaved candidate formula. The empirically supported ordering is interleaved:
 
 I_(2k-1) = LConn_k; I_(2k) = RConn_k.
 
