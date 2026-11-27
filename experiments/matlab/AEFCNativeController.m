@@ -1,6 +1,7 @@
 classdef AEFCNativeController < matlab.System
 % TDSC-R1 experimental native IEEE39 controller (new audit branch only).
-% ONLINE interface: (trusted local FOUR rotor-speed sensors, received packet).
+% ONLINE interface: (four locally tapped rotor-speed channels, received packet).
+% Sensor integrity and measurement-error bounds for these channels remain unverified.
 % No scenario/seed/attack-active, malicious label, true state or clean shadow.
 % An offline AEFCNativeAttackHarness alone handles attacker instrumentation.
 %
@@ -137,10 +138,10 @@ methods(Access=protected)
             [uShield,status,proxyMargin,~,proxyPass]= ...
                 aefc_native_execution_contract(zLocal,proposal,backup,obj.Bn,c,false);
         else
-            % STRICT path reaches the real full-state observer, reachable
-            % tube and robust input checker. At present the IEEE39 model
-            % lacks a reviewed full-state certificate, so this branch
-            % rejects every extra Pref correction (status < 0).
+            % STRICT path invokes the fail-closed full-state gate. Missing
+            % certificate premises cause immediate rejection BEFORE the
+            % observer, reachability and input-solver stages. The original
+            % generator PI/governor loops remain active and are not certified.
             opts=struct('strict',true,'roundoff_inflation',1e-10,'max_passes',4);
             [uShield,newMemory,fullDiag]=aefc_native_certified_execution_step( ...
                 obj.statePrior,obj.stateModel,obj.previousCertifiedCommand, ...
