@@ -30,9 +30,7 @@ for k=1:numel(allGen)
  end
 end
 for k=1:numel(keep)
- b=keep{k};genSummary(k)=struct('path',b,'name',char(get_param(b,'Name')), ...
-    'block_type',safeText(safeParam(b,'BlockType')),'mask_type',safeText(safeParam(b,'MaskType')), ...
-    'port_handles',{describePorts(b)}); %#ok<AGROW>
+ b=keep{k};genSummary(k)=describeBlock(b); %#ok<AGROW>
 end
 info=struct();
 info.model=model;info.generator_subsystem=gen;info.measurements_subsystem=meas;
@@ -57,7 +55,7 @@ function d=describeBlock(block)
 d=struct('path',block,'name',char(get_param(block,'Name')), ...
  'block_type',safeText(safeParam(block,'BlockType')),'mask_type',safeText(safeParam(block,'MaskType')), ...
  'reference_block',safeText(safeParam(block,'ReferenceBlock')),'port_handles',{describePorts(block)}, ...
- 'port_connectivity',struct([]),'descendant_block_count',0,'error','');
+ 'port_connectivity',struct([]),'descendant_block_count',0,'dialog_parameters',struct([]),'error','');
 try
  pc=get_param(block,'PortConnectivity');
  rec=struct('index',{},'type',{},'src_blocks',{},'src_ports',{},'dst_blocks',{},'dst_ports',{});
@@ -68,6 +66,21 @@ try
  end
  d.port_connectivity=rec;
 catch ME,d.error=ME.message;end
+try
+ q=get_param(block,'DialogParameters');fn=fieldnames(q);
+ rows=struct('name',{},'prompt',{},'type',{},'value',{});
+ for i=1:numel(fn)
+  nm=fn{i};z=q.(nm);v='';
+  try,v=safeText(get_param(block,nm));catch
+   try,v=safeText(z.Value);catch,end
+  end
+  pr='';ty='';
+  try,pr=safeText(z.Prompt);catch,end
+  try,ty=safeText(z.Type);catch,end
+  rows(end+1)=struct('name',nm,'prompt',pr,'type',ty,'value',v); %#ok<AGROW>
+ end
+ d.dialog_parameters=rows;
+catch ME,d.error=[d.error ' | DialogParameters: ' ME.message];end
 try,kids=find_system(block,'LookUnderMasks','all','FollowLinks','on','Type','Block');d.descendant_block_count=max(0,numel(kids)-1);catch,end
 end
 function out=describePorts(block)
