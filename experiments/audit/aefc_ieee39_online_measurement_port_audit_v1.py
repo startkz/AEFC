@@ -29,7 +29,7 @@ report={
  "busbar_exposed_port_handle_count":count_ports(d["busbar_blocks"]),
  "line_exposed_port_handle_count":count_ports(d["line_blocks"]),
  "transformer_exposed_port_handle_count":count_ports(d["transformer_blocks"]),
- "controller_input_port_count":len(d["controller"]["port_handles"]),
+ "controller_exposed_port_handle_count":len(d["controller"]["port_handles"]),
  "online_physical_measurement_channels":4,
  "trusted_online_sensor_integrity_verified":False,
  "sensor_error_bounds_verified":False,
