@@ -147,7 +147,7 @@ The earlier near-zero inductor_a/i/amplitude path is an internal inductor-curren
 - RATE_A 参考值分布：500 MVA（7 条）、480 MVA（1 条）、600 MVA（20 条）、900 MVA（14 条）、1000 MVA（1 条）、1200 MVA（2 条）、1800 MVA（1 条）；
 - 按 345 kV 计算的 RATE_A 等效线电流范围为约 803.27–3012.26 A RMS。
 
-该映射首先建立支路拓扑和公开参考额定值之间的对应关系。随后，原生参数提取 [Run 45931696089](https://github.com/startkz/AEFC/actions/runs/45931696089) 和逐支路参数审计 [Run 45953495289](https://github.com/startkz/AEFC/actions/runs/45953495289) 完成了线路正序 R/X/B 与变压器串联 R/X 对照。线路在 0.1%（R）、1%（X）、5%（B）的声明容差内 34/34 匹配；变压器 12/12 漏抗和匹配，绕组电阻和在 1e-3 p.u. 绝对容差内匹配。详细偏差见第 11 节。
+该映射首先建立支路拓扑和公开参考额定值之间的对应关系。随后，原生参数提取 [Run 45931696089](https://github.com/startkz/AEFC/actions/runs/45931696089) 和逐支路参数审计 [Run 45954314407](https://github.com/startkz/AEFC/actions/runs/45954314407) 完成了线路正序 R/X/B 与变压器串联 R/X 对照。线路在 0.1%（R）、1%（X）、5%（B）的声明容差内 34/34 匹配；变压器 12/12 漏抗和匹配，绕组电阻和在 1e-3 p.u. 绝对容差内匹配。详细偏差见第 11 节。
 
 仍需严格区分 benchmark reference 与原生设备热额定值：
 
