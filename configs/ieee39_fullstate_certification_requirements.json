@@ -108,7 +108,15 @@
       "direct_signed_phase_matches": 11,
       "sampled_linear_consistency": 24,
       "rank_two_fits": 9,
-      "thermal_limits_validated": false
+      "thermal_limits_validated": false,
+      "rank_aware_audit": {
+        "source_run_id": 45930232661,
+        "direct_signed_three_phase_matches": 11,
+        "sampled_linear_consistency": 24,
+        "rank_two_fits": 9,
+        "rank_three_fits": 15,
+        "unique_full_rank_transformations_verified": false
+      }
     },
     "busbar_port_current": {
       "physical_bus_sections": 41,
@@ -117,7 +125,32 @@
       "mapping_source_run_id": 45928276856,
       "composite_ports": 5,
       "composite_port_kcl_source_run_id": 45930674491,
-      "online_sensor_channels": 0
+      "online_sensor_channels": 0,
+      "composite_port_kcl": {
+        "source_run_id": 45930674491,
+        "composite_busbar_ports": 5,
+        "validated_kcl_relations": 3,
+        "bus16_split_node": {
+          "normalized_residual": 7.41e-17,
+          "max_abs_residual_A": 4.55e-13
+        },
+        "bus26_split_node": {
+          "normalized_residual": 6.35e-17,
+          "max_abs_residual_A": 9.24e-14
+        },
+        "bus16_fault_node": {
+          "normalized_residual": 9.04e-17,
+          "max_abs_residual_A": 7.28e-12,
+          "samples": 151,
+          "window_s": [
+            5,
+            5.1
+          ]
+        },
+        "bus16_prefault_two_branch_residual": 0.000217,
+        "all_five_composite_ports_offline_kcl_closed": true,
+        "online_sensor_integrity_verified": false
+      }
     },
     "online_measurement_port_audit": {
       "source_run_id": 45932082411,
@@ -259,18 +292,91 @@
       "matpower_RATE_A_applicable_to_native_windings": false,
       "thermal_limit_verified": false,
       "verified_by_audit_run_id": 45932665618,
-      "matpower_RATE_A_applied_to_transformer_windings": false
+      "matpower_RATE_A_applied_to_transformer_windings": false,
+      "transformer_tap_match_count": 0,
+      "transformer_winding_voltage_base_match_count": 3,
+      "winding_voltage_base_mismatch_count": 9
     },
-    "transformer_thermal_limit_source": "Native transformer SRated=100 MW and VRated1/VRated2; requires confirmation of apparent-power interpretation and winding-current measurement convention."
+    "transformer_thermal_limit_source": "Native transformer SRated=100 MW and VRated1/VRated2; requires confirmation of apparent-power interpretation and winding-current measurement convention.",
+    "parameter_equivalence_audit_v2": {
+      "source_parameter_inventory_run_id": 45931696089,
+      "verified_by_audit_run_id": 45953495289,
+      "line_positive_sequence_formula": {
+        "R1": "(R-Rm)*length",
+        "X1": "2*pi*f*(L-M)*length",
+        "B1": "2*pi*f*(Cg+3*Cl)*length*Zbase"
+      },
+      "line_tolerances_relative": {
+        "R": 0.001,
+        "X": 0.01,
+        "B": 0.05
+      },
+      "line_match_counts": {
+        "R": 34,
+        "X": 34,
+        "B": 34,
+        "all_R_X_B": 34
+      },
+      "strict_diagnostic_threshold_relative": 0.0002,
+      "strict_diagnostic_matches": {
+        "R": 34,
+        "X": 33,
+        "B": 32
+      },
+      "notable_line_deviations": {
+        "B5 to B4": {
+          "X_relative_error": 0.00781381720594266,
+          "B_relative_error": 0.029794549025501688
+        },
+        "B25 to B26": {
+          "X_relative_error": 2.817235630367802e-7,
+          "B_relative_error": 0.033888183431038735
+        }
+      },
+      "transformer_series_tolerances": {
+        "R_absolute_pu": 0.001,
+        "X_relative": 0.01
+      },
+      "transformer_series_match_counts": {
+        "R": 12,
+        "X": 12,
+        "exact_R": 8,
+        "exact_X": 12
+      },
+      "transformer_tap_match_count": 0,
+      "transformer_winding_voltage_base_match_count": 3,
+      "native_transformer_winding_configurations": {
+        "345/345 kV": 3,
+        "345/22 kV": 9
+      },
+      "native_SRated": {
+        "value": 100,
+        "unit": "MW",
+        "all_12": true
+      },
+      "matpower_transformer_RATE_A_MVA": [
+        500,
+        900,
+        1200,
+        1800
+      ],
+      "transformer_RATE_A_applicable_to_native_windings": false,
+      "overall_native_model_physical_equivalence_verified": false,
+      "line_thermal_ampacity_verified": false,
+      "transformer_thermal_limits_verified": false,
+      "full_network_safety_certified": false
+    }
   },
   "next_required_sensor_work": [
-    "Run a single-point native sensor insertion pilot at Bus16_1 and B16-B17; compare PS-Simulink outputs against offline Simscape Vt and phase_splitter currents and verify no measurable plant perturbation.",
-    "Probe and reuse the existing Generators measurement bus for ten rotor speeds, ten terminal voltages, and the third generator measurement signal; keep it separate from AEFCNativeController until its schema and trust assumptions are verified.",
-    "Route the ten generator rotor-angle, rotor-velocity, and terminal-voltage signal candidates to an independent safety monitor and verify scaling/time bases.",
-    "Add explicit voltage sensing for all 41 physical bus sections.",
-    "Add explicit current sensing for both terminals of all 34 lines and both windings of all 12 transformers.",
-    "Establish sensor error, bias, dropout, synchronization, and integrity bounds before using any signal in a safety certificate.",
-    "Reconcile native MathWorks line/transformer parameters and winding voltage bases against MATPOWER case39 before comparing current RMS with RATE_A/B/C."
+    "Complete the Bus16_1 voltage and B16-B17 current sensor insertion pilot and reconcile the routed outputs with native Simscape logs and the no-sensor seed-80 baseline.",
+    "Use the verified sensor wiring pattern to add voltage measurements to all 41 physical bus sections.",
+    "Add series three-phase current measurements at both terminals of all 34 lines and both windings of all 12 transformers; preserve the native electrical topology and verify zero measurable plant perturbation.",
+    "Map the 30-dimensional generator measurement bus to exact field names, units, order, and sample times; keep it routed to an independent monitor, not AEFCNativeController.",
+    "Establish sensor noise, bias, dropout, time-synchronization, and integrity bounds before using measurements in the observer or safety contract.",
+    "Reconcile transformer winding voltage bases and tap ratios before deriving winding current limits; retain MATPOWER RATE_A only as a 345-kV line benchmark until native thermal limits are validated.",
+    "Build a full nonlinear DAE state/measurement map and validated observer-error set; prove sampled and intersample reachable-tube coverage.",
+    "Implement and test an independent governor/backup safety action with verified authority, feasibility, deadline, and solver-timeout fallback.",
+    "Re-run the full-state promotion gate and the six-method independent recovery holdout only after all required predicates are evidenced."
   ],
   "latest_promotion_gate_recheck": {
     "run_id": 45934329179,
@@ -279,5 +385,26 @@
     "full_network_certified": false,
     "six_method_physical_recovery_superiority_established": false,
     "interpretation": "Offline topology and parameter equivalence evidence does not satisfy trusted online measurement, observer error bounds, full nonlinear DAE reachability, intersample safety, emergency governor viability, or independent six-method holdout."
+  },
+  "online_sensor_insertion_pilot": {
+    "run_id": 45953868950,
+    "status": "in_progress",
+    "instrumentation": {
+      "bus_voltage_sensor_count": 1,
+      "line_current_sensor_count": 1,
+      "bus_section": "Bus16_1",
+      "line_component": "B16 to B17",
+      "line_terminal": 1
+    },
+    "planned_checks": [
+      "Compare routed voltage sensor output with native Bus16_1 Vt envelope",
+      "Compare routed current sensor output with native B16-B17 terminal-1 three-phase current",
+      "Compare all 41 bus voltage and 10 generator-speed trajectories with the no-sensor seed-80 baseline",
+      "Verify passive sensor insertion does not perturb native plant trajectories"
+    ],
+    "full_grid_sensor_coverage_complete": false,
+    "trusted_sensor_integrity_verified": false,
+    "sensor_error_bounds_verified": false,
+    "full_network_safety_certified": false
   }
 }
