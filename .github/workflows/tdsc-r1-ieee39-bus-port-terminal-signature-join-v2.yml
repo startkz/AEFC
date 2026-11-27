@@ -1,0 +1,60 @@
+name: TDSC-R1 IEEE39 interleaved bus-port current-variable signature join v2
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-bus-port-terminal-signature-join-v2.yml'
+      - 'experiments/audit/aefc_ieee39_bus_port_terminal_signature_join_v2.py'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  terminal_signature_join:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical linear algebra for three-phase signature matching
+        run: python -m pip install numpy
+      - name: Download original physical Busbar port map
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-busbar-port-component-map-v1-e86c2f761e9c327db53a4a703b68532673733b67
+          run-id: 45772532158
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/busbar_port_map
+      - name: Download native Bus/I# and PortConnectivity capture
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-bus-port-connection-map-v1
+          run-id: 45924972310
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/current_port_map
+      - name: Download three-phase line terminal and transformer winding currents
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-bus-port-terminal-current-capture-v2
+          run-id: 45926990179
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/terminal_current_capture
+      - name: Join all 123 I# variables using terminal-current signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/audit/aefc_ieee39_bus_port_terminal_signature_join_v2.py
+      - name: Archive final 123-port current-variable map
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-123-bus-port-current-variable-map-v2
+          path: |
+            results/ieee39_safety_mapping/native_ieee39_bus_port_current_variable_map_v2.json
+            results/ieee39_safety_mapping/native_ieee39_bus_port_current_variable_map_v2.csv
+            results/ieee39_safety_mapping/bus_port_current_variable_join_audit_v2.json
+          if-no-files-found: error
+          retention-days: 90
