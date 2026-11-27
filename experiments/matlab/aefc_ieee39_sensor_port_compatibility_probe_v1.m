@@ -29,7 +29,7 @@ for k=1:numel(sensors)
   sb=[model '/Sensor' num2str(k)];
   cb=[model '/PS2SL' num2str(k)];
   add_block(sensors{k},sb,'Position',[80 40+100*k 260 100+100*k]);
-  add_block('nesl_utility/PS-Simulink' newline 'Converter',cb, ...
+  add_block(['nesl_utility/PS-Simulink' newline 'Converter'],cb, ...
    'Position',[420 60+100*k 580 100+100*k]);
   rec.block_added=true;rec.mask_type=safeText(safeParam(sb,'MaskType'));
   rec.port_handles=portSummary(sb);
