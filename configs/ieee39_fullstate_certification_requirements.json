@@ -388,10 +388,10 @@
     "interpretation": "The gate script completed successfully, but 18 material evidence predicates remain unsatisfied."
   },
   "online_sensor_insertion_pilot": {
-    "run_id": 45955471023,
-    "status": "in_progress",
-    "previous_failed_run_id": 45954949162,
-    "previous_failure": "MATLAB invalid array indexing in the LineChildren expansion; corrected by assigning LineChildren to a temporary variable before indexing.",
+    "run_id": 45956291421,
+    "status": "queued",
+    "previous_failed_run_id": 45955471023,
+    "previous_failure": "MATLAB delete_line(grid,busR,lineL) rejected the branched conserving-port connection as an invalid line specifier. The rerun deletes only the verified child branch by line handle (lineLHandle), preserving the fault branch.",
     "instrumentation": {
       "bus_voltage_sensor_count": 1,
       "line_current_sensor_count": 1,
