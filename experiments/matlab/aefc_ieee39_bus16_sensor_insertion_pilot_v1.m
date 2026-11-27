@@ -50,9 +50,12 @@ busR=busPorts.RConn(1);lineL=linePorts.LConn(1);
 oldLine=get_param(busR,'Line');
 assert(isnumeric(oldLine)&&isscalar(oldLine)&&oldLine>0,'AEFC:SensorPilotConnection','Missing original Bus16_1/RConn1 line');
 assert(get_param(lineL,'Line')==oldLine,'AEFC:SensorPilotConnection','Bus16_1/RConn1 and B16-B17/LConn1 are not on the same physical line');
+assert(faultConnectedToBus(fault,[grid '/Bus16_1']),'AEFC:SensorPilotFault','Fault is not connected to Bus16_1 before insertion');
 
-% Insert the current sensor in series without changing the endpoint pair.
-delete_line(oldLine);
+% Remove only the Bus16_1-to-line branch. Bus16_1/RConn1 is a composite node
+% also connected to the native fault; deleting the whole line handle would
+% risk removing the fault branch.
+delete_line(grid,busR,lineL);
 vPorts=get_param(vSensor,'PortHandles');
 iPorts=get_param(iSensor,'PortHandles');
 vC=get_param(vConv,'PortHandles');iC=get_param(iConv,'PortHandles');
@@ -62,6 +65,8 @@ assert(isfield(iPorts,'LConn')&&isfield(iPorts,'RConn')&&numel(iPorts.RConn)>=2)
 % Current sensor: LConn1/RConn2 are conserving ports; RConn1 is PS output.
 add_line(grid,busR,iPorts.LConn(1),'autorouting','on');
 add_line(grid,iPorts.RConn(2),lineL,'autorouting','on');
+assert(get_param(busR,'Line')>0 && get_param(lineL,'Line')>0,'AEFC:SensorPilotSeries','Current sensor did not reconnect both series endpoints');
+assert(faultConnectedToBus(fault,[grid '/Bus16_1']),'AEFC:SensorPilotFault','Fault branch was lost during current-sensor insertion');
 % Line-voltage sensor is a one-port shunt sensor at the Bus16_1 node.
 add_line(grid,busR,vPorts.LConn(1),'autorouting','on');
 % PS outputs to PS-Simulink Converter inputs.
@@ -194,6 +199,18 @@ end
 if size(v,1)~=numel(t)&&size(v,2)==numel(t),v=v.';end
 assert(size(v,1)==numel(t),'AEFC:SensorPilotWorkspaceShape','Signal %s has inconsistent time/data dimensions',name);
 s=struct('time_s',t(:)','values_real',real(v),'values_imag',imag(v),'class',class(x));
+end
+function tf=faultConnectedToBus(fault,busPath)
+tf=false;
+try
+ pc=get_param(fault,'PortConnectivity');
+ busHandle=get_param(busPath,'Handle');
+ for k=1:numel(pc)
+  hs=[pc(k).SrcBlock(:);pc(k).DstBlock(:)];
+  if any(hs==busHandle),tf=true;return;end
+ end
+catch
+end
 end
 function x=safeParam(h,n)
 try,x=get_param(h,n);catch,x='';end
