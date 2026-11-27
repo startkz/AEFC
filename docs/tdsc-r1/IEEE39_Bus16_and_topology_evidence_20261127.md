@@ -243,3 +243,15 @@ I_{2k-1}\leftrightarrow LConn_k,\qquad I_{2k}\leftrightarrow RConn_k.
 
 
 **发电机测量总线补充核验：** [Run 45931515695](https://github.com/startkz/AEFC/actions/runs/45931515695) 确认顶层 Generators 子系统具有一个独立 Simulink Outport，直接连接到 Measurements 子系统的 Inport；Generators 的另一物理端口仍连接 Grid。Measurements 子系统包含 20 个 In Bus Element、两个 10 输入 Mux 和 Scope，没有输出端口，因此它是测量总线的显示/监视终端，不是 AEFC 控制输入。该总线可在 Generators/Measurements 连接处分支，供独立安全监视器使用；其中 20 个字段的准确名称、单位和采样时间仍由 bus schema 探测工作流核验。
+
+
+### 10.4 原生三相传感器库候选已定位
+
+[Run 45932018570](https://github.com/startkz/AEFC/actions/runs/45932018570) 在 MATLAB R2024b 的 Simscape Electrical 库中找到三相电流、电压测量候选块，包括：
+
+- \`Current Sensor (Three-Phase)\`
+- \`Phase Voltage Sensor (Three-Phase)\`
+- \`Line Voltage Sensor (Three-Phase)\`
+- \`Current and Voltage Sensor (Three-Phase)\`
+
+目前只完成了库块发现和端口句柄枚举。由于 Simscape 物理信号端口在块句柄中也表现为连接端口，不能仅根据 \`LConn/RConn\` 名称判断其类型。正在通过实际连接 \`nesl_utility/PS-Simulink Converter\` 的小模型探测，确认每种传感器的物理信号输出端口和三相向量形式。确认后先在 Bus16_1 和 B16–B17 做单点插装，再验证测量值与现有离线 Simscape 日志一致，最后才扩展到全网。
