@@ -47,9 +47,13 @@ add_block('simulink/Sinks/To Workspace',iToWs,'VariableName','AEFC_B16_B17_I_SEN
 busPorts=get_param([grid '/Bus16_1'],'PortHandles');
 linePorts=get_param([grid '/B16 to B17'],'PortHandles');
 busR=busPorts.RConn(1);lineL=linePorts.LConn(1);
-oldLine=get_param(busR,'Line');
-assert(isnumeric(oldLine)&&isscalar(oldLine)&&oldLine>0,'AEFC:SensorPilotConnection','Missing original Bus16_1/RConn1 line');
-assert(get_param(lineL,'Line')==oldLine,'AEFC:SensorPilotConnection','Bus16_1/RConn1 and B16-B17/LConn1 are not on the same physical line');
+busLineSet=double(get_param(busR,'Line'));
+try,busLineSet=[busLineSet;double(get_param(busLineSet(1),'LineParent'))];catch,end
+try,busLineSet=[busLineSet;double(get_param(busLineSet(1),'LineChildren'))(:)];catch,end
+busLineSet=unique(busLineSet(isfinite(busLineSet)&busLineSet>0));
+lineLHandle=double(get_param(lineL,'Line'));
+assert(~isempty(busLineSet)&&lineLHandle>0,'AEFC:SensorPilotConnection','Bus16_1/RConn1 or B16-B17/LConn1 is not physically connected');
+assert(any(abs(busLineSet-lineLHandle)<1e-6),'AEFC:SensorPilotConnection','B16-B17/LConn1 is not a branch of the Bus16_1/RConn1 composite connection');
 assert(faultConnectedToBus(fault,[grid '/Bus16_1']),'AEFC:SensorPilotFault','Fault is not connected to Bus16_1 before insertion');
 
 % Remove only the Bus16_1-to-line branch. Bus16_1/RConn1 is a composite node
