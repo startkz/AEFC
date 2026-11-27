@@ -256,3 +256,14 @@ The map deliberately leaves the Simscape I# current-variable-to-LConn/RConn asso
 ### 9.5 Publication boundary
 
 The Bus16 pilot can support a fail-closed execution statement and an observed original-plant post-fault response statement. It cannot support AEFC recovery superiority. The 32-case Pref pilot cannot support physical recovery because it never leaves the recovery set. The 123-port topology map supports offline structural connectivity, not authenticated online measurements. The full IEEE39 certification gate therefore remains **BLOCKED** pending trusted measurement/error bounds, validated current/thermal mappings, complete DAE coverage, sampled and intersample reachability, and independently verified backup-governor viability.
+
+
+### 9.6 Final 123-port I# to physical-port join
+
+The immutable-artifact join [Actions run 45926582377](https://github.com/startkz/AEFC/actions/runs/45926582377) completed successfully. It joins all 123 Simscape Bus/I# current series to physical LConn/RConn ports and connected components: 123 resolved, zero unresolved, 34 transmission-line components and 12 transformer components.
+
+The join uses the global PortConnectivity ordinal within each Busbar block. It corrects 52 incorrect candidates in the earlier map, which had reused local LConn/RConn indices (for example, Bus1/RConn1 is I2, not I1). Two transformer current anchors are exact up to sign: Bus10/I1 versus TF_B32_to_B10/i2 and Bus12/I1 versus TF_B11_to_B12/i2, both with normalized residual zero.
+
+The 123-port topology/current-variable mapping is complete as an offline simulator map. It is not an authenticated online sensor certificate.
+
+The same capture identifies an unresolved line-current diagnostic: all 34 selected inductor_a/i/amplitude Series have maximum absolute values below 1e-6 A (1.17e-12–5.59e-11 A), while the corresponding bus-port current vectors have all three components nonzero and the inductor_b/inductor_c channels are nonzero. Do not report the selected 102 line-internal amplitude series as a validated three-phase terminal-current map or use them for branch thermal-safety claims until the phase-A path is traced through the native line subsystem.
