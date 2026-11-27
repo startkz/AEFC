@@ -304,3 +304,6 @@ MATPOWER 的变压器支路 RATE_A 不应用于原生变压器绕组热限。绕
 
 
 **发电机总线字段进一步明确：** [Run 45932227560](https://github.com/startkz/AEFC/actions/runs/45932227560) 导出了每台发电机的 Bus Creator（3 个输入）和顶层 Generators Bus Creator（10 个输入）。现有 Measurements 子系统的20个 In Bus Element 实际只选择了每台机组的 \`mGenX.w\` 与 \`mGenX.Vt\)，分别送入两个10输入 Mux；第三个机组测量信号没有被当前 Scope 选取。结合前述10路 Rotor electrical angle 转换器，它是角度信号的候选来源，但其 bus 字段名和运行时数据形状仍待 runtime probe 确认。
+
+
+**在线测量端口分类复核：** [Run 45932082411](https://github.com/startkz/AEFC/actions/runs/45932082411) 通过了细化审计：70 个 PS-Simulink Converter 全部位于 Generators 子系统，Grid 子系统为0；10路转子角、10路转速和10路机端电压候选均已定位；Busbar、线路和变压器信号输出端口数均为0。当前 AEFCNativeController 仍只接收4路转速观测。该结果与离线 Simscape 日志完整性相互独立，不能把日志变量当作在线传感器。
