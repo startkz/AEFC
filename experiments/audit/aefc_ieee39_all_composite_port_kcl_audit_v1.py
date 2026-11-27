@@ -59,7 +59,7 @@ def main():
     assert len(c["transformer_winding_current_series"]) == 24
     assert c["physical_bus_sections"] == 41 and c["logical_bus_count"] == 39
 
-    assert m["status"] == "PASS_INTERLEAVED_123_PORT_CURRENT_MAP"
+    assert m["status"] == "PASS_INTERLEAVED_123_PORT_CURRENT_VARIABLE_MAP"
     assert m["bus_port_current_series"] == 123
     assert m["resolved_physical_ports"] == 123
     assert m["unresolved_physical_ports"] == 0
