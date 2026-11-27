@@ -223,3 +223,36 @@ Pilot v5 configures `SimscapeLogType` and `SimscapeLogName` once before enabling
 For the faulted physical section, the original model exposes `Bus16_1/I1` through `Bus16_1/I4`. The physical-connection audit independently maps `Bus16_1/RConn1` to `B16 to B17/LConn1`. The current-channel-to-port index association is retained as a candidate mapping pending a complete all-bus port-to-component reconciliation; do not yet treat every `I#` label as a validated branch identity.
 
 The updated complete offline census therefore contains 39 logical bus voltage channels, 41 physical bus voltage sections, 123 busbar-port current series, 102 line-inductor current-amplitude series, and 24 transformer winding-current series. These remain simulator-oracle records, not online trusted sensors or certified thermal measurements.
+
+
+## 9. 2026-11-27 addendum — Bus16 fault, strict refusal, and full port topology
+
+This addendum supersedes the earlier status statements in Sections 8.4 and 8.6 that described the Bus16 fault pilot as still awaiting physical-artifact review. It does not alter the historical 360-episode exploratory Pref-stress result or the earlier 48-episode non-exposure result.
+
+### 9.1 Latest Bus16_1 strict fault pilot
+
+The corrected strict rerun [Actions run 45921838661](https://github.com/startkz/AEFC/actions/runs/45921838661) completed successfully and its archived artifact was independently inspected.
+
+The four pilot episodes (two methods × seeds 0 and 1) use the original native Bus16_1 three-phase fault at 5.0–5.1 s. The fault produces a maximum Bus16-section relative voltage deviation of approximately 0.999944 and a maximum ten-generator normalized speed deviation of 0.446705. The adjacent B16–B17 line current reaches approximately 7.115 kA in the fault window; the recorded fault-current maximum is approximately 18.136 kA. These are simulator-observed currents, not validated thermal-limit comparisons.
+
+All four episodes first satisfy the frozen 20-sample recovery predicate at 7.1833 s, approximately 2.0833 s after clearing. The strict gate reports zero added Pref correction, zero execution releases, and zero backup actions. AEFC-Full records 470 accepted internal adaptation samples per episode, but none is released to the plant. The paired AEFC-Full and Supervisor-only bus-voltage, ten-speed, adjacent-line-current, original-Pref, and delivered-Pref traces are pointwise identical. The physical trajectories for seeds 0 and 1 are also pointwise identical.
+
+**Interpretation:** the pilot satisfies the exposure prerequisite and demonstrates strict refusal while the original plant/governor response returns to the sampled recovery set. It does not demonstrate an AEFC physical recovery gain or certify the original Governor's robust viability.
+
+### 9.2 Ten-seed confirmatory replay
+
+The preregistered seed-80–89 replay is running at [Actions run 45924335524](https://github.com/startkz/AEFC/actions/runs/45924335524). It retains the same fault, methods, thresholds, sampling and 20-point hold. The controller seed changes offline client-packet generation; it does not inject a seed-driven physical disturbance. The post-run audit therefore explicitly distinguishes reproducibility from independent physical sampling. No inferential physical-effect claim is authorized merely by completing 20 episodes.
+
+### 9.3 Separate 32-case persistent-Pref pilot
+
+[Actions run 45920180021](https://github.com/startkz/AEFC/actions/runs/45920180021) completed 32 exploratory episodes over Pref stress amplitudes 0.024, 0.06, 0.12 and 0.24. The largest observed ten-generator normalized speed deviation was approximately 0.169514, below the frozen 0.25 recovery-set boundary. There were zero attack-end exposures and zero true recovery events. This experiment is not a recovery-time comparison; the amplitude range must not be enlarged post hoc and merged into the original preregistered protocol.
+
+### 9.4 Structural mapping of all 123 busbar ports
+
+[Actions run 45772532158](https://github.com/startkz/AEFC/actions/runs/45772532158) successfully resolved all 123 physical busbar ports using parent/child physical connection-line handles: 123 matched, zero unresolved, 34 unique line blocks, and 12 unique transformer blocks across 41 busbar sections. The map also identifies load, generator, fault, and split-bus interconnections. Five busbar ports have multiple connected component endpoints, including the Bus16/Bus26 split sections and Bus16_1/RConn1's connection to both B16–B17 and the three-phase fault.
+
+The map deliberately leaves the Simscape I# current-variable-to-LConn/RConn association unvalidated. A separate raw current/port capture is running at [Actions run 45924972310](https://github.com/startkz/AEFC/actions/runs/45924972310), with 123 bus-port current series, 126 selected line/transformer current series, and model connectivity metadata. The known near-zero inductor_a/i/amplitude series remain a phase-mapping/model diagnostic; they must not be reported as validated nonzero phase currents without further checks.
+
+### 9.5 Publication boundary
+
+The Bus16 pilot can support a fail-closed execution statement and an observed original-plant post-fault response statement. It cannot support AEFC recovery superiority. The 32-case Pref pilot cannot support physical recovery because it never leaves the recovery set. The 123-port topology map supports offline structural connectivity, not authenticated online measurements. The full IEEE39 certification gate therefore remains **BLOCKED** pending trusted measurement/error bounds, validated current/thermal mappings, complete DAE coverage, sampled and intersample reachability, and independently verified backup-governor viability.
