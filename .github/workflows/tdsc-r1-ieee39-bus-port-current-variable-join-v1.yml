@@ -1,0 +1,50 @@
+name: TDSC-R1 IEEE39 bus-port current-variable join audit v1
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-bus-port-current-variable-join-v1.yml'
+      - 'experiments/audit/aefc_ieee39_bus_port_current_variable_join_v1.py'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  join_immutable_port_artifacts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download original-model physical busbar port map
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-busbar-port-component-map-v1-e86c2f761e9c327db53a4a703b68532673733b67
+          run-id: 45772532158
+          repository: \${{ github.repository }}
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/busbar_port_map
+      - name: Download native Simscape bus-port current and connectivity capture
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-bus-port-connection-map-v1
+          run-id: 45924972310
+          repository: \${{ github.repository }}
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/current_port_map
+      - name: Join all 123 I# series to physical LConn/RConn and connected components
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/audit/aefc_ieee39_bus_port_current_variable_join_v1.py
+      - name: Archive final 123-port mapping and audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-123-bus-port-current-variable-map-v1
+          path: |
+            results/ieee39_safety_mapping/native_ieee39_bus_port_current_variable_map_v1.json
+            results/ieee39_safety_mapping/native_ieee39_bus_port_current_variable_map_v1.csv
+            results/ieee39_safety_mapping/bus_port_current_variable_join_audit_v1.json
+          if-no-files-found: error
+          retention-days: 90
