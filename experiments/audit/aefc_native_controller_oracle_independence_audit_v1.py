@@ -14,6 +14,7 @@ def read(p):
     return p.read_text(encoding="utf-8")
 
 ctrl,step,contract,loader=map(read,(CTRL,STEP,CONTRACT,LOADER))
+ctrl_code="\n".join(line.split("%",1)[0] for line in ctrl.splitlines())
 forbidden=[
  r"\bcleanBelief\b",r"\battackIdentity\b",r"\battack_id\b",r"\btrue_attack\b",
  r"\bisAttacked\b",r"\bgroundTruthAttack\b",r"\battackLabel\b",r"\btrueState\b",
