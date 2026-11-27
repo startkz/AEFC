@@ -155,7 +155,7 @@
     "thermal_limits_validated": false,
     "line_parameter_equivalence": {
       "source_parameter_inventory_run_id": 45931696089,
-      "verified_by_audit_run_id": null,
+      "verified_by_audit_run_id": 45932665618,
       "native_line_count": 34,
       "matpower_line_count": 34,
       "positive_sequence_formula": "R1=R-Rm; L1=L-M; C1=Cg+3*Cl",
@@ -163,8 +163,8 @@
       "baseKV": 345,
       "frequency_Hz": 60,
       "max_relative_error": {
-        "r": 0.00007001330252750029,
-        "x": 0.007813817205942524,
+        "r": 0.00007001330252750028,
+        "x": 0.00781381720594257,
         "b": 0.033888183431038735
       },
       "tolerances": {
@@ -191,7 +191,9 @@
       },
       "tap_equivalence_verified": false,
       "matpower_RATE_A_applicable_to_native_windings": false,
-      "thermal_limit_verified": false
+      "thermal_limit_verified": false,
+      "verified_by_audit_run_id": 45932665618,
+      "matpower_RATE_A_applied_to_transformer_windings": false
     },
     "transformer_thermal_limit_source": "Native transformer SRated=100 MW and VRated1/VRated2; requires confirmation of apparent-power interpretation and winding-current measurement convention."
   },
