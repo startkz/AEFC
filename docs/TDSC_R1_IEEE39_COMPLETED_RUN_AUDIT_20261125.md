@@ -259,12 +259,13 @@ The Bus16 pilot can support a fail-closed execution statement and an observed or
 
 
 
-### 9.6 Structural 123-port topology map; current-variable assignment pending
 
-The physical Busbar port-to-component topology map is complete: 123/123 physical ports are resolved, zero unresolved, 34 line components and 12 transformer components across 41 physical bus sections. The structural map uses Simulink/Simscape physical connection handles and is independent of the I# variable naming.
+### 9.6 Final 123-port current-variable map
 
-The 123 Bus/I# current series have been captured. The first join used the global PortConnectivity ordinal as a candidate I# assignment. Two transformer LConn1 anchors match exactly up to sign, but this does not validate the remaining 121 I# assignments. The earlier local-index candidate differs from the global-ordinal candidate in 52 cases; this difference is not itself evidence that either ordering is correct.
+The terminal-signature join [Actions run 45928276856](https://github.com/startkz/AEFC/actions/runs/45928276856) resolves all 123 physical Busbar ports to Simscape I# series using the empirically supported interleaved order: I_(2k-1)=LConn_k and I_(2k)=RConn_k. The predicted I# sets match the captured series sets for all 41 Busbar blocks.
 
-A new terminal-current capture is running at [Actions run 45926990179](https://github.com/startkz/AEFC/actions/runs/45926990179). It records both terminal current vectors (phase_splitter1/2) for all 34 lines, together with all 24 transformer winding current vectors. These signatures will be matched to the Bus/I# traces to resolve the current-variable permutation.
+The interleaved rule produces 65/70 exact bus-port-to-line-terminal matches, compared with 33/70 under global PortConnectivity order and 24/70 under the earlier local-index candidate. All 65 single-component line-port references match directly. The five remaining references belong to three composite endpoints: Bus16_1/RConn1 (line plus fault), B19-B16/RConn1 (split Bus16_1/Bus16_2), and B25-B26/RConn1 (split Bus26_1/Bus26_2).
 
-The inductor_a internal-current amplitude series are near zero across all 34 lines, but nonzero three-phase terminal-current candidates exist under phase_splitter1/I, phase_splitter2/I and T1/T2 i_a/i_b/i_c. Do not interpret the inductor_a series as proof of a zero phase-A terminal current. The final I# permutation and terminal-current identity remain pending; no online sensor integrity or branch thermal safety is certified.
+The two split-bus current sums match the corresponding line terminal current up to sign with normalized residuals 1.49e-16 and 2.30e-16. All 24 transformer endpoints are structurally mapped; 11 directly match winding current up to sign/phase permutation, and all 24 are consistent under a fixed three-phase linear transformation.
+
+The correct line terminal current vectors are phase_splitter1/2. The previously selected inductor_a internal-current amplitude series are not terminal phase-A measurements. The Bus16_1/RConn1 fault-current sum remains under targeted one-episode validation. This mapping is offline simulator evidence only; it does not certify authenticated sensors, branch thermal limits, or full-network safety.
