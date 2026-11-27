@@ -262,7 +262,7 @@ The Bus16 pilot can support a fail-closed execution statement and an observed or
 
 ### 9.6 Final 123-port current-variable map
 
-The terminal-signature join [Actions run 45928276856](https://github.com/startkz/AEFC/actions/runs/45928276856) resolves all 123 physical Busbar ports to Simscape I# series using the empirically supported interleaved order: I_(2k-1)=LConn_k and I_(2k)=RConn_k. The predicted I# sets match the captured series sets for all 41 Busbar blocks.
+The terminal-signature join [Actions run 45928276856](https://github.com/startkz/AEFC/actions/runs/45928276856) resolves all 123 physical Busbar ports to Simscape I# series using the empirically supported interleaved order: The independent original-model rebuild [Actions run 45928516528](https://github.com/startkz/AEFC/actions/runs/45928516528) also confirms 41 Busbar blocks, 123 physical ports, 34 lines, 12 transformers, and the same interleaved candidate formula. I_(2k-1)=LConn_k and I_(2k)=RConn_k. The predicted I# sets match the captured series sets for all 41 Busbar blocks.
 
 The interleaved rule produces 65/70 exact bus-port-to-line-terminal matches, compared with 33/70 under global PortConnectivity order and 24/70 under the earlier local-index candidate. All 65 single-component line-port references match directly. The five remaining references belong to three composite endpoints: Bus16_1/RConn1 (line plus fault), B19-B16/RConn1 (split Bus16_1/Bus16_2), and B25-B26/RConn1 (split Bus26_1/Bus26_2).
 
