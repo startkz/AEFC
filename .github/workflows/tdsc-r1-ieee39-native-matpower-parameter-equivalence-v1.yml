@@ -1,0 +1,42 @@
+name: TDSC-R1 verify native IEEE39 line/transformer parameters against MATPOWER case39 v1
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-native-matpower-parameter-equivalence-v1.yml'
+      - 'experiments/audit/aefc_ieee39_matpower_native_parameter_equivalence_v1.py'
+      - 'configs/ieee39_matpower_case39_reference_branch_ratings.json'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  verify_native_parameter_equivalence:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download native line/transformer parameter inventory
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-branch-parameter-inventory-v1
+          run-id: 45931696089
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/native_params
+      - name: Verify per-unit line and transformer parameter equivalence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/audit/aefc_ieee39_matpower_native_parameter_equivalence_v1.py
+      - name: Archive parameter equivalence audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-MATPOWER-parameter-equivalence-v1
+          path: |
+            results/ieee39_safety_mapping/native_matpower_parameter_equivalence_v1.json
+            experiments/audit/aefc_ieee39_matpower_native_parameter_equivalence_v1.py
+          if-no-files-found: error
+          retention-days: 90

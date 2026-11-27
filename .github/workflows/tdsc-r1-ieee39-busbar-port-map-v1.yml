@@ -1,0 +1,51 @@
+name: TDSC-R1 map all 123 IEEE39 busbar physical ports to connected components v1
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-busbar-port-map-v1.yml'
+      - 'experiments/matlab/aefc_ieee39_busbar_port_component_map_v1.m'
+permissions:
+  contents: read
+jobs:
+  busbar_port_to_component_map:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Resolve busbar port-to-line/transformer physical endpoint mappings
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_busbar_port_component_map_v1
+      - name: Validate reference mapping and archive all resolved/unresolved ports
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s results/ieee39_safety_mapping/native_busbar_port_component_map_v1.json
+          python - <<'PY'
+          import json
+          x=json.load(open('results/ieee39_safety_mapping/native_busbar_port_component_map_v1.json'))
+          print({k:x[k] for k in ('status','busbar_blocks','busbar_physical_ports','busbar_ports_matched','busbar_ports_unresolved','unique_connected_line_blocks','unique_connected_transformer_blocks','bus16_1_rconn1_verified')})
+          assert x['status']=='BUSBAR_PORT_COMPONENT_MAP_BUILT_BUS16_REFERENCE_VERIFIED'
+          assert x['busbar_blocks']==41
+          assert x['busbar_physical_ports']==123
+          assert x['bus16_1_rconn1_verified'] is True
+          assert x['busbar_port_current_variable_mapping_validated'] is False
+          assert x['full_network_safety_certified'] is False
+          PY
+      - name: Archive all busbar-port endpoints and candidate I# mappings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-busbar-port-component-map-v1-${{ github.sha }}
+          path: |
+            results/ieee39_safety_mapping/native_busbar_port_component_map_v1.json
+            experiments/matlab/aefc_ieee39_busbar_port_component_map_v1.m
+          if-no-files-found: warn
+          retention-days: 90

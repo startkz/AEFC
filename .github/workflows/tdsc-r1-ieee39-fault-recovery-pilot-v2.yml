@@ -1,0 +1,59 @@
+name: TDSC-R1 native IEEE39 original three-phase fault full-grid physical recovery pilot v2
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-fault-recovery-pilot-v2.yml'
+      - 'experiments/matlab/aefc_ieee39_native_fault_recovery_pilot_v2.m'
+      - 'configs/ieee39_native_fault_recovery_protocol_r1.json'
+permissions:
+  contents: read
+jobs:
+  native_39bus_fault_fullgrid_physical_pilot_v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Run original temporal three-phase fault with offline all-bus voltage, line/transformer currents and ten-speed recovery
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_native_fault_recovery_pilot_v2
+      - name: Audit full-grid offline records while keeping safety-certificate status blocked
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv,json,glob,os
+          root='results/ieee39_fault_recovery_r1/pilot_v2'
+          m=json.load(open(root+'/manifest.json'))
+          rows=list(csv.DictReader(open(root+'/summary.csv')))
+          assert len(rows)==4
+          assert m['fault_parameters_verified_at_runtime'] is True
+          assert m['full_network_safety_certified'] is False
+          assert m['offline_simscape_oracle_only'] is True
+          for r in rows:
+              assert int(r['bus_logical_ids'])==39
+              assert int(r['bus_physical_sections'])>=39
+              assert int(r['branch_current_series'])>0
+          print(json.dumps(rows,indent=2))
+          PY
+      - name: Archive full-grid bus, branch, fault-current and ten-generator physical trajectories
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-threephase-fault-recovery-pilot-v2-${{ github.sha }}
+          path: |
+            results/ieee39_fault_recovery_r1/pilot_v2/
+            configs/ieee39_native_fault_recovery_protocol_r1.json
+            experiments/matlab/aefc_ieee39_native_fault_recovery_pilot_v2.m
+          if-no-files-found: warn
+          retention-days: 90

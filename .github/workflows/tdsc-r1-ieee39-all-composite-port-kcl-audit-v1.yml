@@ -1,0 +1,59 @@
+name: TDSC-R1 IEEE39 all composite busbar port KCL audit v1
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-all-composite-port-kcl-audit-v1.yml'
+      - 'experiments/audit/aefc_ieee39_all_composite_port_kcl_audit_v1.py'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  audit_all_composite_ports:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical audit dependency
+        run: python -m pip install numpy
+      - name: Download native terminal-current capture
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-bus-port-terminal-current-capture-v2
+          run-id: 45926990179
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/terminal_capture
+      - name: Download interleaved 123-port current-variable map
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-123-bus-port-current-variable-map-v2
+          run-id: 45928276856
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/current_map
+      - name: Download native Bus16 fault-port current probe
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-Bus16-port-current-fault-probe-v2
+          run-id: 45929573463
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/bus16_probe
+      - name: Audit all composite-port KCL and phase-current coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/audit/aefc_ieee39_all_composite_port_kcl_audit_v1.py
+      - name: Archive consolidated current-mapping audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-all-composite-port-KCL-audit-v1
+          path: |
+            results/ieee39_safety_mapping/all_composite_port_kcl_audit_v1.json
+            experiments/audit/aefc_ieee39_all_composite_port_kcl_audit_v1.py
+          if-no-files-found: error
+          retention-days: 90

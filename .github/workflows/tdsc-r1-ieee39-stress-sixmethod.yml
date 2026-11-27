@@ -1,0 +1,77 @@
+name: TDSC-R1 IEEE39 six-method 360-episode ten-independent-seed native physical recovery test
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-stress-sixmethod.yml'
+permissions:
+  contents: read
+jobs:
+  six_method_10_seeds_native_matlab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Audit original causal input boundary and study preregistration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_unprivileged.py
+          python analysis/audit_ieee39_method_fidelity.py --output study_method_fidelity.json
+          python - <<'PY'
+          import json
+          p=json.load(open('configs/ieee39_stress_protocol_r1.json'))
+          assert p['main_seeds']==list(range(80,90))
+          assert p['main_pressures']==[0.06,0.12,0.24]
+          assert p['hard_constraints']['complete_ieee39_safety_certified'] is False
+          assert p['no_expost_threshold_tuning'] is True
+          print('Frozen ten independent paired seeds × six methods × two attacks × three intensities.')
+          PY
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Build separate official MathWorks native IEEE39 model with persistent threat and physical Pref/ten-speed monitors
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_build_stress
+      - name: Run all 360 original-plant episodes, ten independent seeds and equal four-speed proxy terminal safety checker
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_stress_recovery('stress_six')
+      - name: Independent all ten generator physical exposure and recovery audit with seed-cluster paired bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_stress.py \
+            --results results/ieee39_stress_r1/stress_six \
+            --output ten_seed_sixmethod_physical_audit.json | tee all_sixmethod_physical_results.txt
+          python - <<'PY'
+          import json
+          q=json.load(open('ten_seed_sixmethod_physical_audit.json'))
+          a=q['actual_native_experiment_audit']
+          assert a['cases']==360 and a['samples']==360*181
+          assert a['attacked_samples']==360*75
+          assert q['paired_seed_cluster_effect']['n_seeds']==10
+          assert not q['full_network_safety_certified']
+          assert not q['genuine_recovery_effect_demonstrated']
+          print('Physical outcomes audited, publication safety and complete AEFC checkpoint claims remain independently blocked.')
+          PY
+      - name: Preserve every real trajectory, failure, pressure setting and method-fidelity warning
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-real-stress-sixmethod-10seed-${{ github.sha }}
+          path: |
+            results/ieee39_stress_r1/stress_six/
+            ten_seed_sixmethod_physical_audit.json
+            all_sixmethod_physical_results.txt
+            study_method_fidelity.json
+            configs/ieee39_stress_protocol_r1.json
+          if-no-files-found: warn
+          retention-days: 90

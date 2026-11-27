@@ -1,0 +1,31 @@
+name: TDSC-R1 native controller oracle-independence static audit v1
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-controller-oracle-independence-audit-v1.yml'
+      - 'experiments/audit/aefc_native_controller_oracle_independence_audit_v1.py'
+      - 'experiments/matlab/AEFCNativeController.m'
+      - 'experiments/matlab/aefc_native_certified_execution_step.m'
+      - 'experiments/matlab/aefc_native_full_state_contract.m'
+      - 'experiments/matlab/aefc_native_load_verified_state_contract.m'
+permissions:
+  contents: read
+jobs:
+  audit_online_controller_independence:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Audit online controller for attack-truth and offline-shadow dependencies
+        run: python experiments/audit/aefc_native_controller_oracle_independence_audit_v1.py
+      - name: Archive static oracle-independence audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-controller-oracle-independence-audit-v1
+          path: results/ieee39_safety_mapping/native_controller_oracle_independence_audit_v1.json
+          if-no-files-found: error
+          retention-days: 90

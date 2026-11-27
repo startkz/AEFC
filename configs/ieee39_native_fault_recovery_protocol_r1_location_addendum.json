@@ -1,0 +1,51 @@
+{
+  "document": "Native IEEE39 three-phase fault recovery protocol R1 — location and physical-signal addendum",
+  "date": "2026-11-25",
+  "base_protocol": "configs/ieee39_native_fault_recovery_protocol_r1.json",
+  "purpose": "Record physical connection facts discovered after the R1 protocol was frozen. This addendum does not alter any experimental parameter, threshold, seed, method, sampling rule, recovery predicate, or censoring rule.",
+  "fault": {
+    "block": "IEEE39BusSystem/Grid/Fault (Three-Phase)",
+    "variant": "ee.utilities.faults.abc",
+    "fault_type_option": 11,
+    "R_pn_ohm": 0.001,
+    "R_ng_ohm": 0.001,
+    "temporal_fault_enabled": true,
+    "start_time_s": 5,
+    "duration_s": 0.1,
+    "logical_bus": 16,
+    "physical_bus_section": "IEEE39BusSystem/Grid/Bus16_1",
+    "connected_transmission_line": "IEEE39BusSystem/Grid/B16 to B17",
+    "busbar_port": "RConn1",
+    "line_port": "LConn1",
+    "physical_line_handles": [
+      2798.0010986328125,
+      2799.0010986328125,
+      2800.0009765625
+    ],
+    "verified_by": [
+      "https://github.com/startkz/AEFC/actions/runs/45582643023",
+      "https://github.com/startkz/AEFC/actions/runs/45582793472"
+    ]
+  },
+  "offline_physical_signal_census": {
+    "verified_by": "https://github.com/startkz/AEFC/actions/runs/45582393099",
+    "logical_bus_voltage_channels": 39,
+    "physical_bus_voltage_sections": 41,
+    "transmission_line_components": 34,
+    "line_inductor_current_amplitude_series": 102,
+    "transformer_components": 12,
+    "transformer_winding_current_series": 24,
+    "branch_current_series_total": 126,
+    "all_values_finite": true,
+    "truncated": false,
+    "measurement_class": "offline Simscape simulator logs; not trusted online sensor inputs",
+    "interpretation_caveat": "The inductor_a current-amplitude series are near numerical zero across inspected branches, while inductor_b and inductor_c are nonzero. Preserve raw channels and do not claim validated three-phase branch-current semantics until the internal line model/phase convention is checked."
+  },
+  "claim_limits": {
+    "trusted_online_full_state_observer_verified": false,
+    "branch_thermal_ratings_validated": false,
+    "nonlinear_DAE_reachability_certified": false,
+    "continuous_intersample_safety_certified": false,
+    "full_network_safety_certified": false
+  }
+}

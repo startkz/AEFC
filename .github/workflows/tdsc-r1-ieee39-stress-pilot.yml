@@ -1,0 +1,73 @@
+name: TDSC-R1 real IEEE39 persistent Pref stress 32-case pre-registered physical recovery pilot
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-stress-pilot.yml'
+      - 'experiments/matlab/AEFCNativeStressAttackHarness.m'
+      - 'experiments/matlab/aefc_ieee39_build_stress.m'
+      - 'experiments/matlab/aefc_ieee39_stress_recovery.m'
+      - 'analysis/audit_ieee39_stress.py'
+      - 'configs/ieee39_stress_protocol_r1.json'
+permissions:
+  contents: read
+jobs:
+  native_matlab_stress_pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check source, detector and predeclared threat budget
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile analysis/audit_ieee39_stress.py
+          python analysis/audit_ieee39_unprivileged.py
+          python - <<'PY'
+          import json
+          x=json.load(open('configs/ieee39_stress_protocol_r1.json'))
+          assert x['physical_pref_stress_amplitudes']==[0.024,0.06,0.12,0.24]
+          assert x['recovery_bound']==0.25
+          assert x['hard_constraints']['complete_ieee39_safety_certified'] is False
+          print('No post-hoc recovery threshold or safety claim allowed.')
+          PY
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Build independently isolated true native 39bus four-Pref stress model
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_build_stress
+      - name: Run 32 paired AEFC/Supervisor-only original-plant physical episodes
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_stress_recovery('stress_pilot')
+      - name: Independently audit real exposure, controller and actual delivered Pref signals
+        shell: bash
+        run: |
+          set -euo pipefail
+          python analysis/audit_ieee39_stress.py \
+             --results results/ieee39_stress_r1/stress_pilot \
+             --output stress_pilot_audit.json | tee physical_stress_pilot_audit.log
+      - name: Archive every native physical trajectory even if nonexposure or CI failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-real-stress-32-pilot-${{ github.sha }}
+          path: |
+            results/ieee39_stress_r1/stress_pilot/
+            results/ieee39_r2024b/unprivileged_model_build.json
+            stress_pilot_audit.json
+            physical_stress_pilot_audit.log
+            configs/ieee39_stress_protocol_r1.json
+            experiments/matlab/AEFCNativeStressAttackHarness.m
+            experiments/matlab/aefc_ieee39_stress_recovery.m
+            analysis/audit_ieee39_stress.py
+          if-no-files-found: warn
+          retention-days: 90

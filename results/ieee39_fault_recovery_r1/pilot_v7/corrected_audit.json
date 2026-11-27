@@ -1,0 +1,115 @@
+{
+  "source": {
+    "github_actions_run_id": 45767827120,
+    "artifact_id": 15092489561,
+    "artifact_name": "ieee39_fault_recovery_pilot_v7.zip",
+    "artifact_sha256": "71cf82aa39785b046083c87aa17a194c871a98316a002bae111f49644136b746",
+    "source_commit": "926993ff35bb63c48eb9481cb632e15ab787fdd8"
+  },
+  "scope": "Two-seed exploratory Bus16_1 native fault pilot; offline Simscape physical evaluation; not full IEEE39 safety certification or formal confirmatory evidence.",
+  "diagnostic_index_correction": {
+    "AEFCNativeController_diagOut_index_10": "adaptAccepted",
+    "AEFCNativeController_diagOut_index_14": "released (surrogate execution contract status > 0)",
+    "legacy_summary_field_deployment_accepted_samples": "Actually counts adaptAccepted, not physical action deployment.",
+    "legacy_trace_field_deployment_accepted": "Actually records adaptAccepted, not physical action deployment.",
+    "legacy_summary_field_proxy_release_samples": "Counts positive surrogate execution-contract release status; does not mean full-state certified release.",
+    "full_state_certified_samples": 0
+  },
+  "episodes": [
+    {
+      "method": "AEFC-Full",
+      "seed": 0,
+      "exposed_during_fault": true,
+      "recovered_after_fault": true,
+      "recovery_time_after_fault_clear_s": 2.1,
+      "gate_authorized_samples": 466,
+      "adaptation_accepted_samples": 466,
+      "surrogate_contract_released_samples": 481,
+      "gate_denied_samples": 15,
+      "max_abs_pref_correction": 0.026,
+      "postfault_mean_max_bus_relative_deviation": 0.05937639844493162,
+      "postfault_peak_max_bus_relative_deviation": 0.2573397605581465,
+      "postfault_mean_max_normalized_generator_speed_deviation": 0.2225968251701536,
+      "postfault_peak_max_normalized_generator_speed_deviation": 0.4725094331837487,
+      "full_state_certified_samples": 0
+    },
+    {
+      "method": "AEFC-Full",
+      "seed": 1,
+      "exposed_during_fault": true,
+      "recovered_after_fault": true,
+      "recovery_time_after_fault_clear_s": 2.1,
+      "gate_authorized_samples": 466,
+      "adaptation_accepted_samples": 466,
+      "surrogate_contract_released_samples": 481,
+      "gate_denied_samples": 15,
+      "max_abs_pref_correction": 0.026,
+      "postfault_mean_max_bus_relative_deviation": 0.059810974259809496,
+      "postfault_peak_max_bus_relative_deviation": 0.2574403879434722,
+      "postfault_mean_max_normalized_generator_speed_deviation": 0.2230346198294256,
+      "postfault_peak_max_normalized_generator_speed_deviation": 0.4728360924676489,
+      "full_state_certified_samples": 0
+    },
+    {
+      "method": "Supervisor-only",
+      "seed": 0,
+      "exposed_during_fault": true,
+      "recovered_after_fault": true,
+      "recovery_time_after_fault_clear_s": 2.083333333333334,
+      "gate_authorized_samples": 0,
+      "adaptation_accepted_samples": 0,
+      "surrogate_contract_released_samples": 481,
+      "gate_denied_samples": 481,
+      "max_abs_pref_correction": 0.0021252984278965215,
+      "postfault_mean_max_bus_relative_deviation": 0.06010905810591021,
+      "postfault_peak_max_bus_relative_deviation": 0.25731426812252056,
+      "postfault_mean_max_normalized_generator_speed_deviation": 0.23469750580334692,
+      "postfault_peak_max_normalized_generator_speed_deviation": 0.4789406266829055,
+      "full_state_certified_samples": 0
+    },
+    {
+      "method": "Supervisor-only",
+      "seed": 1,
+      "exposed_during_fault": true,
+      "recovered_after_fault": true,
+      "recovery_time_after_fault_clear_s": 2.083333333333334,
+      "gate_authorized_samples": 0,
+      "adaptation_accepted_samples": 0,
+      "surrogate_contract_released_samples": 481,
+      "gate_denied_samples": 481,
+      "max_abs_pref_correction": 0.0021252984278965215,
+      "postfault_mean_max_bus_relative_deviation": 0.06010905810591021,
+      "postfault_peak_max_bus_relative_deviation": 0.25731426812252056,
+      "postfault_mean_max_normalized_generator_speed_deviation": 0.23469750580334692,
+      "postfault_peak_max_normalized_generator_speed_deviation": 0.4789406266829055,
+      "full_state_certified_samples": 0
+    }
+  ],
+  "paired_summary": {
+    "seed_0": {
+      "both_exposed": true,
+      "both_recovered": true,
+      "AEFC_minus_Supervisor_recovery_time_s": 0.016666666666666607,
+      "AEFC_minus_Supervisor_postfault_mean_bus_deviation": -0.0007326596609785879,
+      "AEFC_minus_Supervisor_postfault_mean_speed_deviation": -0.012100680633193306
+    },
+    "seed_1": {
+      "both_exposed": true,
+      "both_recovered": true,
+      "AEFC_minus_Supervisor_recovery_time_s": 0.016666666666666607,
+      "AEFC_minus_Supervisor_postfault_mean_bus_deviation": -0.00029808384610071487,
+      "AEFC_minus_Supervisor_postfault_mean_speed_deviation": -0.011662885973921316
+    }
+  },
+  "claim_boundary": {
+    "common_exposure_gate_passed": true,
+    "hold20_recovery_observed_all_four_episodes": true,
+    "formal_confirmatory_seeds_80_89_started": false,
+    "full_network_safety_certified": false,
+    "trusted_online_bus_voltage_channels": 0,
+    "trusted_sensor_error_bounds_verified": 0,
+    "intersample_reachability_verified": false,
+    "independent_backup_governor_viability_verified": false,
+    "recovery_superiority_established": false
+  }
+}

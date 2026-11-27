@@ -75,5 +75,405 @@
     "explicit_note": "Offline simulator state logging, empirical holdout coverage, or a green MATLAB workflow alone cannot satisfy these flags"
   },
   "verified_native_mat_file": null,
-  "verified_native_mat_sha256": null
+  "verified_native_mat_sha256": null,
+  "offline_native_measurement_inventory": {
+    "bus_voltage": {
+      "logical_bus_channels": 39,
+      "physical_bus_sections": 41,
+      "source_run_id": 45920344894,
+      "online_signal_output_ports": 0,
+      "online_trusted": false
+    },
+    "generator": {
+      "rotor_speed_channels": 10,
+      "controller_connected_rotor_speed_channels": 4,
+      "rotor_angle_signal_candidates": 10,
+      "terminal_voltage_signal_candidates": 10,
+      "generator_candidates_routed_to_controller": false
+    },
+    "line_current": {
+      "line_components": 34,
+      "terminal_three_phase_vectors": 68,
+      "phase_components_per_vector": 3,
+      "source_run_id": 45926990179,
+      "online_signal_output_ports": 0,
+      "branch_ampacity_validated": false
+    },
+    "transformer_current": {
+      "transformer_components": 12,
+      "winding_three_phase_vectors": 24,
+      "phase_components_per_vector": 3,
+      "source_run_id": 45926990179,
+      "online_signal_output_ports": 0,
+      "direct_signed_phase_matches": 11,
+      "sampled_linear_consistency": 24,
+      "rank_two_fits": 9,
+      "thermal_limits_validated": false,
+      "rank_aware_audit": {
+        "source_run_id": 45930232661,
+        "direct_signed_three_phase_matches": 11,
+        "sampled_linear_consistency": 24,
+        "rank_two_fits": 9,
+        "rank_three_fits": 15,
+        "unique_full_rank_transformations_verified": false
+      }
+    },
+    "busbar_port_current": {
+      "physical_bus_sections": 41,
+      "three_phase_current_series": 123,
+      "physical_port_mapping": "123/123; I_(2k-1)=LConn_k and I_(2k)=RConn_k",
+      "mapping_source_run_id": 45928276856,
+      "composite_ports": 5,
+      "composite_port_kcl_source_run_id": 45930674491,
+      "online_sensor_channels": 0,
+      "composite_port_kcl": {
+        "source_run_id": 45930674491,
+        "composite_busbar_ports": 5,
+        "validated_kcl_relations": 3,
+        "bus16_split_node": {
+          "normalized_residual": 7.41e-17,
+          "max_abs_residual_A": 4.55e-13
+        },
+        "bus26_split_node": {
+          "normalized_residual": 6.35e-17,
+          "max_abs_residual_A": 9.24e-14
+        },
+        "bus16_fault_node": {
+          "normalized_residual": 9.04e-17,
+          "max_abs_residual_A": 7.28e-12,
+          "samples": 151,
+          "window_s": [
+            5,
+            5.1
+          ]
+        },
+        "bus16_prefault_two_branch_residual": 0.000217,
+        "all_five_composite_ports_offline_kcl_closed": true,
+        "online_sensor_integrity_verified": false
+      }
+    },
+    "online_measurement_port_audit": {
+      "source_run_id": 45932082411,
+      "ps_simulink_converter_blocks_in_generators": 70,
+      "ps_simulink_converter_blocks_in_grid": 0,
+      "synchronous_machine_measurement_blocks": 60,
+      "simulink_ps_converter_blocks": 20,
+      "generator_signal_candidates": {
+        "rotor_angle": 10,
+        "rotor_velocity": 10,
+        "terminal_voltage": 10
+      },
+      "busbar_signal_output_ports": 0,
+      "line_signal_output_ports": 0,
+      "transformer_signal_output_ports": 0,
+      "controller_physical_measurement_channels": 4,
+      "bus_voltage_online_measurement_channels": 0,
+      "line_terminal_current_online_measurement_channels": 0,
+      "transformer_winding_current_online_measurement_channels": 0,
+      "trusted_sensor_integrity_verified": false,
+      "sensor_error_bounds_verified": false
+    },
+    "generator_measurement_bus_schema": {
+      "source_run_id": 45932227560,
+      "generators_subsystem_outport_count": 1,
+      "measurements_subsystem_inport_count": 1,
+      "per_generator_bus_creator_inputs": 3,
+      "measurements_selected_fields_per_generator": [
+        "w",
+        "Vt"
+      ],
+      "measurements_selected_signal_count": 20,
+      "rotor_angle_bus_field_name_verified": false,
+      "runtime_bus_capture_verified": true,
+      "routed_to_aefc_controller": false,
+      "runtime_probe_run_id": 45933102123,
+      "runtime_bus_channel_count": 30,
+      "runtime_bus_sample_count": 7,
+      "runtime_bus_channel_order_verified": false
+    },
+    "sensor_port_compatibility": {
+      "source_run_id": 45932871101,
+      "verified": true,
+      "ps_simulink_converter_library": "nesl_utility/PS-Simulink Converter",
+      "sensors": {
+        "Current Sensor (Three-Phase)": {
+          "ps_output": "RConn1",
+          "conserving_ports": [
+            "LConn1",
+            "RConn2"
+          ]
+        },
+        "Line Voltage Sensor (Three-Phase)": {
+          "ps_output": "RConn1",
+          "conserving_ports": [
+            "LConn1"
+          ]
+        },
+        "Phase Voltage Sensor (Three-Phase)": {
+          "ps_output": "RConn1",
+          "conserving_ports": [
+            "LConn1",
+            "RConn2"
+          ]
+        },
+        "Current and Voltage Sensor (Three-Phase)": {
+          "ps_outputs": [
+            "RConn1",
+            "RConn2"
+          ],
+          "conserving_ports": [
+            "LConn1",
+            "RConn3"
+          ]
+        }
+      },
+      "actual_ieee39_network_sensor_insertion_complete": false,
+      "calibration_verified": false,
+      "sensor_error_bounds_verified": false
+    }
+  },
+  "branch_rating_reference": {
+    "source": "MATPOWER/matpower data/case39.m",
+    "source_commit_sha": "b6c85b0323d20fb801cab3377c803a285d730847",
+    "topology_match_run_id": 45931096901,
+    "matched_branches": 46,
+    "matched_lines": 34,
+    "matched_transformers": 12,
+    "baseMVA": 100,
+    "bus_base_kV": 345,
+    "rateA_MVA_range": [
+      480,
+      1800
+    ],
+    "rateA_current_equivalent_A_range": [
+      803.269939742088,
+      3012.26227403283
+    ],
+    "mathworks_branch_R_X_equivalence_verified": true,
+    "transformer_winding_voltage_base_equivalence_verified": false,
+    "thermal_limits_validated": false,
+    "line_parameter_equivalence": {
+      "source_parameter_inventory_run_id": 45931696089,
+      "verified_by_audit_run_id": 45954314407,
+      "native_line_count": 34,
+      "matpower_line_count": 34,
+      "positive_sequence_formula": "R1=R-Rm; L1=L-M; C1=Cg+3*Cl",
+      "baseMVA": 100,
+      "baseKV": 345,
+      "frequency_Hz": 60,
+      "max_relative_error": {
+        "r": 0.00007001330252750028,
+        "x": 0.00781381720594257,
+        "b": 0.033888183431038735
+      },
+      "tolerances": {
+        "r": 0.001,
+        "x": 0.01,
+        "b": 0.05
+      },
+      "equivalence_verified": true,
+      "rateA_reference_applicable_to_345kV_line_benchmark": true,
+      "actual_thermal_ampacity_verified": false
+    },
+    "transformer_parameter_equivalence": {
+      "source_parameter_inventory_run_id": 45931696089,
+      "native_transformer_count": 12,
+      "matpower_transformer_count": 12,
+      "resistance_sum_pu_max_absolute_error": 0.0001,
+      "leakage_reactance_sum_pu_max_absolute_error": 0,
+      "winding_R_X_equivalence_verified": true,
+      "native_SRated_value": 100,
+      "native_SRated_unit": "MW",
+      "native_VRated_configurations": {
+        "345/345 kV": 3,
+        "345/22 kV": 9
+      },
+      "tap_equivalence_verified": false,
+      "matpower_RATE_A_applicable_to_native_windings": false,
+      "thermal_limit_verified": false,
+      "verified_by_audit_run_id": 45954314407,
+      "matpower_RATE_A_applied_to_transformer_windings": false,
+      "transformer_tap_match_count": 0,
+      "transformer_winding_voltage_base_match_count": 3,
+      "winding_voltage_base_mismatch_count": 9
+    },
+    "transformer_thermal_limit_source": "Native transformer SRated=100 MW and VRated1/VRated2; requires confirmation of apparent-power interpretation and winding-current measurement convention.",
+    "parameter_equivalence_audit_v2": {
+      "source_parameter_inventory_run_id": 45931696089,
+      "verified_by_audit_run_id": 45954314407,
+      "line_positive_sequence_formula": {
+        "R1": "(R-Rm)*length",
+        "X1": "2*pi*f*(L-M)*length",
+        "B1": "2*pi*f*(Cg+3*Cl)*length*Zbase"
+      },
+      "line_tolerances_relative": {
+        "R": 0.001,
+        "X": 0.01,
+        "B": 0.05
+      },
+      "line_match_counts": {
+        "R": 34,
+        "X": 34,
+        "B": 34,
+        "all_R_X_B": 34
+      },
+      "strict_diagnostic_threshold_relative": 0.0002,
+      "strict_diagnostic_matches": {
+        "R": 34,
+        "X": 33,
+        "B": 32
+      },
+      "notable_line_deviations": {
+        "B5 to B4": {
+          "X_relative_error": 0.00781381720594266,
+          "B_relative_error": 0.029794549025501688
+        },
+        "B25 to B26": {
+          "X_relative_error": 2.817235630367802e-7,
+          "B_relative_error": 0.033888183431038735
+        }
+      },
+      "transformer_series_tolerances": {
+        "R_absolute_pu": 0.001,
+        "X_relative": 0.01
+      },
+      "transformer_series_match_counts": {
+        "R": 12,
+        "X": 12,
+        "exact_R": 8,
+        "exact_X": 12
+      },
+      "transformer_tap_match_count": 0,
+      "transformer_winding_voltage_base_match_count": 3,
+      "native_transformer_winding_configurations": {
+        "345/345 kV": 3,
+        "345/22 kV": 9
+      },
+      "native_SRated": {
+        "value": 100,
+        "unit": "MW",
+        "all_12": true
+      },
+      "matpower_transformer_RATE_A_MVA": [
+        500,
+        900,
+        1200,
+        1800
+      ],
+      "transformer_RATE_A_applicable_to_native_windings": false,
+      "overall_native_model_physical_equivalence_verified": false,
+      "line_thermal_ampacity_verified": false,
+      "transformer_thermal_limits_verified": false,
+      "full_network_safety_certified": false,
+      "status": "PASS_LINE_POSITIVE_SEQUENCE_AND_TRANSFORMER_SERIES_PARAMETER_AUDIT"
+    }
+  },
+  "next_required_sensor_work": [
+    "Complete the Bus16_1 voltage and B16-B17 current sensor insertion pilot and reconcile routed outputs with native Simscape logs and the no-sensor seed-80 baseline.",
+    "Instrument 41 physical bus sections with shunt three-phase voltage sensors using the topology-grounded insertion plan.",
+    "Instrument all 65 single-component line endpoints and 24 transformer winding endpoints with series current sensors.",
+    "Implement internal line-terminal current sensing or a proven multi-edge isolation strategy for B19-B16 and B25-B26 split-bus composite endpoints.",
+    "Map the 30-dimensional generator measurement bus to exact field names, units, order, and sample times; keep it routed to an independent monitor, not AEFCNativeController.",
+    "Establish sensor noise, bias, dropout, time-synchronization, and integrity bounds before using measurements in the observer or safety contract.",
+    "Reconcile transformer winding voltage bases and tap ratios before deriving winding current limits; retain MATPOWER RATE_A only as a 345-kV line benchmark until native thermal limits are validated.",
+    "Build a full nonlinear DAE state/measurement map and validated observer-error set; prove sampled and intersample reachable-tube coverage.",
+    "Implement and test an independent governor/backup safety action with verified authority, feasibility, deadline, and solver-timeout fallback.",
+    "Re-run the full-state promotion gate and the six-method independent recovery holdout only after all required predicates are evidenced."
+  ],
+  "latest_promotion_gate_recheck": {
+    "run_id": 45955567123,
+    "status": "BLOCKED",
+    "full_network_certified": false,
+    "blocking_requirement_count": 18,
+    "interpretation": "The gate script completed successfully, but 18 material evidence predicates remain unsatisfied."
+  },
+  "online_sensor_insertion_pilot": {
+    "run_id": 45956291421,
+    "status": "queued",
+    "previous_failed_run_id": 45955471023,
+    "previous_failure": "MATLAB delete_line(grid,busR,lineL) rejected the branched conserving-port connection as an invalid line specifier. The rerun deletes only the verified child branch by line handle (lineLHandle), preserving the fault branch.",
+    "instrumentation": {
+      "bus_voltage_sensor_count": 1,
+      "line_current_sensor_count": 1,
+      "bus_section": "Bus16_1",
+      "line_component": "B16 to B17",
+      "line_terminal": 1
+    },
+    "planned_checks": [
+      "Compare routed voltage sensor output with native Bus16_1 Vt envelope",
+      "Compare routed current sensor output with native B16-B17 terminal-1 three-phase current",
+      "Compare all 41 bus voltage and 10 generator-speed trajectories with the no-sensor seed-80 baseline",
+      "Verify passive sensor insertion does not perturb native plant trajectories"
+    ],
+    "full_grid_sensor_coverage_complete": false,
+    "trusted_sensor_integrity_verified": false,
+    "sensor_error_bounds_verified": false,
+    "full_network_safety_certified": false
+  },
+  "full_grid_sensor_insertion_plan": {
+    "source_run_id": 45955400747,
+    "status": "PASS_TOPOLOGY_GROUNDED_FULL_GRID_SENSOR_INSERTION_PLAN",
+    "bus_voltage_sensors": 41,
+    "line_terminal_current_sensors": 68,
+    "transformer_winding_current_sensors": 24,
+    "total_sensor_blocks": 133,
+    "line_terminals_single_component": 65,
+    "line_terminals_composite": 3,
+    "transformer_winding_terminals_single_component": 24,
+    "special_handling": {
+      "B16 to B17/LConn1": "Branch-specific external insertion preserving the Bus16_1 fault branch; currently under pilot.",
+      "B19 to B16/RConn1": "Internal line-terminal sensing or validated multi-edge isolation required at split-bus node.",
+      "B25 to B26/RConn1": "Internal line-terminal sensing or validated multi-edge isolation required at split-bus node."
+    },
+    "full_grid_sensor_instrumentation_implemented": false,
+    "sensor_calibration_verified": false,
+    "sensor_error_bounds_verified": false,
+    "plant_nonperturbation_verified": false,
+    "full_network_safety_certified": false
+  },
+  "online_controller_oracle_independence": {
+    "source_run_id": 45955789106,
+    "status": "PASS_NO_ATTACK_TRUTH_OR_CLEAN_SHADOW_DEPENDENCY",
+    "online_step_signature": "stepImpl(obj,localPhysical,packet)",
+    "online_physical_measurement_channels": 4,
+    "online_packet_fields": 67,
+    "cleanBelief_dependency": false,
+    "attack_identity_truth_dependency": false,
+    "true_state_dependency": false,
+    "offline_simscape_log_dependency": false,
+    "exploratory_mode_default": false,
+    "strict_mode_uses_full_state_certified_execution_step": true,
+    "full_state_certificate_loader_defaults_all_coverage_flags_false": true,
+    "original_governors_certified": false,
+    "full_network_safety_certified": false,
+    "interpretation": "Static source audit only; the four-speed online interface is not sufficient for full IEEE39 safety certification. Strict mode remains fail-closed."
+  },
+  "generator_measurement_bus_schema_v2": {
+    "source_run_id": 45955976199,
+    "status": "PASS_GENERATOR_BUS_SCHEMA_AND_SIGNAL_SOURCE_ORDER",
+    "generator_count": 10,
+    "generator_bus_creator_count": 10,
+    "top_level_mGens_bus_creator_count": 1,
+    "per_generator_bus_input_order": [
+      "Rotor velocity",
+      "Terminal voltage",
+      "Rotor electrical angle"
+    ],
+    "measurements_selected_fields": {
+      "rotor_velocity": "mGenX.w",
+      "terminal_voltage": "mGenX.Vt"
+    },
+    "selected_fields_per_type": 10,
+    "rotor_angle_signal_selected_by_measurements_sink": false,
+    "runtime_vector_probe_run_id": 45933102123,
+    "runtime_vector_dimension": 30,
+    "runtime_samples": 7,
+    "runtime_flattened_channel_order_verified": false,
+    "rotor_angle_bus_element_identifier": "unresolved",
+    "measurement_bus_routed_to_AEFCNativeController": false,
+    "controller_physical_inputs": 4,
+    "sensor_integrity_verified": false,
+    "sensor_error_bounds_verified": false,
+    "full_network_safety_certified": false
+  }
 }

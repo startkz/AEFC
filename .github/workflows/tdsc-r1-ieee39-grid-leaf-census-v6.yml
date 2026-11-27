@@ -1,0 +1,61 @@
+name: TDSC-R1 IEEE39 offline 39-bus voltage and busbar-port current plus 46-branch current census v6
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-grid-leaf-census-v6.yml'
+      - 'experiments/matlab/aefc_ieee39_grid_physical_leaf_census_v6.m'
+permissions:
+  contents: read
+jobs:
+  original_grid_voltage_busport_and_branch_current_inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Extract all 39 logical bus Vt, busbar port I1-I4, 34 line inductor and 12 transformer current series
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_grid_physical_leaf_census_v6
+      - name: Require complete offline voltage and current channel inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s results/ieee39_safety_mapping/native_grid_physical_leaf_census_v6.json
+          python - <<'PY'
+          import json
+          x=json.load(open('results/ieee39_safety_mapping/native_grid_physical_leaf_census_v6.json'))
+          keys=('status','logical_bus_ids_with_Vt','physical_bus_voltage_sections','bus_current_leaf_rows','line_components_with_current','line_current_leaf_rows','transformer_components_with_current','transformer_current_leaf_rows','branch_current_leaf_rows','truncated')
+          print({k:x[k] for k in keys})
+          if x['status']!='OFFLINE_PHYSICAL_GRID_LEAF_VALUES_EXTRACTED':
+              print(x.get('error_id'),x.get('error_message'),x.get('error_stack'))
+              raise SystemExit(1)
+          assert x['logical_bus_ids_with_Vt']==39
+          assert x['physical_bus_voltage_sections']==41
+          assert x['bus_current_leaf_rows']==123
+          assert x['line_components_with_current']==34
+          assert x['line_current_leaf_rows']>=102
+          assert x['transformer_components_with_current']==12
+          assert x['transformer_current_leaf_rows']==24
+          assert x['all_entries_offline_simscape_oracle_only'] is True
+          assert x['trusted_online_safety_sensors'] is False
+          assert x['rigorous_nonlinear_reachability_certified'] is False
+          assert not x['truncated']
+          assert all(e['finite'] for e in x['entries'])
+          PY
+      - name: Archive busbar port-current and branch-current mappings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-39bus-123busport-34line-12transformer-census-v6-${{ github.sha }}
+          path: |
+            results/ieee39_safety_mapping/native_grid_physical_leaf_census_v6.json
+            experiments/matlab/aefc_ieee39_grid_physical_leaf_census_v6.m
+          if-no-files-found: warn
+          retention-days: 90

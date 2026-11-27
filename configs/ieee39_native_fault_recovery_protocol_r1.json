@@ -1,0 +1,87 @@
+{
+  "study": "Native IEEE39 three-phase fault recovery pilot with offline full-grid electrical monitoring",
+  "model": "IEEE39BusSystem_AEFCStress",
+  "original_source": "MathWorks R2024b IEEE39BusSystem",
+  "fault_block": "Grid/Fault (Three-Phase)",
+  "fault_parameters_frozen": {
+    "fault_type_option": 11,
+    "variant": "ee.utilities.faults.abc",
+    "fault_start_time_s": 5,
+    "fault_duration_s": 0.1,
+    "R_pn_fault_ohm": 0.001,
+    "R_ng_fault_ohm": 0.001,
+    "enable_temporal_fault": 1,
+    "fault_condition": 1
+  },
+  "controller_scenario": "clean; no synthetic knowledge attack, no added post-shield Pref stress; only the original model's temporal three-phase fault",
+  "methods": [
+    "AEFC-Full",
+    "Supervisor-only"
+  ],
+  "method_codes": [
+    7,
+    8
+  ],
+  "pilot_seeds": [
+    0,
+    1
+  ],
+  "confirmatory_seeds": [
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89
+  ],
+  "stop_time_s": 8,
+  "sample_time_s": 0.016666666666666666,
+  "prefault_baseline_window_s": [
+    4.5,
+    4.95
+  ],
+  "fault_window_s": [
+    5,
+    5.1
+  ],
+  "post_fault_recovery_start_s": 5.1,
+  "offline_physical_evaluation": {
+    "logical_bus_voltage_ids": 39,
+    "physical_bus_voltage_sections_expected": 41,
+    "generator_rotor_speed_channels": 10,
+    "branch_currents": "all available native line and transformer Simscape current series; descriptive unless validated rating is found",
+    "measurement_source": "offline Simscape logging; not controller inputs and not trusted online sensors"
+  },
+  "preregistered_recovery_predicate": {
+    "bus_voltage_relative_deviation_from_prefault_baseline_max": 0.05,
+    "generator_speed_max_abs_normalized_deviation": 0.25,
+    "generator_speed_normalization_divisor_pu": 0.02,
+    "condition": "all 39 logical buses and every physical bus section satisfy voltage tolerance AND all ten generators satisfy speed bound",
+    "hold_samples": 20,
+    "hold_duration_s": 0.3333333333333333,
+    "exposure": "at least one bus section or generator speed violates its recovery predicate during the frozen 5.0-5.1 s fault window",
+    "recovery": "first post-clear sample after 5.1 s with all bus-voltage and ten-speed predicates continuously satisfied for 20 samples",
+    "nonexposure": "not counted as recovery",
+    "censoring": "not recovered by 8.0 s is right-censored"
+  },
+  "statistics": {
+    "primary_unit": "paired independent seed",
+    "primary_comparison": "AEFC-Full versus Supervisor-only with same seed and identical original fault block",
+    "pilot_is_exploratory": true,
+    "no_posthoc_threshold_tuning": true
+  },
+  "safety_claim_scope": {
+    "full_ieee39_safety_certified": false,
+    "bus_voltage_offline_monitoring_only": true,
+    "branch_thermal_limits_validated": false,
+    "rotor_angle_and_governor_state_full_coverage": false,
+    "nonlinear_dae_reachable_tube_verified": false,
+    "intersample_continuous_safety_verified": false,
+    "backup_governor_viability_verified": false,
+    "trained_federated_rl_checkpoint_loaded": false
+  }
+}

@@ -1,0 +1,36 @@
+name: TDSC-R1 generator measurement bus schema audit v2
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-generator-bus-schema-audit-v2.yml'
+      - 'experiments/audit/aefc_ieee39_generator_bus_schema_audit_v2.py'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  audit_generator_bus_schema:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download native generator measurement bus inventory
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-generator-measurement-bus-audit-v1
+          run-id: 45955041086
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/generator_measurement_audit
+      - name: Verify per-generator measurement bus field sources and order
+        run: python experiments/audit/aefc_ieee39_generator_bus_schema_audit_v2.py
+      - name: Archive generator measurement bus schema audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-generator-measurement-bus-schema-v2
+          path: results/ieee39_safety_mapping/generator_measurement_bus_schema_v2.json
+          if-no-files-found: error
+          retention-days: 90

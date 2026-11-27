@@ -1,0 +1,35 @@
+name: TDSC-R1 truthful physical recovery paired-statistics right-censoring tests
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-statistics-selftest.yml'
+      - 'analysis/ieee39_recovery_stats.py'
+      - 'tests/test_ieee39_recovery_stats.py'
+permissions:
+  contents: read
+jobs:
+  statistical_evidence_falsification_tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Require physically outside before recovery, preserve censor and paired independent-seed uncertainty
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p test_ieee39_recovery_stats.py -v |& tee true_recovery_statistics_selftest.log
+      - name: Archive falsification test and exact statistical formulas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-recovery-paired-statistics-tests-${{ github.sha }}
+          path: |
+            true_recovery_statistics_selftest.log
+            analysis/ieee39_recovery_stats.py
+            tests/test_ieee39_recovery_stats.py
+          if-no-files-found: warn

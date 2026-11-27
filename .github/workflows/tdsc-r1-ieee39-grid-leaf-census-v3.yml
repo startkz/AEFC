@@ -1,0 +1,58 @@
+name: TDSC-R1 corrected offline IEEE39 bus voltage and branch current Simscape census v3
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-grid-leaf-census-v3.yml'
+      - 'experiments/matlab/aefc_ieee39_grid_physical_leaf_census_v3.m'
+permissions:
+  contents: read
+jobs:
+  offline_full_grid_physical_oracle_inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Extract actual original Simscape bus Vt and line/transformer current values
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_grid_physical_leaf_census_v3
+      - name: Validate 39 bus voltage series and preserve offline-only status
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s results/ieee39_safety_mapping/native_grid_physical_leaf_census_v3.json
+          python - <<'PY'
+          import json
+          x=json.load(open('results/ieee39_safety_mapping/native_grid_physical_leaf_census_v3.json'))
+          print('status',x['status'])
+          print('logical bus IDs',x['logical_bus_ids_with_Vt'])
+          print('voltage sections',x['physical_bus_voltage_sections'])
+          print('line current components',x['line_components_with_current'])
+          print('transformer current components',x['transformer_components_with_current'])
+          if x['status']!='OFFLINE_PHYSICAL_GRID_LEAF_VALUES_EXTRACTED':
+              print('MATLAB exception:',x.get('error_id'),x.get('error_message'),x.get('error_stack'))
+              raise SystemExit(1)
+          assert x['logical_bus_ids_with_Vt']==39
+          assert x['all_entries_offline_simscape_oracle_only'] is True
+          assert x['full_network_online_observer_verified'] is False
+          assert x['rigorous_nonlinear_reachability_certified'] is False
+          assert not x['truncated']
+          assert all(e['finite'] for e in x['entries'])
+          PY
+      - name: Archive complete offline Vt and branch-current value summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-offline-grid-Vt-branch-I-v3-${{ github.sha }}
+          path: |
+            results/ieee39_safety_mapping/native_grid_physical_leaf_census_v3.json
+            experiments/matlab/aefc_ieee39_grid_physical_leaf_census_v3.m
+          if-no-files-found: warn
+          retention-days: 90

@@ -1,0 +1,49 @@
+name: TDSC-R1 topology-grounded full-grid sensor insertion plan v1
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-full-grid-sensor-insertion-plan-v1.yml'
+      - 'experiments/audit/aefc_ieee39_full_grid_sensor_insertion_plan_v1.py'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  build_sensor_insertion_plan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download native Busbar component topology map
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-busbar-port-component-map-v2
+          run-id: 45928516528
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/busbar_component_map
+      - name: Download validated interleaved current-variable map
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-123-bus-port-current-variable-map-v2
+          run-id: 45928276856
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/current_variable_map
+      - name: Build unique voltage and current sensor targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/audit/aefc_ieee39_full_grid_sensor_insertion_plan_v1.py
+      - name: Archive topology-grounded sensor insertion plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-full-grid-sensor-insertion-plan-v1
+          path: |
+            results/ieee39_safety_mapping/full_grid_sensor_insertion_plan_v1.json
+            experiments/audit/aefc_ieee39_full_grid_sensor_insertion_plan_v1.py
+          if-no-files-found: error
+          retention-days: 90

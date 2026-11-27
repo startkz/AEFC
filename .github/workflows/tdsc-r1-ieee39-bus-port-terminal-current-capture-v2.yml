@@ -1,0 +1,47 @@
+name: TDSC-R1 native IEEE39 bus-port terminal current capture v2
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-bus-port-terminal-current-capture-v2.yml'
+      - 'experiments/matlab/aefc_ieee39_bus_port_terminal_current_capture_v2.m'
+      - 'experiments/audit/aefc_ieee39_terminal_current_capture_audit_v2.py'
+      - 'experiments/matlab/aefc_ieee39_build_stress.m'
+permissions:
+  contents: read
+jobs:
+  terminal_current_capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Capture Bus/I# and both three-phase terminal currents for every line
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_bus_port_terminal_current_capture_v2
+      - name: Audit terminal current capture coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/audit/aefc_ieee39_terminal_current_capture_audit_v2.py
+      - name: Archive terminal current traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-bus-port-terminal-current-capture-v2
+          path: |
+            results/ieee39_safety_mapping/native_ieee39_bus_port_terminal_current_capture_v2.json
+            results/ieee39_safety_mapping/terminal_current_capture_audit_v2.json
+            experiments/matlab/aefc_ieee39_bus_port_terminal_current_capture_v2.m
+            experiments/audit/aefc_ieee39_terminal_current_capture_audit_v2.py
+          if-no-files-found: warn
+          retention-days: 90
