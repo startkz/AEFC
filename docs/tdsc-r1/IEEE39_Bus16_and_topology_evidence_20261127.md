@@ -133,3 +133,52 @@ All 24 transformer endpoints are structurally mapped to 12 transformers. Eleven 
 The earlier near-zero inductor_a/i/amplitude path is an internal inductor-current series, not the line terminal phase-A current. The actual terminal-current vectors are phase_splitter1/2 and contain all three phase components. The remaining Bus16 fault-port sum is being checked using the one-episode fault-current probe.
 
 **Claim boundary:** all 123 physical ports have a current-variable assignment under the validated interleaved ordering. The five composite bus ports require component-sum interpretation; the Bus16 fault composite is still under targeted validation. No online sensor integrity, branch thermal limits, or full-network safety is certified.
+
+
+## 8. 123 个 Bus/I# 电流变量的端口映射与五个复合节点 KCL 审计
+
+本节更新此前“Bus/I# 到 LConn/RConn 的变量关联待验证”的状态。最新证据来自：
+
+- 物理端口连接映射 v2：[Run 45928516528](https://github.com/startkz/AEFC/actions/runs/45928516528)
+- 123 个电流变量与物理端口的交错序号签名匹配：[Run 45928276856](https://github.com/startkz/AEFC/actions/runs/45928276856)
+- 全部线路两端与变压器绕组端电流采集：[Run 45926990179](https://github.com/startkz/AEFC/actions/runs/45926990179)
+- Bus16_1 故障端口电流探测：[Run 45928384720](https://github.com/startkz/AEFC/actions/runs/45928384720)
+- Bus16_1/RConn1 复合电流和独立审计：[Run 45929575893](https://github.com/startkz/AEFC/actions/runs/45929575893)
+- 五个复合母线端口统一 KCL 审计：[Run 45930108949](https://github.com/startkz/AEFC/actions/runs/45930108949)
+
+### 8.1 123/123 物理端口的电流变量序号规则
+
+全部 41 个母线物理区段共提取 123 个 Bus/I# 三相电流序列。由 Busbar 块的物理端口顺序和 Simscape 电流向量的签名匹配，得到：
+
+\[
+I_{2k-1}\leftrightarrow LConn_k,\qquad I_{2k}\leftrightarrow RConn_k.
+\]
+
+- 123/123 个电流变量均映射到物理端口，未解析项为 0；
+- 65 个单组件线路端口引用中，65 个三相电流向量均与对应线路端口电流直接匹配，符号和相序一致；
+- 34 条线路共采集 68 个端点三相电流向量；
+- 12 台变压器共采集 24 个绕组端电流向量。
+
+此前使用的线路内部 \`inductor_a/i/amplitude\` 序列在 34 条线路上均接近数值零，不能代表完整三相线路电流。后续物理电流分析应采用线路 \`phase_splitter1/2/I/instantaneous\` 两端三相电流向量。当前 68 个端点向量的 A/B/C 三个相分量均为非零，且单位为 A。
+
+### 8.2 五个多组件母线端口的 KCL 验证
+
+五个复合端口涉及 Bus16、Bus26 分段母线互连和 Bus16_1 故障支路。统一审计使用原始三相电流向量验证以下节点电流和：
+
+| 节点 | KCL 组成 | 归一化残差 | 最大绝对残差 |
+|---|---|---:|---:|
+| Bus16 分段节点 | Bus16_1/I3 + Bus16_2/I1 + B19–B16 端点2 | 7.41×10⁻¹⁷ | 4.55×10⁻¹³ A |
+| Bus26 分段节点 | Bus26_1/I1 + Bus26_2/I1 + B25–B26 端点2 | 6.35×10⁻¹⁷ | 9.24×10⁻¹⁴ A |
+| Bus16_1/RConn1 故障节点 | I2 + B16–B17 端点1 + 三相故障电流（5.0–5.1 s） | 9.04×10⁻¹⁷ | 7.28×10⁻¹² A |
+
+因此，五个多组件端口的拓扑连接与复合电流和均有对应证据，不再将它们简单视作单组件端口。故障前窗口中 I2 与线路端电流的残差约为 2.17×10⁻⁴（按参与电流范数之和归一化），反映故障支路未激活时仍存在的小量数值泄漏；故障窗口中则满足三支路电流和。
+
+### 8.3 变压器端电流的证据边界
+
+24 个变压器绕组端电流向量均通过当前采样轨迹上的线性电流向量一致性检查，最大拟合残差约为 1.17×10⁻¹⁴；其中 11/24 个端点为直接符号/相序匹配。其余端点的拟合受变压器相移及平衡三相子空间影响，9 个拟合矩阵的样本秩为 2，不能把这些轨迹拟合解释成对所有可能工况都成立的唯一满秩物理变换。端点拓扑来自物理连接句柄，拟合仅作为离线信号对应性检查。
+
+### 8.4 当前可以和不可以得出的结论
+
+现在可以确认：原生 Simscape 离线日志中 123 个母线端口电流变量与物理端口顺序一致；65 个单组件线路端口具有直接三相签名匹配；五个复合母线端口的 KCL 关系已在原生数据中验证；线路和变压器端点电流均有完整三相日志。
+
+仍然不能确认：这些日志就是可信在线传感器；线路/变压器热额定值已经核实；当前支路电流低于热限；全网电气状态连续安全；或这些离线变量已进入 AEFC 控制器。所有相关安全认证字段仍为 false。完整 IEEE39 执行安全门槛继续保持 BLOCKED。
