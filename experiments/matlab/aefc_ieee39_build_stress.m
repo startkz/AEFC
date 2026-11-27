@@ -1,8 +1,9 @@
 function aefc_ieee39_build_stress
 % Build a SEPARATE original-plant copy for an exploratory physical stress sweep.
 % This is NOT a full IEEE39 safety proof or original P0 bounded attack.
-% Build an editable native IEEE39 copy whose real observations feed
-% AEFCNativeController. Evidence signals are exported through explicit
+% Build an editable native IEEE39 copy whose four locally tapped generator
+% speed channels feed AEFCNativeController. Their sensor integrity and error
+% bounds are not established. Evidence signals are exported through explicit
 % To Workspace sinks so headless CI does not depend on logsout.
 repo=pwd; resDir=fullfile(repo,'results','ieee39_r2024b');
 mapPath=fullfile(resDir,'interface_mapping.json');
