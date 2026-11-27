@@ -18,8 +18,17 @@ assert d["trusted_online_sensor_integrity_verified"] is False
 assert d["sensor_error_bounds_verified"] is False
 assert d["full_network_safety_certified"] is False
 
+def as_list(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, dict):
+        return [value]
+    return []
+
 def count_ports(x):
-    return sum(len(y.get("port_handles",[])) for y in x)
+    return sum(len(as_list(y.get("port_handles",[]))) for y in as_list(x))
 report={
  "status":"PASS_NATIVE_SIGNAL_PORT_INVENTORY",
  "native_busbar_blocks":d["native_busbar_blocks"],
@@ -29,7 +38,7 @@ report={
  "busbar_exposed_port_handle_count":count_ports(d["busbar_blocks"]),
  "line_exposed_port_handle_count":count_ports(d["line_blocks"]),
  "transformer_exposed_port_handle_count":count_ports(d["transformer_blocks"]),
- "controller_exposed_port_handle_count":len(d["controller"]["port_handles"]),
+ "controller_exposed_port_handle_count":len(as_list(d["controller"].get("port_handles",[]))),
  "online_physical_measurement_channels":4,
  "trusted_online_sensor_integrity_verified":False,
  "sensor_error_bounds_verified":False,
