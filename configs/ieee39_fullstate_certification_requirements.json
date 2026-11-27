@@ -447,5 +447,33 @@
     "original_governors_certified": false,
     "full_network_safety_certified": false,
     "interpretation": "Static source audit only; the four-speed online interface is not sufficient for full IEEE39 safety certification. Strict mode remains fail-closed."
+  },
+  "generator_measurement_bus_schema_v2": {
+    "source_run_id": 45955976199,
+    "status": "PASS_GENERATOR_BUS_SCHEMA_AND_SIGNAL_SOURCE_ORDER",
+    "generator_count": 10,
+    "generator_bus_creator_count": 10,
+    "top_level_mGens_bus_creator_count": 1,
+    "per_generator_bus_input_order": [
+      "Rotor velocity",
+      "Terminal voltage",
+      "Rotor electrical angle"
+    ],
+    "measurements_selected_fields": {
+      "rotor_velocity": "mGenX.w",
+      "terminal_voltage": "mGenX.Vt"
+    },
+    "selected_fields_per_type": 10,
+    "rotor_angle_signal_selected_by_measurements_sink": false,
+    "runtime_vector_probe_run_id": 45933102123,
+    "runtime_vector_dimension": 30,
+    "runtime_samples": 7,
+    "runtime_flattened_channel_order_verified": false,
+    "rotor_angle_bus_element_identifier": "unresolved",
+    "measurement_bus_routed_to_AEFCNativeController": false,
+    "controller_physical_inputs": 4,
+    "sensor_integrity_verified": false,
+    "sensor_error_bounds_verified": false,
+    "full_network_safety_certified": false
   }
 }
