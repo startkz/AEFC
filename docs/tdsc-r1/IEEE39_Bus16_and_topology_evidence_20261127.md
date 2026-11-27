@@ -185,3 +185,24 @@ I_{2k-1}\leftrightarrow LConn_k,\qquad I_{2k}\leftrightarrow RConn_k.
 
 
 **审计精化：** [Run 45930232661](https://github.com/startkz/AEFC/actions/runs/45930232661) 在同一组原始工件上增加了变压器拟合秩检查：24 个端点中 11 个为直接符号/相序匹配，24 个均满足样本轨迹线性一致性；其中 9 个拟合为秩 2、15 个为秩 3。该结果明确限制了变压器电流映射的解释范围，不把平衡三相轨迹上的秩 2 拟合当作唯一满秩变换。
+
+
+## 9. MATPOWER case39 的 46 条支路参考额定值映射
+
+参考数据源固定为 MATPOWER/matpower 的 case39 文件，commit \`b6c85b0323d20fb801cab3377c803a285d730847\`。拓扑匹配审计 [Run 45931096901](https://github.com/startkz/AEFC/actions/runs/45931096901) 得到：
+
+- 34/34 条 MathWorks 原生输电线路与 MATPOWER case39 的线路端点匹配；
+- 12/12 台 MathWorks 原生变压器与 MATPOWER case39 的变压器端点匹配；
+- 总计 46/46 个端点对匹配，未匹配项为 0；
+- MATPOWER 数据的 baseMVA 为 100 MVA，39 个母线的 baseKV 均为 345 kV；
+- RATE_A 参考值分布：500 MVA（7 条）、480 MVA（1 条）、600 MVA（20 条）、900 MVA（14 条）、1000 MVA（1 条）、1200 MVA（2 条）、1800 MVA（1 条）；
+- 按 345 kV 计算的 RATE_A 等效线电流范围为约 803.27–3012.26 A RMS。
+
+该映射只建立**支路拓扑和公开参考额定值之间的对应关系**。MATPOWER case39 文件的注释说明其潮流限值来自 PSERC TC Calculator 的修改数据；这些数值不是 MathWorks Simscape 模型自带的热额定值。当前尚未完成 MathWorks 线路 R/X/L/C、变压器绕组额定电压、基准容量、端电流 RMS 定义与 MATPOWER 参数的逐项等价性验证。因此：
+
+1. RATE_A/B/C 暂时只能作为 benchmark reference limits；
+2. 不能把 345 kV 等效电流直接用于变压器低压绕组电流比较；
+3. 不能用瞬时电流峰值直接与 RATE_A 等效 RMS 电流比较；
+4. 在参数等价、绕组电压基准和 RMS 窗口核验完成前，不报告支路热过载率或热安全通过率。
+
+下一项工作是提取 MathWorks 原生线路和变压器掩码参数，逐支路与 MATPOWER 的 per-unit R/X、tap ratio 和 baseMVA 对齐；只有对齐后才进入连续热限比较。
