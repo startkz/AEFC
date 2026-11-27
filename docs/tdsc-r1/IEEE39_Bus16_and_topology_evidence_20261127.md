@@ -240,3 +240,6 @@ I_{2k-1}\leftrightarrow LConn_k,\qquad I_{2k}\leftrightarrow RConn_k.
 建议先复用现有 10 台机组的转速、转子角和端电压信号，构建独立的 Generator Measurement Monitor；随后在 41 个物理母线区段接入电压测量，在 34 条线路两端及 12 台变压器两侧接入电流测量，并将测量信号通过显式转换器接入独立的全网安全监视器。传感器噪声、偏置、丢包、时间同步和完整性保护需要作为单独的威胁模型与实验变量，不得把仿真器隐藏日志直接当作可信在线观测。
 
 这一步只解决测量路径，不自动解决全状态估计、误差界或可达集证明。完整 IEEE39 安全认证仍保持 BLOCKED。
+
+
+**发电机测量总线补充核验：** [Run 45931515695](https://github.com/startkz/AEFC/actions/runs/45931515695) 确认顶层 Generators 子系统具有一个独立 Simulink Outport，直接连接到 Measurements 子系统的 Inport；Generators 的另一物理端口仍连接 Grid。Measurements 子系统包含 20 个 In Bus Element、两个 10 输入 Mux 和 Scope，没有输出端口，因此它是测量总线的显示/监视终端，不是 AEFC 控制输入。该总线可在 Generators/Measurements 连接处分支，供独立安全监视器使用；其中 20 个字段的准确名称、单位和采样时间仍由 bus schema 探测工作流核验。
