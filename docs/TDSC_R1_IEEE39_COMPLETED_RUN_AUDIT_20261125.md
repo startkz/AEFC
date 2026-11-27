@@ -280,3 +280,20 @@ The strict gate released zero additional Pref corrections and invoked zero backu
 ### 9.8 Persistent-Pref 32-case stress pilot
 
 Actions run [45920180021](https://github.com/startkz/AEFC/actions/runs/45920180021) completed 32 native IEEE39 episodes across two methods, two attack scenarios, two seeds and four Pref stress levels. The maximum normalized generator-speed deviation was 0.1695, below the preregistered recovery-set boundary 0.25; no episode exposed the recovery set. This pilot therefore cannot support a recovery comparison. Do not increase the sample size under the same pressure range; the next recovery-effect experiment requires a separately justified exposure-producing disturbance and a valid execution certificate.
+
+
+## 10. 2026-11-27 addendum — 123-port current-variable mapping and composite-node KCL
+
+This section supersedes the earlier statement in Section 9.4 that the Bus/I# current-variable-to-LConn/RConn association remained unvalidated. The mapping has now been completed as an offline native Simscape topology/current audit.
+
+- Physical Busbar topology v2: [run 45928516528](https://github.com/startkz/AEFC/actions/runs/45928516528), 41 bus sections, 123/123 physical ports resolved, 34 line components and 12 transformer components.
+- Interleaved current-variable mapping v2: [run 45928276856](https://github.com/startkz/AEFC/actions/runs/45928276856), with the rule \(I_{2k-1}\leftrightarrow LConn_k\), \(I_{2k}\leftrightarrow RConn_k\), 123/123 variables resolved and no unresolved physical ports.
+- Native line/transformer terminal-current capture: [run 45926990179](https://github.com/startkz/AEFC/actions/runs/45926990179), 68 three-phase line-terminal current vectors (34 lines × 2 terminals) and 24 transformer winding-current vectors (12 transformers × 2 windings).
+- Single-component line endpoint signature: 65/65 direct signed three-phase matches. The remaining line references belong to composite busbar nodes and are audited by KCL, not by a single-branch equality.
+- All 68 line-terminal vectors and all 24 transformer-winding vectors have nonzero A/B/C phase components in the captured baseline interval. The previously selected internal inductor_a/i/amplitude leaf series is near zero and is not used as the authoritative three-phase line-current record.
+- The five multi-component busbar ports are accounted for by three KCL relations. Bus16 and Bus26 split-node current sums have normalized residuals \(7.41\times10^{-17}\) and \(6.35\times10^{-17}\), respectively. The faulted Bus16_1/RConn1 sum (Bus16_1/I2 + B16–B17 terminal-1 current + three-phase fault current) has normalized residual \(9.04\times10^{-17}\) over 151 fault-window samples.
+- Consolidated audit: [run 45930108949](https://github.com/startkz/AEFC/actions/runs/45930108949), artifact TDSC-R1-IEEE39-all-composite-port-KCL-audit-v1.
+
+Transformer current evidence is more limited: 24/24 endpoints satisfy a trajectory-sampled linear vector-consistency fit, but only 11/24 are direct signed phase matches. Nine of the fitted transformations have rank 2 under the balanced-current trajectory. They are not promoted to unique full-rank physical transforms.
+
+**Claim boundary:** this closes the offline Bus/I# topology and current-series mapping, including the five composite-port KCL checks. It does not authenticate the logged quantities as trusted online sensors, identify validated branch ampacities, prove thermal safety, or establish full-grid/intersample reachability. The full IEEE39 execution-safety gate remains **BLOCKED**.
