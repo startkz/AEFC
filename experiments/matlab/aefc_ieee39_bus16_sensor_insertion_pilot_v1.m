@@ -49,7 +49,11 @@ linePorts=get_param([grid '/B16 to B17'],'PortHandles');
 busR=busPorts.RConn(1);lineL=linePorts.LConn(1);
 busLineSet=double(get_param(busR,'Line'));
 try,busLineSet=[busLineSet;double(get_param(busLineSet(1),'LineParent'))];catch,end
-try,busLineSet=[busLineSet;double(get_param(busLineSet(1),'LineChildren'))(:)];catch,end
+try
+    lineChildren=get_param(busLineSet(1),'LineChildren');
+    busLineSet=[busLineSet;double(lineChildren(:))];
+catch
+end
 busLineSet=unique(busLineSet(isfinite(busLineSet)&busLineSet>0));
 lineLHandle=double(get_param(lineL,'Line'));
 assert(~isempty(busLineSet)&&lineLHandle>0,'AEFC:SensorPilotConnection','Bus16_1/RConn1 or B16-B17/LConn1 is not physically connected');
