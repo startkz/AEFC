@@ -128,7 +128,7 @@ def main():
             previous_candidate_mismatches += 1
         rows.append({
             "bus_section": bus, "logical_bus": str(item["logical_bus"]),
-            "current_variable": current_variable, "current_series_path": current["path"],
+            "current_variable_candidate": current_variable, "current_series_path": current["path"],
             "port_ordinal": ordinal, "physical_port_type": ptype,
             "physical_port_kind": item["bus_port_kind"],
             "physical_port_index": int(item["bus_port_index"]),
@@ -200,27 +200,27 @@ def main():
     multi_ports = [r for r in rows if r["connected_port_count"] > 1]
 
     mapping = {
-        "status": "PASS_123_OF_123_BUS_PORT_CURRENT_VARIABLE_TOPOLOGY_MAP",
+        "status": "PASS_123_OF_123_PHYSICAL_PORT_TO_COMPONENT_TOPOLOGY_MAP",
         "official_model_source": old["model"], "current_series_model": raw["model"],
         "physical_bus_sections": 41, "logical_buses": 39,
         "bus_port_current_series": 123, "bus_ports_resolved": len(rows), "unresolved_bus_ports": 0,
         "unique_transmission_line_components": len(raw_line_names),
         "unique_transformer_components": len(raw_transformer_names), "branch_current_series": 126,
-        "current_variable_index_rule": "Busbar Simscape I# equals the global PortConnectivity index within the Busbar block; PortConnectivity.type resolves LConn/RConn and local port index.",
-        "current_variable_mapping_verified": True,
+        "current_variable_index_rule": "Provisional hypothesis only: Busbar Simscape I# may follow the global PortConnectivity ordinal; all 123 assignments require terminal-current signature validation.",
+        "current_variable_mapping_verified": False,
         "verification_basis": [
-            "123/123 busbar physical ports join one-to-one with 123/123 Bus/I# Series paths.",
-            "For all 41 Busbar blocks, PortConnectivity record count equals the I# Series count and indices are contiguous 1..N.",
-            "Every PortConnectivity LConn/RConn type and local index matches the physical-port handle record.",
+            "123/123 physical busbar ports are structurally resolved to connected components; I# Series counts match per block, but the port-index permutation is not yet validated.",
+            "For all 41 Busbar blocks, PortConnectivity record count equals the I# Series count and indices are contiguous 1..N; this count correspondence alone does not establish I# ordering.",
+            "Every PortConnectivity LConn/RConn type and local index matches the physical-port handle record; the Simscape I# to PortConnectivity ordinal correspondence remains a candidate.",
             "All 34 line and 12 transformer components in the current Series registry occur in the physical port map.",
-            "Bus10/I1 equals negative TF_B32_to_B10/i2 and Bus12/I1 equals negative TF_B11_to_B12/i2, both with zero normalized residual."
+            "Two LConn1 anchors are exact: Bus10/I1 versus negative TF_B32_to_B10/i2 and Bus12/I1 versus negative TF_B11_to_B12/i2; these do not validate the remaining 121 I# assignments."
         ],
-        "previous_local_candidate_mismatches": previous_candidate_mismatches,
+        "previous_local_candidate_differs_from_global_ordinal": previous_candidate_mismatches,
         "physical_component_port_reference_counts": dict(ref_counts),
         "unique_physical_component_port_counts": dict(unique_type_counts),
         "multi_component_busbar_ports": len(multi_ports),
         "multi_component_busbar_port_details": [
-            {"bus_section": r["bus_section"], "current_variable": r["current_variable"],
+            {"bus_section": r["bus_section"], "current_variable_candidate": r["current_variable_candidate"],
              "physical_port_type": r["physical_port_type"], "components": r["all_connected_components"]}
             for r in multi_ports
         ],
@@ -245,7 +245,7 @@ def main():
     }
     json_out.write_text(json.dumps(mapping, indent=2) + "\n", encoding="utf-8")
     fields = [
-        "bus_section", "logical_bus", "current_variable", "current_series_path",
+        "bus_section", "logical_bus", "current_variable_candidate", "current_series_path",
         "port_ordinal", "physical_port_type", "physical_port_kind", "physical_port_index",
         "port_connectivity_primary_blocks", "all_connected_components",
         "connected_port_count", "previous_local_candidate", "previous_local_candidate_was_wrong",
@@ -264,7 +264,7 @@ def main():
         "status": mapping["status"], "bus_ports_resolved": len(rows), "unresolved_bus_ports": 0,
         "line_components": len(raw_line_names), "transformer_components": len(raw_transformer_names),
         "branch_current_series": len(raw["branch_current_series"]),
-        "previous_local_candidate_mismatches": previous_candidate_mismatches,
+        "previous_local_candidate_differs_from_global_ordinal": previous_candidate_mismatches,
         "transformer_current_signature_anchors": anchors,
         "line_inductor_current_amplitude_phase_diagnostic": line_phase_stats,
         "multi_component_busbar_ports": len(multi_ports),
