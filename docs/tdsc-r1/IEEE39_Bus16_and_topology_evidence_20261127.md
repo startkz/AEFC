@@ -343,3 +343,6 @@ MATPOWER 的变压器支路 RATE_A 不应用于原生变压器绕组热限。绕
 | Current and Voltage Sensor (Three-Phase) | RConn1、RConn2 | LConn1、RConn3 |
 
 这关闭了“传感器是否能输出到 Simulink”的库级兼容性问题。下一步不直接扩展到全网，而是先在 Bus16_1 接入 Line Voltage Sensor，在 B16–B17 一端串入 Current Sensor，比较传感器输出与已有离线 Simscape 电压/电流序列，并确认插装前后原生物理轨迹没有可测变化。只有这个单点插装通过后，才批量扩展到41个母线区段、68个线路端点和24个变压器绕组端。
+
+
+**运行时总线探测：** [Run 45933102123](https://github.com/startkz/AEFC/actions/runs/45933102123) 在0.1 s原生运行中成功分支并采集 Generators 输出，得到7个时间样本、30维数值向量。结合每台机组 Bus Creator 的3个输入和顶层10个子总线输入，说明该总线确实承载30路发电机测量数据；但 To Workspace 将其展平为数值向量，标签未保留。正在补充首末样本值和 Simulink.Bus 对象提取，以确定30维的确切通道顺序和单位，避免仅按端口顺序猜测。
