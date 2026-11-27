@@ -254,7 +254,7 @@
     "thermal_limits_validated": false,
     "line_parameter_equivalence": {
       "source_parameter_inventory_run_id": 45931696089,
-      "verified_by_audit_run_id": 45932665618,
+      "verified_by_audit_run_id": 45954314407,
       "native_line_count": 34,
       "matpower_line_count": 34,
       "positive_sequence_formula": "R1=R-Rm; L1=L-M; C1=Cg+3*Cl",
@@ -291,7 +291,7 @@
       "tap_equivalence_verified": false,
       "matpower_RATE_A_applicable_to_native_windings": false,
       "thermal_limit_verified": false,
-      "verified_by_audit_run_id": 45932665618,
+      "verified_by_audit_run_id": 45954314407,
       "matpower_RATE_A_applied_to_transformer_windings": false,
       "transformer_tap_match_count": 0,
       "transformer_winding_voltage_base_match_count": 3,
@@ -300,7 +300,7 @@
     "transformer_thermal_limit_source": "Native transformer SRated=100 MW and VRated1/VRated2; requires confirmation of apparent-power interpretation and winding-current measurement convention.",
     "parameter_equivalence_audit_v2": {
       "source_parameter_inventory_run_id": 45931696089,
-      "verified_by_audit_run_id": 45953495289,
+      "verified_by_audit_run_id": 45954314407,
       "line_positive_sequence_formula": {
         "R1": "(R-Rm)*length",
         "X1": "2*pi*f*(L-M)*length",
@@ -364,7 +364,8 @@
       "overall_native_model_physical_equivalence_verified": false,
       "line_thermal_ampacity_verified": false,
       "transformer_thermal_limits_verified": false,
-      "full_network_safety_certified": false
+      "full_network_safety_certified": false,
+      "status": "PASS_LINE_POSITIVE_SEQUENCE_AND_TRANSFORMER_SERIES_PARAMETER_AUDIT"
     }
   },
   "next_required_sensor_work": [
@@ -379,12 +380,31 @@
     "Re-run the full-state promotion gate and the six-method independent recovery holdout only after all required predicates are evidenced."
   ],
   "latest_promotion_gate_recheck": {
-    "run_id": 45934329179,
+    "run_id": 45954777797,
     "status": "BLOCKED",
-    "blocking_requirement_count": 18,
     "full_network_certified": false,
-    "six_method_physical_recovery_superiority_established": false,
-    "interpretation": "Offline topology and parameter equivalence evidence does not satisfy trusted online measurement, observer error bounds, full nonlinear DAE reachability, intersample safety, emergency governor viability, or independent six-method holdout."
+    "blocking_requirement_count": 18,
+    "blockers": [
+      "NO_INDEPENDENT_NATIVE_STATE_INVENTORY",
+      "NO_FULLSTATE_ONLINE_OBSERVER_COVERAGE_PROOF",
+      "NO_OBSERVER_ERROR_BOUND_PROOF",
+      "NO_ALL_STATE_MEASUREMENT_MAP",
+      "UNVERIFIED_PHYSICAL_PREDICATE:generator_rotor_speed_all_machines",
+      "UNVERIFIED_PHYSICAL_PREDICATE:generator_rotor_angle_stability",
+      "UNVERIFIED_PHYSICAL_PREDICATE:bus_voltage_limits_all_buses",
+      "UNVERIFIED_PHYSICAL_PREDICATE:branch_thermal_power_loading",
+      "UNVERIFIED_PHYSICAL_PREDICATE:actuator_governor_pref_and_rate_limits",
+      "NO_VALIDATED_FULL_NETWORK_SAMPLED_REACHABLE_TUBE",
+      "NO_FORMAL_DISCRETE_MODEL_RESIDUAL_ENVELOPE",
+      "NO_FULL_NONLINEAR_INTERSAMPLE_REACHABILITY",
+      "UNCERTIFIED_EMERGENCY_CONTROL:emergency_actuator_authority_verified",
+      "UNCERTIFIED_EMERGENCY_CONTROL:fallback_reachable_set_feasible",
+      "UNCERTIFIED_EMERGENCY_CONTROL:deadline_and_solver_timeout_verified",
+      "UNCERTIFIED_EMERGENCY_CONTROL:original_governors_independently_certified",
+      "NO_HASH_PINNED_NATIVE_FULLSTATE_MODEL_ARTIFACT",
+      "NO_INDEPENDENT_SIX_METHOD_RECOVERY_HOLDOUT"
+    ],
+    "interpretation": "A green audit workflow means the gate evaluation completed; the full IEEE39 safety promotion decision remains blocked."
   },
   "online_sensor_insertion_pilot": {
     "run_id": 45953868950,
