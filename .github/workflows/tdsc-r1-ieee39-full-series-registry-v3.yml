@@ -1,0 +1,53 @@
+name: TDSC-R1 native IEEE39 complete Simscape Series registry v3
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-full-series-registry-v3.yml'
+      - 'experiments/matlab/aefc_ieee39_simscape_full_series_registry_v3.m'
+      - 'experiments/audit/aefc_ieee39_full_series_registry_audit_v3.py'
+      - 'experiments/matlab/aefc_ieee39_build_stress.m'
+      - 'experiments/matlab/AEFCNativeController.m'
+      - 'configs/ieee39_unpriv_r1.json'
+permissions:
+  contents: read
+jobs:
+  full_series_registry:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Enumerate every valid native IEEE39 Simscape Series leaf
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_simscape_full_series_registry_v3
+      - name: Audit registry completeness and preserve the no-certification boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/audit/aefc_ieee39_full_series_registry_audit_v3.py
+      - name: Archive full Series registry, audit and source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-full-Simscape-Series-registry-v3
+          path: |
+            results/ieee39_safety_mapping/native_simscape_full_series_registry_v3.json
+            results/ieee39_safety_mapping/full_series_registry_audit_v3.json
+            results/ieee39_r2024b/unprivileged_model_build.json
+            experiments/matlab/aefc_ieee39_simscape_full_series_registry_v3.m
+            experiments/audit/aefc_ieee39_full_series_registry_audit_v3.py
+            experiments/matlab/aefc_ieee39_build_stress.m
+            experiments/matlab/AEFCNativeController.m
+            configs/ieee39_unpriv_r1.json
+          if-no-files-found: warn
+          retention-days: 90
