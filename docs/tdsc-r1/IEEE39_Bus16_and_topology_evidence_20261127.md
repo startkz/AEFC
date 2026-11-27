@@ -329,3 +329,17 @@ MATPOWER 的变压器支路 RATE_A 不应用于原生变压器绕组热限。绕
 这是目前首个在冻结恢复判据下真正产生 IEEE39 物理恢复集暴露的正式十种子确认实验。它确认了 Bus16_1 故障及原生系统故障清除后的恢复响应，但不能归因于 AEFC：严格模式没有释放任何额外控制，且十个 seed 没有改变物理扰动。因此，这20个 episode 是可重复性确认，不是10个独立物理随机样本，也不能据此计算 AEFC 物理恢复增益。
 
 **当前实验定位：** 将该结果作为 native Supervisor-only / fail-closed 的故障恢复基准。下一阶段必须先完成在线电网传感器、测量误差界和安全可达集，再在相同 Bus16 故障上引入可控的恢复动作/攻击组合，检验 AEFC 是否带来可归因的恢复时间或安全裕度改善。
+
+
+### 10.5 三相传感器物理信号端口兼容性测试已通过
+
+[Run 45932871101](https://github.com/startkz/AEFC/actions/runs/45932871101) 在独立 Simulink 模型中逐端口尝试连接 \`nesl_utility/PS-Simulink Converter\`，确认以下端口可作为物理信号输出：
+
+| 传感器块 | 可连接 PS 输出 | 其余保留端口 |
+|---|---|---|
+| Current Sensor (Three-Phase) | RConn1 | LConn1、RConn2 |
+| Line Voltage Sensor (Three-Phase) | RConn1 | LConn1 |
+| Phase Voltage Sensor (Three-Phase) | RConn1 | LConn1、RConn2 |
+| Current and Voltage Sensor (Three-Phase) | RConn1、RConn2 | LConn1、RConn3 |
+
+这关闭了“传感器是否能输出到 Simulink”的库级兼容性问题。下一步不直接扩展到全网，而是先在 Bus16_1 接入 Line Voltage Sensor，在 B16–B17 一端串入 Current Sensor，比较传感器输出与已有离线 Simscape 电压/电流序列，并确认插装前后原生物理轨迹没有可测变化。只有这个单点插装通过后，才批量扩展到41个母线区段、68个线路端点和24个变压器绕组端。
