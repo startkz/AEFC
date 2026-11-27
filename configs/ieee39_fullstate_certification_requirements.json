@@ -151,8 +151,12 @@
       ],
       "measurements_selected_signal_count": 20,
       "rotor_angle_bus_field_name_verified": false,
-      "runtime_bus_capture_verified": false,
-      "routed_to_aefc_controller": false
+      "runtime_bus_capture_verified": true,
+      "routed_to_aefc_controller": false,
+      "runtime_probe_run_id": 45933102123,
+      "runtime_bus_channel_count": 30,
+      "runtime_bus_sample_count": 7,
+      "runtime_bus_channel_order_verified": false
     },
     "sensor_port_compatibility": {
       "source_run_id": 45932871101,
