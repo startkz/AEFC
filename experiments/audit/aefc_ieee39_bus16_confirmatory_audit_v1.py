@@ -39,9 +39,18 @@ def flatten(x):
         yield float(x)
 
 def maxdiff(a, b):
-    aa, bb = list(flatten(a)), list(flatten(b))
-    assert len(aa) == len(bb), (len(aa), len(bb))
-    return max((abs(x-y) for x, y in zip(aa, bb)), default=0.0)
+    if isinstance(a, dict) or isinstance(b, dict):
+        assert isinstance(a, dict) and isinstance(b, dict)
+        assert set(a) == set(b), (set(a), set(b))
+        return max((maxdiff(a[k], b[k]) for k in a), default=0.0)
+    if isinstance(a, list) or isinstance(b, list):
+        assert isinstance(a, list) and isinstance(b, list)
+        assert len(a) == len(b), (len(a), len(b))
+        return max((maxdiff(x, y) for x, y in zip(a, b)), default=0.0)
+    if isinstance(a, (int, float, bool)) and isinstance(b, (int, float, bool)):
+        return abs(float(a) - float(b))
+    assert a == b, (a, b)
+    return 0.0
 
 def load_jsonl(path):
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
