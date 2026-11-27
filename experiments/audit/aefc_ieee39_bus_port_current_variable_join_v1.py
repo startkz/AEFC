@@ -231,11 +231,13 @@ def main():
         "online_sensor_integrity_verified": False,
         "branch_thermal_limits_validated": False,
         "interpretation": (
-            "The 123 Bus/I# series are joined to exact Busbar LConn/RConn ports and connected components. "
-            "The selected line inductor_a current-amplitude series remain near zero while all three components "
-            "of the bus-port current vectors are nonzero; line internal-current phase mapping therefore needs "
-            "separate model review and is not a validated branch thermal measurement. This is offline mapping, "
-            "not authenticated online sensing or a safety certificate."
+            "All 123 physical Busbar ports are structurally mapped to connected components. The I# to "
+            "LConn/RConn assignment in this artifact is only a provisional global-ordinal candidate; two "
+            "transformer LConn1 anchors match exactly, but the remaining assignments require terminal-current "
+            "signature matching. The selected inductor_a amplitude series are near zero while all three "
+            "bus-port current components are nonzero, so these internal line-current series are not validated "
+            "branch thermal measurements. This is offline mapping, not authenticated online sensing or a "
+            "safety certificate."
         ),
         "bus_port_current_variable_map": rows,
         "source_artifact_sha256": {
