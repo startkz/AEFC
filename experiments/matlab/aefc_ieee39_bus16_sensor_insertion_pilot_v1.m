@@ -63,7 +63,7 @@ assert(faultConnectedToBus(fault,[grid '/Bus16_1']),'AEFC:SensorPilotFault','Fau
 % Remove only the Bus16_1-to-line branch. Bus16_1/RConn1 is a composite node
 % also connected to the native fault; deleting the whole line handle would
 % risk removing the fault branch.
-delete_line(grid,busR,lineL);
+delete_line(lineLHandle);
 vPorts=get_param(vSensor,'PortHandles');
 iPorts=get_param(iSensor,'PortHandles');
 vC=get_param(vConv,'PortHandles');iC=get_param(iConv,'PortHandles');
