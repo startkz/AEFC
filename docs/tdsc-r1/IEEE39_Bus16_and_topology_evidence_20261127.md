@@ -109,30 +109,19 @@
 **发布决策：** 在十种子确认审计和 I# 电流变量映射审计完成之前，只更新证据边界和限制，不把该 pilot 写成 AEFC 的物理恢复增益实验。
 
 
-## 8. Final 123-port current-variable join — completed
 
-The immutable-artifact join [Actions run 45926582377](https://github.com/startkz/AEFC/actions/runs/45926582377) completed successfully. Its artifact is TDSC-R1-IEEE39-123-bus-port-current-variable-map-v1.
+## 8. Final physical topology map; I# port assignment remains under validation
 
-The result resolves **123/123 Bus/I# Series paths** to their exact physical Busbar port and connected component:
-- 41 Busbar blocks, each with a one-to-one count match between PortConnectivity records and I# Series;
-- the global PortConnectivity ordinal within each Busbar block maps to I#;
-- the PortConnectivity type (LConn1, LConn2, RConn1, etc.) resolves the local physical port;
-- 34/34 transmission-line components and 12/12 transformer components are present;
-- zero unresolved bus ports.
+The structural port-to-component map is complete: 123/123 physical Busbar ports are resolved, with zero unresolved ports, 34 transmission-line components, 12 transformer components and 41 physical bus sections. The immutable artifacts are available from Actions runs 45772532158, 45924972310 and the join audit 45926582377.
 
-The earlier map's current_variable_candidate used the local index separately within LConn and RConn. This caused **52 incorrect RConn candidates**. The new join corrects them by using the global PortConnectivity ordinal. For example, Bus1/RConn1 maps to I2, not I1; Bus10/RConn1 maps to I3, not I1.
+The 123 Bus/I# current series have also been captured. For every Busbar block, the number of I# series equals the number of physical ports, and the two transformer LConn1 anchors (Bus10/I1 and Bus12/I1) match the negative of the corresponding i2 winding current with zero residual.
 
-Two independent transformer anchors validate the current sign/index convention:
-- Bus10/I1 = −TF_B32_to_B10/i2, normalized L2 residual 0;
-- Bus12/I1 = −TF_B11_to_B12/i2, normalized L2 residual 0.
+**However, the full I# to LConn/RConn permutation is not yet validated.** The global PortConnectivity ordinal used in the first join is only a candidate rule. The two exact anchors validate two LConn1 cases, not the remaining 121 assignments. The earlier local-index candidate differs from the global-ordinal candidate in 52 cases; this difference alone does not establish which assignment is correct.
 
-The final JSON and 123-row CSV therefore complete the offline Bus/I# to physical LConn/RConn and component mapping. This does **not** certify online sensor integrity or thermal limits.
+The next capture [Actions run 45926990179](https://github.com/startkz/AEFC/actions/runs/45926990179) records the 123 bus-port currents together with both three-phase line terminal vectors (phase_splitter1/2) and all 24 transformer winding-current vectors. These terminal signatures will be used to resolve the I# permutation rather than assuming PortConnectivity ordering.
 
-### Line-current diagnostic remains open
+### Line-current diagnostic
 
-The same raw current capture reveals a significant inconsistency:
-- all 34 selected inductor_a/i/amplitude series have maximum absolute values below 1e-6 A (range approximately 1.17e-12–5.59e-11 A);
-- all 34 inductor_b and all 34 inductor_c series are nonzero;
-- all 123 bus-port current series have three nonzero phase components.
+The selected inductor_a/i/amplitude internal series remain near zero across all 34 lines (1.17e-12–5.59e-11 A), whereas inductor_b and inductor_c are nonzero. However, the Simscape registry also contains nonzero three-phase terminal-current candidates under phase_splitter1/I and phase_splitter2/I, and corresponding T1/T2 i_a/i_b/i_c paths. Therefore the near-zero inductor_a series must not be interpreted as proof that the physical phase-A terminal current is zero. The correct terminal-current mapping is being validated in the new capture.
 
-Thus, the selected internal line-inductor amplitude paths do not currently provide a valid three-phase branch-current set. The topology mapping is complete, but the line phase-A internal current path must be inspected before any branch-current/thermal-safety claim is made.
+**Current claim boundary:** 123 physical port-to-component topology mapping is complete; the I#-to-port permutation and line terminal current identity remain provisional. No online sensor integrity, branch thermal limits or full-network safety is certified.
