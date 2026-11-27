@@ -81,3 +81,26 @@ The strict controller therefore remains fail-closed. The requirements document i
 6. Only after these gates pass, run the predeclared six-method recovery comparison. The currently running 32-case persistent-Pref pilot is exploratory four-speed-proxy evidence and cannot substitute for these certification steps.
 
 **Claim boundary:** No complete IEEE39 state observability, full-network safety, continuous-time safety, backup viability, or AEFC full-network recovery gain is certified by the current runs.
+
+
+## 6. Completed 123-port current-variable mapping
+
+The terminal-signature audit in Actions run 45928276856 establishes the interleaved Simscape current-variable order:
+
+\[
+I_{2k-1}\leftrightarrow LConn_k,\qquad I_{2k}\leftrightarrow RConn_k.
+\]
+
+The mapping resolves all 123 physical Busbar ports across 41 sections. It is supported by:
+- 65/70 exact bus-port-to-line-terminal matches; all 65 single-component line-port references match the corresponding phase_splitter1/phase_splitter2 vector;
+- 24/24 transformer endpoints structurally mapped, with 11 direct winding-current matches and three-phase linear consistency for all 24;
+- exact current-sum checks for the two split-bus composite endpoints: Bus16_1/I3 + Bus16_2/I1 matches the negative B19-B16 phase_splitter2 current (normalized residual 1.49e-16), and Bus26_1/I1 + Bus26_2/I1 matches the negative B25-B26 phase_splitter2 current (2.30e-16).
+
+The five composite Busbar ports are:
+1. Bus16_1/RConn1: B16-B17 plus the three-phase fault;
+2. Bus16_1/LConn2 and Bus16_2/LConn1: the shared B19-B16 endpoint;
+3. Bus26_1/LConn1 and Bus26_2/LConn1: the shared B25-B26 endpoint.
+
+The two split-bus endpoint sums are validated. The Bus16 fault composite is subject to the targeted one-episode port-current probe. The earlier inductor_a/i/amplitude series is an internal inductor current, not the line terminal phase-A current; the phase_splitter1/2 three-phase vectors are the terminal-current channels.
+
+This mapping remains an offline simulator result. It does not authenticate the four local controller speed inputs, establish full DAE-state observability, validate branch thermal ratings, or certify continuous-time network safety.
