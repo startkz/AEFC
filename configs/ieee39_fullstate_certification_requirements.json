@@ -150,9 +150,50 @@
       803.269939742088,
       3012.26227403283
     ],
-    "mathworks_branch_R_X_equivalence_verified": false,
+    "mathworks_branch_R_X_equivalence_verified": true,
     "transformer_winding_voltage_base_equivalence_verified": false,
-    "thermal_limits_validated": false
+    "thermal_limits_validated": false,
+    "line_parameter_equivalence": {
+      "source_parameter_inventory_run_id": 45931696089,
+      "verified_by_audit_run_id": null,
+      "native_line_count": 34,
+      "matpower_line_count": 34,
+      "positive_sequence_formula": "R1=R-Rm; L1=L-M; C1=Cg+3*Cl",
+      "baseMVA": 100,
+      "baseKV": 345,
+      "frequency_Hz": 60,
+      "max_relative_error": {
+        "r": 0.00007001330252750029,
+        "x": 0.007813817205942524,
+        "b": 0.033888183431038735
+      },
+      "tolerances": {
+        "r": 0.001,
+        "x": 0.01,
+        "b": 0.05
+      },
+      "equivalence_verified": true,
+      "rateA_reference_applicable_to_345kV_line_benchmark": true,
+      "actual_thermal_ampacity_verified": false
+    },
+    "transformer_parameter_equivalence": {
+      "source_parameter_inventory_run_id": 45931696089,
+      "native_transformer_count": 12,
+      "matpower_transformer_count": 12,
+      "resistance_sum_pu_max_absolute_error": 0.0001,
+      "leakage_reactance_sum_pu_max_absolute_error": 0,
+      "winding_R_X_equivalence_verified": true,
+      "native_SRated_value": 100,
+      "native_SRated_unit": "MW",
+      "native_VRated_configurations": {
+        "345/345 kV": 3,
+        "345/22 kV": 9
+      },
+      "tap_equivalence_verified": false,
+      "matpower_RATE_A_applicable_to_native_windings": false,
+      "thermal_limit_verified": false
+    },
+    "transformer_thermal_limit_source": "Native transformer SRated=100 MW and VRated1/VRated2; requires confirmation of apparent-power interpretation and winding-current measurement convention."
   },
   "next_required_sensor_work": [
     "Route the ten generator rotor-angle, rotor-velocity, and terminal-voltage signal candidates to an independent safety monitor and verify scaling/time bases.",
