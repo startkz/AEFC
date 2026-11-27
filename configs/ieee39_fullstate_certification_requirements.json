@@ -75,5 +75,90 @@
     "explicit_note": "Offline simulator state logging, empirical holdout coverage, or a green MATLAB workflow alone cannot satisfy these flags"
   },
   "verified_native_mat_file": null,
-  "verified_native_mat_sha256": null
+  "verified_native_mat_sha256": null,
+  "offline_native_measurement_inventory": {
+    "bus_voltage": {
+      "logical_bus_channels": 39,
+      "physical_bus_sections": 41,
+      "source_run_id": 45920344894,
+      "online_signal_output_ports": 0,
+      "online_trusted": false
+    },
+    "generator": {
+      "rotor_speed_channels": 10,
+      "controller_connected_rotor_speed_channels": 4,
+      "rotor_angle_signal_candidates": 10,
+      "terminal_voltage_signal_candidates": 10,
+      "generator_candidates_routed_to_controller": false
+    },
+    "line_current": {
+      "line_components": 34,
+      "terminal_three_phase_vectors": 68,
+      "phase_components_per_vector": 3,
+      "source_run_id": 45926990179,
+      "online_signal_output_ports": 0,
+      "branch_ampacity_validated": false
+    },
+    "transformer_current": {
+      "transformer_components": 12,
+      "winding_three_phase_vectors": 24,
+      "phase_components_per_vector": 3,
+      "source_run_id": 45926990179,
+      "online_signal_output_ports": 0,
+      "direct_signed_phase_matches": 11,
+      "sampled_linear_consistency": 24,
+      "rank_two_fits": 9,
+      "thermal_limits_validated": false
+    },
+    "busbar_port_current": {
+      "physical_bus_sections": 41,
+      "three_phase_current_series": 123,
+      "physical_port_mapping": "123/123; I_(2k-1)=LConn_k and I_(2k)=RConn_k",
+      "mapping_source_run_id": 45928276856,
+      "composite_ports": 5,
+      "composite_port_kcl_source_run_id": 45930674491,
+      "online_sensor_channels": 0
+    },
+    "online_measurement_port_audit": {
+      "source_run_id": 45930528000,
+      "ps_simulink_converters_in_generators": 70,
+      "ps_simulink_converters_in_grid": 0,
+      "synchronous_machine_measurement_blocks": 60,
+      "simulink_ps_converters": 20,
+      "busbar_signal_output_ports": 0,
+      "line_signal_output_ports": 0,
+      "transformer_signal_output_ports": 0,
+      "controller_physical_measurement_channels": 4,
+      "trusted_sensor_integrity_verified": false,
+      "sensor_error_bounds_verified": false
+    }
+  },
+  "branch_rating_reference": {
+    "source": "MATPOWER/matpower data/case39.m",
+    "source_commit_sha": "b6c85b0323d20fb801cab3377c803a285d730847",
+    "topology_match_run_id": 45931096901,
+    "matched_branches": 46,
+    "matched_lines": 34,
+    "matched_transformers": 12,
+    "baseMVA": 100,
+    "bus_base_kV": 345,
+    "rateA_MVA_range": [
+      480,
+      1800
+    ],
+    "rateA_current_equivalent_A_range": [
+      803.269939742088,
+      3012.26227403283
+    ],
+    "mathworks_branch_R_X_equivalence_verified": false,
+    "transformer_winding_voltage_base_equivalence_verified": false,
+    "thermal_limits_validated": false
+  },
+  "next_required_sensor_work": [
+    "Route the ten generator rotor-angle, rotor-velocity, and terminal-voltage signal candidates to an independent safety monitor and verify scaling/time bases.",
+    "Add explicit voltage sensing for all 41 physical bus sections.",
+    "Add explicit current sensing for both terminals of all 34 lines and both windings of all 12 transformers.",
+    "Establish sensor error, bias, dropout, synchronization, and integrity bounds before using any signal in a safety certificate.",
+    "Reconcile native MathWorks line/transformer parameters and winding voltage bases against MATPOWER case39 before comparing current RMS with RATE_A/B/C."
+  ]
 }
