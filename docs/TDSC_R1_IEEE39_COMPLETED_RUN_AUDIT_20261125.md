@@ -300,3 +300,14 @@ Transformer current evidence is more limited: 24/24 endpoints satisfy a trajecto
 
 
 The rank-aware rerun [45930232661](https://github.com/startkz/AEFC/actions/runs/45930232661) preserves the same composite-node KCL results and adds the transformer-fit rank audit: 11/24 direct signed phase matches; 24/24 sampled linear consistency; 9 rank-2 and 15 rank-3 fits. Rank-2 fits are not promoted to unique full-rank physical transformations.
+
+
+## 10. 2026-11-27 addendum — electrical parameter equivalence and measurement-chain progress
+
+- [Run 45932665618](https://github.com/startkz/AEFC/actions/runs/45932665618) verified all 34 native line R/X/B parameters against MATPOWER case39 using the three-phase positive-sequence conversion. Maximum relative errors: R 0.0070%, X 0.7814%, B 3.3888%. MATPOWER RATE_A may now be used as a 345-kV line benchmark after RMS-current calculation, but not as a certified conductor thermal limit.
+- The same run verified all 12 native transformer winding R/X sums against MATPOWER (maximum absolute errors 1e-4 p.u. and zero). Native transformers declare SRated=100 MW; MATPOWER transformer RATE_A is not used for winding thermal limits. Tap and rated-apparent-power interpretation remain unverified.
+- [Run 45932082411](https://github.com/startkz/AEFC/actions/runs/45932082411) confirmed 70 generator PS-Simulink converters, zero Grid converters, ten rotor-angle, ten rotor-speed and ten generator-terminal-voltage candidates. The controller still receives four speed channels only.
+- [Run 45932871101](https://github.com/startkz/AEFC/actions/runs/45932871101) verified three-phase sensor PS outputs connect to the native PS-Simulink Converter. This is library compatibility, not network instrumentation.
+- [Run 45933102123](https://github.com/startkz/AEFC/actions/runs/45933102123) captured the existing Generators measurement bus as a 30-dimensional vector. Exact channel ordering is being extracted in the updated runtime probe.
+- [Run 45934329179](https://github.com/startkz/AEFC/actions/runs/45934329179) reran the full-state promotion gate after the latest evidence update. Result: **BLOCKED**, 18 material blockers. Full IEEE39 safety and six-method physical recovery superiority remain uncertified.
+- The Bus16_1 sensor insertion pilot is currently running at [Run 45934020640](https://github.com/startkz/AEFC/actions/runs/45934020640). It must pass sensor-to-native-log consistency and no-plant-perturbation checks before expanding to the full grid.
