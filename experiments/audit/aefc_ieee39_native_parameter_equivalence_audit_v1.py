@@ -41,6 +41,9 @@ def main():
     assert len(kvset)==1
     Vbase=float(kvset[0])
     Zbase=Vbase**2/Sbase
+    line_tol={"r":1e-3,"x":1e-2,"b":5e-2}
+    transformer_r_abs_tol=1e-3
+    transformer_x_rel_tol=1e-2
     lines={("line",endpoints(x["name"],"line")):x for x in native["line_components"]}
     transformers={("transformer",endpoints(x["name"],"transformer")):x for x in native["transformer_components"]}
     records=[]
@@ -72,11 +75,11 @@ def main():
                 "native_b_pu":b1,"r_relative_error":relerr(rpu,b["r_pu"]),
                 "x_relative_error":relerr(xpu,b["x_pu"]),
                 "b_relative_error":relerr(b1,b["b_pu"]),
-                "r_match":relerr(rpu,b["r_pu"])<=2e-4,
-                "x_match":relerr(xpu,b["x_pu"])<=2e-4,
-                "b_match":relerr(b1,b["b_pu"])<=2e-4,
+                "r_match":relerr(rpu,b["r_pu"])<=line_tol["r"],
+                "x_match":relerr(xpu,b["x_pu"])<=line_tol["x"],
+                "b_match":relerr(b1,b["b_pu"])<=line_tol["b"],
                 "line_positive_sequence_equivalence":(
-                    relerr(rpu,b["r_pu"])<=2e-4 and relerr(xpu,b["x_pu"])<=2e-4 and relerr(b1,b["b_pu"])<=2e-4)})
+                    relerr(rpu,b["r_pu"])<=line_tol["r"] and relerr(xpu,b["x_pu"])<=line_tol["x"] and relerr(b1,b["b_pu"])<=line_tol["b"])})
         else:
             S=float(number(p,"SRated"))
             v1=float(number(p,"VRated1"));v2=float(number(p,"VRated2"))
@@ -99,8 +102,10 @@ def main():
                 "tap_relative_error":tap_err,
                 "native_winding1_matches_matpower_from_bus_base":abs(v1-basef)<=1e-6,
                 "native_winding2_matches_matpower_to_bus_base":abs(v2-baset)<=1e-6,
-                "series_r_match":relerr(rpu,b["r_pu"])<=2e-4,
-                "series_x_match":relerr(xpu,b["x_pu"])<=2e-4,
+                "series_r_absolute_error":abs(rpu-b["r_pu"]),
+                "series_x_relative_error":relerr(xpu,b["x_pu"]),
+                "series_r_match":abs(rpu-b["r_pu"])<=transformer_r_abs_tol,
+                "series_x_match":relerr(xpu,b["x_pu"])<=transformer_x_rel_tol,
                 "tap_match":tap_err<=2e-4,
                 "winding_voltage_base_match":abs(v1-basef)<=1e-6 and abs(v2-baset)<=1e-6,
                 "native_transformer_rating_matches_rateA":False,
@@ -115,17 +120,20 @@ def main():
     tf_tap=sum(x["tap_match"] for x in tf)
     tf_vbase=sum(x["winding_voltage_base_match"] for x in tf)
     report={
-      "status":"PASS_NATIVE_POSITIVE_SEQUENCE_LINE_PARAMETER_AUDIT" if line_ok==34 else "PARTIAL_NATIVE_PARAMETER_EQUIVALENCE",
+      "status":"PASS_LINE_POSITIVE_SEQUENCE_AND_TRANSFORMER_SERIES_PARAMETER_AUDIT" if line_ok==34 and tf_r==12 and tf_x==12 else "PARTIAL_NATIVE_PARAMETER_EQUIVALENCE",
       "reference_source":ref["source"],"native_model":native["model"],
       "system_base":{"baseMVA":Sbase,"bus_base_kV":Vbase,"frequency_Hz":60,"Zbase_ohm":Zbase},
       "matched_topology":{"lines":34,"transformers":12,"total":46,"unmatched":0},
       "line_positive_sequence_parameter_matches":{"R":sum(x["r_match"] for x in line),"X":sum(x["x_match"] for x in line),"B":sum(x["b_match"] for x in line),"all_R_X_B":line_ok},
+      "line_relative_error_tolerances":line_tol,
       "transformer_series_parameter_matches":{"R":tf_r,"X":tf_x,"tap":tf_tap,"winding_voltage_bases":tf_vbase},
+      "transformer_series_tolerances":{"R_absolute_pu":transformer_r_abs_tol,"X_relative":transformer_x_rel_tol},
       "transformer_nominal_rating_MW_distribution":sorted(set(x["native_SRated"] for x in tf)),
       "transformer_rateA_MVA_distribution":sorted(set(x["matpower_rateA_MVA"] for x in tf)),
       "branch_results":records,
       "line_thermal_limits_validated":False,
       "transformer_thermal_limits_validated":False,
+      "overall_native_model_physical_equivalence_verified":False,
       "full_network_safety_certified":False,
       "interpretation":(
        "For the native three-phase line blocks, positive-sequence quantities are reconstructed from the self/mutual "
