@@ -267,5 +267,13 @@
     "Add explicit current sensing for both terminals of all 34 lines and both windings of all 12 transformers.",
     "Establish sensor error, bias, dropout, synchronization, and integrity bounds before using any signal in a safety certificate.",
     "Reconcile native MathWorks line/transformer parameters and winding voltage bases against MATPOWER case39 before comparing current RMS with RATE_A/B/C."
-  ]
+  ],
+  "latest_promotion_gate_recheck": {
+    "run_id": 45934329179,
+    "status": "BLOCKED",
+    "blocking_requirement_count": 18,
+    "full_network_certified": false,
+    "six_method_physical_recovery_superiority_established": false,
+    "interpretation": "Offline topology and parameter equivalence evidence does not satisfy trusted online measurement, observer error bounds, full nonlinear DAE reachability, intersample safety, emergency governor viability, or independent six-method holdout."
+  }
 }
