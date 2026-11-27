@@ -120,17 +120,39 @@
       "online_sensor_channels": 0
     },
     "online_measurement_port_audit": {
-      "source_run_id": 45930528000,
-      "ps_simulink_converters_in_generators": 70,
-      "ps_simulink_converters_in_grid": 0,
+      "source_run_id": 45932082411,
+      "ps_simulink_converter_blocks_in_generators": 70,
+      "ps_simulink_converter_blocks_in_grid": 0,
       "synchronous_machine_measurement_blocks": 60,
-      "simulink_ps_converters": 20,
+      "simulink_ps_converter_blocks": 20,
+      "generator_signal_candidates": {
+        "rotor_angle": 10,
+        "rotor_velocity": 10,
+        "terminal_voltage": 10
+      },
       "busbar_signal_output_ports": 0,
       "line_signal_output_ports": 0,
       "transformer_signal_output_ports": 0,
       "controller_physical_measurement_channels": 4,
+      "bus_voltage_online_measurement_channels": 0,
+      "line_terminal_current_online_measurement_channels": 0,
+      "transformer_winding_current_online_measurement_channels": 0,
       "trusted_sensor_integrity_verified": false,
       "sensor_error_bounds_verified": false
+    },
+    "generator_measurement_bus_schema": {
+      "source_run_id": 45932227560,
+      "generators_subsystem_outport_count": 1,
+      "measurements_subsystem_inport_count": 1,
+      "per_generator_bus_creator_inputs": 3,
+      "measurements_selected_fields_per_generator": [
+        "w",
+        "Vt"
+      ],
+      "measurements_selected_signal_count": 20,
+      "rotor_angle_bus_field_name_verified": false,
+      "runtime_bus_capture_verified": false,
+      "routed_to_aefc_controller": false
     }
   },
   "branch_rating_reference": {
@@ -198,6 +220,7 @@
     "transformer_thermal_limit_source": "Native transformer SRated=100 MW and VRated1/VRated2; requires confirmation of apparent-power interpretation and winding-current measurement convention."
   },
   "next_required_sensor_work": [
+    "Probe and reuse the existing Generators measurement bus for ten rotor speeds, ten terminal voltages, and the third generator measurement signal; keep it separate from AEFCNativeController until its schema and trust assumptions are verified.",
     "Route the ten generator rotor-angle, rotor-velocity, and terminal-voltage signal candidates to an independent safety monitor and verify scaling/time bases.",
     "Add explicit voltage sensing for all 41 physical bus sections.",
     "Add explicit current sensing for both terminals of all 34 lines and both windings of all 12 transformers.",
