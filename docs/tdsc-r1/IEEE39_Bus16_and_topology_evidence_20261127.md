@@ -159,7 +159,7 @@ I_{2k-1}\leftrightarrow LConn_k,\qquad I_{2k}\leftrightarrow RConn_k.
 - 34 条线路共采集 68 个端点三相电流向量；
 - 12 台变压器共采集 24 个绕组端电流向量。
 
-此前使用的线路内部 \`inductor_a/i/amplitude\` 序列在 34 条线路上均接近数值零，不能代表完整三相线路电流。后续物理电流分析应采用线路 \`phase_splitter1/2/I/instantaneous\` 两端三相电流向量。当前 68 个端点向量的 A/B/C 三个相分量均为非零，且单位为 A。
+此前使用的线路内部 `inductor_a/i/amplitude` 序列在 34 条线路上均接近数值零，不能代表完整三相线路电流。后续物理电流分析应采用线路 `phase_splitter1/2/I/instantaneous` 两端三相电流向量。当前 68 个端点向量的 A/B/C 三个相分量均为非零，且单位为 A。
 
 ### 8.2 五个多组件母线端口的 KCL 验证
 
@@ -189,7 +189,7 @@ I_{2k-1}\leftrightarrow LConn_k,\qquad I_{2k}\leftrightarrow RConn_k.
 
 ## 9. MATPOWER case39 的 46 条支路参考额定值映射
 
-参考数据源固定为 MATPOWER/matpower 的 case39 文件，commit \`b6c85b0323d20fb801cab3377c803a285d730847\`。拓扑匹配审计 [Run 45931096901](https://github.com/startkz/AEFC/actions/runs/45931096901) 得到：
+参考数据源固定为 MATPOWER/matpower 的 case39 文件，commit `b6c85b0323d20fb801cab3377c803a285d730847`。拓扑匹配审计 [Run 45931096901](https://github.com/startkz/AEFC/actions/runs/45931096901) 得到：
 
 - 34/34 条 MathWorks 原生输电线路与 MATPOWER case39 的线路端点匹配；
 - 12/12 台 MathWorks 原生变压器与 MATPOWER case39 的变压器端点匹配；
