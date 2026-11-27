@@ -297,3 +297,6 @@ This section supersedes the earlier statement in Section 9.4 that the Bus/I# cur
 Transformer current evidence is more limited: 24/24 endpoints satisfy a trajectory-sampled linear vector-consistency fit, but only 11/24 are direct signed phase matches. Nine of the fitted transformations have rank 2 under the balanced-current trajectory. They are not promoted to unique full-rank physical transforms.
 
 **Claim boundary:** this closes the offline Bus/I# topology and current-series mapping, including the five composite-port KCL checks. It does not authenticate the logged quantities as trusted online sensors, identify validated branch ampacities, prove thermal safety, or establish full-grid/intersample reachability. The full IEEE39 execution-safety gate remains **BLOCKED**.
+
+
+The rank-aware rerun [45930232661](https://github.com/startkz/AEFC/actions/runs/45930232661) preserves the same composite-node KCL results and adds the transformer-fit rank audit: 11/24 direct signed phase matches; 24/24 sampled linear consistency; 9 rank-2 and 15 rank-3 fits. Rank-2 fits are not promoted to unique full-rank physical transformations.
