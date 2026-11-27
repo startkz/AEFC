@@ -1,0 +1,57 @@
+name: TDSC-R1 Bus16 native voltage/current sensor insertion pilot v1
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-bus16-sensor-insertion-pilot-v1.yml'
+      - 'experiments/matlab/aefc_ieee39_bus16_sensor_insertion_pilot_v1.m'
+      - 'experiments/audit/aefc_ieee39_bus16_sensor_insertion_audit_v1.py'
+      - 'experiments/matlab/aefc_ieee39_build_stress.m'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  bus16_sensor_insertion_pilot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download no-sensor seed-80 baseline
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-Bus16-strict-confirmatory-v1
+          run-id: 45924335524
+          repository: \${{ github.repository }}
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/confirmatory
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2024b
+          products: Simulink Simscape Simscape_Electrical
+          cache: true
+      - name: Insert one Bus16 voltage sensor and one B16-B17 current sensor; run native fault
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath('matlab_r2024b'); addpath('experiments/matlab'); aefc_ieee39_bootstrap; aefc_ieee39_bus16_sensor_insertion_pilot_v1
+      - name: Reconcile sensor outputs with native logs and no-sensor baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install numpy
+          python experiments/audit/aefc_ieee39_bus16_sensor_insertion_audit_v1.py
+      - name: Archive sensor insertion pilot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-native-IEEE39-Bus16-sensor-insertion-pilot-v1
+          path: |
+            results/ieee39_safety_mapping/native_ieee39_bus16_sensor_insertion_pilot_v1.json
+            results/ieee39_safety_mapping/bus16_sensor_insertion_audit_v1.json
+            experiments/matlab/aefc_ieee39_bus16_sensor_insertion_pilot_v1.m
+            experiments/audit/aefc_ieee39_bus16_sensor_insertion_audit_v1.py
+          if-no-files-found: warn
+          retention-days: 90
