@@ -23,8 +23,8 @@ jobs:
         with:
           name: TDSC-R1-IEEE39-123-bus-port-current-variable-map-v2
           run-id: 45928276856
-          repository: \${{ github.repository }}
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts/current_map
       - name: Map all MATPOWER case39 branch rating records to native components
         shell: bash
