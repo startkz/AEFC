@@ -269,3 +269,14 @@ The interleaved rule produces 65/70 exact bus-port-to-line-terminal matches, com
 The two split-bus current sums match the corresponding line terminal current up to sign with normalized residuals 1.49e-16 and 2.30e-16. All 24 transformer endpoints are structurally mapped; 11 directly match winding current up to sign/phase permutation, and all 24 are consistent under a fixed three-phase linear transformation.
 
 The correct line terminal current vectors are phase_splitter1/2. The previously selected inductor_a internal-current amplitude series are not terminal phase-A measurements. The Bus16_1/RConn1 fault-current sum remains under targeted one-episode validation. This mapping is offline simulator evidence only; it does not certify authenticated sensors, branch thermal limits, or full-network safety.
+
+
+### 9.7 Bus16 ten-seed strict confirmatory replay
+
+Actions run [45924335524](https://github.com/startkz/AEFC/actions/runs/45924335524) completed 20 episodes: ten seeds (80--89) for AEFC-Full and ten matched Supervisor-only episodes. All 20 episodes showed fault-window recovery-set exposure and met the fixed 20-sample recovery hold. The first hold occurred at 7.1833 s in every episode (2.0833 s after fault clearing).
+
+The strict gate released zero additional Pref corrections and invoked zero backup actions. AEFC-Full's internal adaptation did not change the delivered plant input. Paired method trajectories were identical, and all ten seeds reproduced the same physical traces. The replay verifies strict refusal and deterministic reproducibility; it does not show an AEFC physical recovery gain and does not provide ten independent physical samples.
+
+### 9.8 Persistent-Pref 32-case stress pilot
+
+Actions run [45920180021](https://github.com/startkz/AEFC/actions/runs/45920180021) completed 32 native IEEE39 episodes across two methods, two attack scenarios, two seeds and four Pref stress levels. The maximum normalized generator-speed deviation was 0.1695, below the preregistered recovery-set boundary 0.25; no episode exposed the recovery set. This pilot therefore cannot support a recovery comparison. Do not increase the sample size under the same pressure range; the next recovery-effect experiment requires a separately justified exposure-producing disturbance and a valid execution certificate.
