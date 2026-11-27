@@ -107,3 +107,32 @@
 - 已证明全网支路热安全、连续时间安全或应急 Governor 可行性。
 
 **发布决策：** 在十种子确认审计和 I# 电流变量映射审计完成之前，只更新证据边界和限制，不把该 pilot 写成 AEFC 的物理恢复增益实验。
+
+
+## 8. Final 123-port current-variable join — completed
+
+The immutable-artifact join [Actions run 45926582377](https://github.com/startkz/AEFC/actions/runs/45926582377) completed successfully. Its artifact is TDSC-R1-IEEE39-123-bus-port-current-variable-map-v1.
+
+The result resolves **123/123 Bus/I# Series paths** to their exact physical Busbar port and connected component:
+- 41 Busbar blocks, each with a one-to-one count match between PortConnectivity records and I# Series;
+- the global PortConnectivity ordinal within each Busbar block maps to I#;
+- the PortConnectivity type (LConn1, LConn2, RConn1, etc.) resolves the local physical port;
+- 34/34 transmission-line components and 12/12 transformer components are present;
+- zero unresolved bus ports.
+
+The earlier map's current_variable_candidate used the local index separately within LConn and RConn. This caused **52 incorrect RConn candidates**. The new join corrects them by using the global PortConnectivity ordinal. For example, Bus1/RConn1 maps to I2, not I1; Bus10/RConn1 maps to I3, not I1.
+
+Two independent transformer anchors validate the current sign/index convention:
+- Bus10/I1 = −TF_B32_to_B10/i2, normalized L2 residual 0;
+- Bus12/I1 = −TF_B11_to_B12/i2, normalized L2 residual 0.
+
+The final JSON and 123-row CSV therefore complete the offline Bus/I# to physical LConn/RConn and component mapping. This does **not** certify online sensor integrity or thermal limits.
+
+### Line-current diagnostic remains open
+
+The same raw current capture reveals a significant inconsistency:
+- all 34 selected inductor_a/i/amplitude series have maximum absolute values below 1e-6 A (range approximately 1.17e-12–5.59e-11 A);
+- all 34 inductor_b and all 34 inductor_c series are nonzero;
+- all 123 bus-port current series have three nonzero phase components.
+
+Thus, the selected internal line-inductor amplitude paths do not currently provide a valid three-phase branch-current set. The topology mapping is complete, but the line phase-A internal current path must be inspected before any branch-current/thermal-safety claim is made.
