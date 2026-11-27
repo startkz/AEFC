@@ -209,7 +209,7 @@ The earlier near-zero inductor_a/i/amplitude path is an internal inductor-curren
 
 ### 10.5 发电机测量总线运行时形状
 
-[Run 45932227560](https://github.com/startkz/AEFC/actions/runs/45932227560) 识别出每台发电机 Bus Creator 的 3 个输入；现有 Measurements 子系统只选取每台机组的 mGenX.w 与 mGenX.Vt，分别进入两个 10 输入 Mux。第三个机组测量信号未被当前 Scope 选取。[Run 45933102123](https://github.com/startkz/AEFC/actions/runs/45933102123) 在 0.1 s 原生运行中捕获了 30 维发电机测量向量、7 个时间样本。数值向量顺序和第三字段的精确语义仍需从 Bus Creator 连接关系和字段参数中确认，不能仅按端口顺序推断。
+[Run 45955976199](https://github.com/startkz/AEFC/actions/runs/45955976199) 已逐端口确认全部 10 台机组的 Bus Creator 输入顺序均为：1）Rotor velocity；2）Terminal voltage；3）Rotor electrical angle。Measurements 子系统只选取每台机组的 mGenX.w 与 mGenX.Vt，分别进入两个 10 输入 Mux；第三个角度信号未被这两个 Mux 选取。此前 [Run 45933102123](https://github.com/startkz/AEFC/actions/runs/45933102123) 在 0.1 s 原生运行中捕获了 30 维发电机测量向量、7 个时间样本。现已确认每台 Bus Creator 的三路信号来源和顺序，但 30 维运行时向量的扁平化通道顺序，以及转子角对应的 Bus Element 字段标识，仍未由运行时标签直接验证。
 
 该测量总线当前连接到 Measurements 显示/监视终端，而不是 AEFCNativeController。它可作为独立安全监视器的信号来源，但不能据此宣称传感器完整性或误差界已经验证。
 
