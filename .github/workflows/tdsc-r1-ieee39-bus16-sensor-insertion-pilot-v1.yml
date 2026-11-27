@@ -25,8 +25,8 @@ jobs:
         with:
           name: TDSC-R1-native-IEEE39-Bus16-strict-confirmatory-v1
           run-id: 45924335524
-          repository: \${{ github.repository }}
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts/confirmatory
       - uses: matlab-actions/setup-matlab@v3
         with:
