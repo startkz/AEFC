@@ -369,9 +369,10 @@
     }
   },
   "next_required_sensor_work": [
-    "Complete the Bus16_1 voltage and B16-B17 current sensor insertion pilot and reconcile the routed outputs with native Simscape logs and the no-sensor seed-80 baseline.",
-    "Use the verified sensor wiring pattern to add voltage measurements to all 41 physical bus sections.",
-    "Add series three-phase current measurements at both terminals of all 34 lines and both windings of all 12 transformers; preserve the native electrical topology and verify zero measurable plant perturbation.",
+    "Complete the Bus16_1 voltage and B16-B17 current sensor insertion pilot and reconcile routed outputs with native Simscape logs and the no-sensor seed-80 baseline.",
+    "Instrument 41 physical bus sections with shunt three-phase voltage sensors using the topology-grounded insertion plan.",
+    "Instrument all 65 single-component line endpoints and 24 transformer winding endpoints with series current sensors.",
+    "Implement internal line-terminal current sensing or a proven multi-edge isolation strategy for B19-B16 and B25-B26 split-bus composite endpoints.",
     "Map the 30-dimensional generator measurement bus to exact field names, units, order, and sample times; keep it routed to an independent monitor, not AEFCNativeController.",
     "Establish sensor noise, bias, dropout, time-synchronization, and integrity bounds before using measurements in the observer or safety contract.",
     "Reconcile transformer winding voltage bases and tap ratios before deriving winding current limits; retain MATPOWER RATE_A only as a 345-kV line benchmark until native thermal limits are validated.",
@@ -407,8 +408,10 @@
     "interpretation": "A green audit workflow means the gate evaluation completed; the full IEEE39 safety promotion decision remains blocked."
   },
   "online_sensor_insertion_pilot": {
-    "run_id": 45953868950,
+    "run_id": 45955471023,
     "status": "in_progress",
+    "previous_failed_run_id": 45954949162,
+    "previous_failure": "MATLAB invalid array indexing in the LineChildren expansion; corrected by assigning LineChildren to a temporary variable before indexing.",
     "instrumentation": {
       "bus_voltage_sensor_count": 1,
       "line_current_sensor_count": 1,
@@ -425,6 +428,27 @@
     "full_grid_sensor_coverage_complete": false,
     "trusted_sensor_integrity_verified": false,
     "sensor_error_bounds_verified": false,
+    "full_network_safety_certified": false
+  },
+  "full_grid_sensor_insertion_plan": {
+    "source_run_id": 45955400747,
+    "status": "PASS_TOPOLOGY_GROUNDED_FULL_GRID_SENSOR_INSERTION_PLAN",
+    "bus_voltage_sensors": 41,
+    "line_terminal_current_sensors": 68,
+    "transformer_winding_current_sensors": 24,
+    "total_sensor_blocks": 133,
+    "line_terminals_single_component": 65,
+    "line_terminals_composite": 3,
+    "transformer_winding_terminals_single_component": 24,
+    "special_handling": {
+      "B16 to B17/LConn1": "Branch-specific external insertion preserving the Bus16_1 fault branch; currently under pilot.",
+      "B19 to B16/RConn1": "Internal line-terminal sensing or validated multi-edge isolation required at split-bus node.",
+      "B25 to B26/RConn1": "Internal line-terminal sensing or validated multi-edge isolation required at split-bus node."
+    },
+    "full_grid_sensor_instrumentation_implemented": false,
+    "sensor_calibration_verified": false,
+    "sensor_error_bounds_verified": false,
+    "plant_nonperturbation_verified": false,
     "full_network_safety_certified": false
   }
 }
