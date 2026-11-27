@@ -14,7 +14,6 @@ allMeas=find_system(measPath,'LookUnderMasks','all','FollowLinks','on','Type','B
 allGen=find_system(genPath,'LookUnderMasks','all','FollowLinks','on','Type','Block');
 measDetails=cell(size(allMeas));
 for k=1:numel(allMeas),measDetails{k}=describeBlock(allMeas{k});end
-genSummary=struct([]);
 keep={};
 for k=1:numel(allGen)
     b=allGen{k};
@@ -37,8 +36,9 @@ for k=1:numel(allGen)
         keep{end+1}=b; %#ok<AGROW>
     end
 end
+genSummary=cell(size(keep));
 for k=1:numel(keep)
-    genSummary(k)=describeBlock(keep{k}); %#ok<AGROW>
+    genSummary{k}=describeBlock(keep{k});
 end
 info=struct();
 info.model=model;
@@ -81,7 +81,12 @@ catch ME
     d.error=ME.message;
 end
 try
-    q=get_param(block,'DialogParameters');fn=fieldnames(q);
+    if strcmpi(d.block_type,'Scope')
+        q=struct();
+    else
+        q=get_param(block,'DialogParameters');
+    end
+    fn=fieldnames(q);
     rows=struct('name',{},'prompt',{},'type',{},'value',{});
     for i=1:numel(fn)
         nm=fn{i};z=q.(nm);v='';pr='';ty='';
