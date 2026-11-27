@@ -23,7 +23,7 @@ forbidden=[
 ]
 hits=[]
 for pat in forbidden:
-    if re.search(pat,ctrl,re.I):
+    if re.search(pat,ctrl_code,re.I):
         hits.append(pat)
 assert not hits,{"online_controller_forbidden_dependencies":hits}
 assert re.search(r"function\s+\[uShield,diagOut\]\s*=\s*stepImpl\(obj,localPhysical,packet\)",ctrl)
