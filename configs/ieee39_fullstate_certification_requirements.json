@@ -153,6 +153,46 @@
       "rotor_angle_bus_field_name_verified": false,
       "runtime_bus_capture_verified": false,
       "routed_to_aefc_controller": false
+    },
+    "sensor_port_compatibility": {
+      "source_run_id": 45932871101,
+      "verified": true,
+      "ps_simulink_converter_library": "nesl_utility/PS-Simulink Converter",
+      "sensors": {
+        "Current Sensor (Three-Phase)": {
+          "ps_output": "RConn1",
+          "conserving_ports": [
+            "LConn1",
+            "RConn2"
+          ]
+        },
+        "Line Voltage Sensor (Three-Phase)": {
+          "ps_output": "RConn1",
+          "conserving_ports": [
+            "LConn1"
+          ]
+        },
+        "Phase Voltage Sensor (Three-Phase)": {
+          "ps_output": "RConn1",
+          "conserving_ports": [
+            "LConn1",
+            "RConn2"
+          ]
+        },
+        "Current and Voltage Sensor (Three-Phase)": {
+          "ps_outputs": [
+            "RConn1",
+            "RConn2"
+          ],
+          "conserving_ports": [
+            "LConn1",
+            "RConn3"
+          ]
+        }
+      },
+      "actual_ieee39_network_sensor_insertion_complete": false,
+      "calibration_verified": false,
+      "sensor_error_bounds_verified": false
     }
   },
   "branch_rating_reference": {
@@ -220,6 +260,7 @@
     "transformer_thermal_limit_source": "Native transformer SRated=100 MW and VRated1/VRated2; requires confirmation of apparent-power interpretation and winding-current measurement convention."
   },
   "next_required_sensor_work": [
+    "Run a single-point native sensor insertion pilot at Bus16_1 and B16-B17; compare PS-Simulink outputs against offline Simscape Vt and phase_splitter currents and verify no measurable plant perturbation.",
     "Probe and reuse the existing Generators measurement bus for ten rotor speeds, ten terminal voltages, and the third generator measurement signal; keep it separate from AEFCNativeController until its schema and trust assumptions are verified.",
     "Route the ten generator rotor-angle, rotor-velocity, and terminal-voltage signal candidates to an independent safety monitor and verify scaling/time bases.",
     "Add explicit voltage sensing for all 41 physical bus sections.",
