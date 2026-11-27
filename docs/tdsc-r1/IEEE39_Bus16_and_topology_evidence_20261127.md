@@ -124,15 +124,18 @@ The 34 lines have 68 terminal-current vectors captured from phase_splitter1/2. O
 - B19-B16/RConn1, shared by Bus16_1/LConn2 and Bus16_2/LConn1;
 - B25-B26/RConn1, shared by Bus26_1/LConn1 and Bus26_2/LConn1.
 
-The two split-bus current sums are already consistent with the corresponding line terminal current to numerical precision:
-- Bus16_1/I3 + Bus16_2/I1 = −(B19-B16 phase_splitter2), normalized residual 1.49e-16;
-- Bus26_1/I1 + Bus26_2/I1 = −(B25-B26 phase_splitter2), normalized residual 2.30e-16.
+The consolidated all-composite-port KCL audit [Run 45930674491](https://github.com/startkz/AEFC/actions/runs/45930674491) covers all five composite busbar ports through three node equations:
+- Bus16 split node: Bus16_1/I3 + Bus16_2/I1 + B19-B16 terminal-2 current; normalized residual 7.41e-17, maximum absolute residual 4.55e-13 A;
+- Bus26 split node: Bus26_1/I1 + Bus26_2/I1 + B25-B26 terminal-2 current; normalized residual 6.35e-17, maximum absolute residual 9.24e-14 A;
+- Bus16_1/RConn1 fault node: Bus16_1/I2 + B16-B17 terminal-1 current + three-phase fault current during 5.0–5.1 s; normalized residual 9.04e-17, maximum absolute residual 7.28e-12 A over 151 samples.
 
-All 24 transformer endpoints are structurally mapped to 12 transformers. Eleven endpoints directly match a winding-current series up to sign/phase permutation; all 24 are consistent with the associated winding current under a fixed three-phase linear transformation. This is a current-signature consistency check, not a transformer protection or thermal certificate.
+The Bus16_1/RConn1 pre-fault two-branch sum has a normalized residual of approximately 2.17e-4 when the inactive fault branch is omitted; this small residual is retained rather than hidden. The fault-window three-branch KCL closes to numerical precision.
 
-The earlier near-zero inductor_a/i/amplitude path is an internal inductor-current series, not the line terminal phase-A current. The actual terminal-current vectors are phase_splitter1/2 and contain all three phase components. The remaining Bus16 fault-port sum is being checked using the one-episode fault-current probe.
+All 24 transformer endpoints are structurally mapped to 12 transformers. Eleven endpoints are direct signed three-phase matches; all 24 pass a sampled linear current-vector consistency fit. The rank-aware audit [Run 45930232661](https://github.com/startkz/AEFC/actions/runs/45930232661) found 9 rank-2 and 15 rank-3 fitted maps. The rank-2 fits arise on the sampled balanced-current subspace and are not unique full-rank physical transformations. This remains a current-signature consistency check, not a transformer protection or thermal certificate.
 
-**Claim boundary:** all 123 physical ports have a current-variable assignment under the validated interleaved ordering. The five composite bus ports require component-sum interpretation; the Bus16 fault composite is still under targeted validation. No online sensor integrity, branch thermal limits, or full-network safety is certified.
+The earlier near-zero inductor_a/i/amplitude path is an internal inductor-current series, not the line terminal phase-A current. The actual terminal-current vectors are phase_splitter1/2 and contain all three phase components. The Bus16 fault-port composite is now closed by the three-branch fault-window KCL check above.
+
+**Claim boundary:** all 123 physical ports have a current-variable assignment under the validated interleaved ordering, all 65 single-component line references match directly, and all five composite busbar ports are covered by KCL. This closes offline native topology/current mapping only. It does not authenticate online sensors, validate branch thermal limits, or certify full-network safety.
 ## 9. MATPOWER case39 的 46 条支路参考额定值映射
 
 参考数据源固定为 MATPOWER/matpower 的 case39 文件，commit `b6c85b0323d20fb801cab3377c803a285d730847`。拓扑匹配审计 [Run 45931096901](https://github.com/startkz/AEFC/actions/runs/45931096901) 得到：
@@ -144,14 +147,14 @@ The earlier near-zero inductor_a/i/amplitude path is an internal inductor-curren
 - RATE_A 参考值分布：500 MVA（7 条）、480 MVA（1 条）、600 MVA（20 条）、900 MVA（14 条）、1000 MVA（1 条）、1200 MVA（2 条）、1800 MVA（1 条）；
 - 按 345 kV 计算的 RATE_A 等效线电流范围为约 803.27–3012.26 A RMS。
 
-该映射只建立**支路拓扑和公开参考额定值之间的对应关系**。MATPOWER case39 文件的注释说明其潮流限值来自 PSERC TC Calculator 的修改数据；这些数值不是 MathWorks Simscape 模型自带的热额定值。当前尚未完成 MathWorks 线路 R/X/L/C、变压器绕组额定电压、基准容量、端电流 RMS 定义与 MATPOWER 参数的逐项等价性验证。因此：
+该映射首先建立支路拓扑和公开参考额定值之间的对应关系。随后，原生参数提取 [Run 45931696089](https://github.com/startkz/AEFC/actions/runs/45931696089) 和逐支路参数审计 [Run 45953495289](https://github.com/startkz/AEFC/actions/runs/45953495289) 完成了线路正序 R/X/B 与变压器串联 R/X 对照。线路在 0.1%（R）、1%（X）、5%（B）的声明容差内 34/34 匹配；变压器 12/12 漏抗和匹配，绕组电阻和在 1e-3 p.u. 绝对容差内匹配。详细偏差见第 11 节。
 
-1. RATE_A/B/C 暂时只能作为 benchmark reference limits；
-2. 不能把 345 kV 等效电流直接用于变压器低压绕组电流比较；
-3. 不能用瞬时电流峰值直接与 RATE_A 等效 RMS 电流比较；
-4. 在参数等价、绕组电压基准和 RMS 窗口核验完成前，不报告支路热过载率或热安全通过率。
+仍需严格区分 benchmark reference 与原生设备热额定值：
 
-下一项工作是提取 MathWorks 原生线路和变压器掩码参数，逐支路与 MATPOWER 的 per-unit R/X、tap ratio 和 baseMVA 对齐；只有对齐后才进入连续热限比较。
+1. MATPOWER RATE_A/B/C 可以用于 345 kV 输电线路的 benchmark 负载参考，但不能据此声称 MathWorks 原生线路的连续热容量已经验证；
+2. MATPOWER 的变压器 RATE_A 不应用于原生变压器绕组，原生模型的 345/22 kV 绕组额定电压与 MATPOWER 全部 345 kV 母线基准不同；
+3. 电流必须按周期 RMS 计算，不能用瞬时峰值直接与 RATE_A 等效 RMS 电流比较；
+4. 线路温升/热惯性、短时应急额定值、变压器绕组热限和传感器误差仍未验证，不能报告为热安全认证通过率。
 
 
 ## 10. 原生在线测量端口审计：现有发电机信号与电网测量缺口
@@ -191,18 +194,28 @@ The earlier near-zero inductor_a/i/amplitude path is an internal inductor-curren
 **发电机测量总线补充核验：** [Run 45931515695](https://github.com/startkz/AEFC/actions/runs/45931515695) 确认顶层 Generators 子系统具有一个独立 Simulink Outport，直接连接到 Measurements 子系统的 Inport；Generators 的另一物理端口仍连接 Grid。Measurements 子系统包含 20 个 In Bus Element、两个 10 输入 Mux 和 Scope，没有输出端口，因此它是测量总线的显示/监视终端，不是 AEFC 控制输入。该总线可在 Generators/Measurements 连接处分支，供独立安全监视器使用；其中 20 个字段的准确名称、单位和采样时间仍由 bus schema 探测工作流核验。
 
 
-### 10.4 原生三相传感器库候选已定位
+### 10.4 原生三相传感器端口兼容性已通过
 
-[Run 45932018570](https://github.com/startkz/AEFC/actions/runs/45932018570) 在 MATLAB R2024b 的 Simscape Electrical 库中找到三相电流、电压测量候选块，包括：
+[Run 45932871101](https://github.com/startkz/AEFC/actions/runs/45932871101) 在独立 Simulink 模型中逐端口尝试连接 PS-Simulink Converter，确认以下物理信号输出端口：
 
-- \`Current Sensor (Three-Phase)\`
-- \`Phase Voltage Sensor (Three-Phase)\`
-- \`Line Voltage Sensor (Three-Phase)\`
-- \`Current and Voltage Sensor (Three-Phase)\`
+| 传感器块 | PS 输出 | 电气 conserving 端口 |
+|---|---|---|
+| Current Sensor (Three-Phase) | RConn1 | LConn1、RConn2 |
+| Line Voltage Sensor (Three-Phase) | RConn1 | LConn1 |
+| Phase Voltage Sensor (Three-Phase) | RConn1 | LConn1、RConn2 |
+| Current and Voltage Sensor (Three-Phase) | RConn1、RConn2 | LConn1、RConn3 |
 
-目前只完成了库块发现和端口句柄枚举。由于 Simscape 物理信号端口在块句柄中也表现为连接端口，不能仅根据 \`LConn/RConn\` 名称判断其类型。正在通过实际连接 \`nesl_utility/PS-Simulink Converter\` 的小模型探测，确认每种传感器的物理信号输出端口和三相向量形式。确认后先在 Bus16_1 和 B16–B17 做单点插装，再验证测量值与现有离线 Simscape 日志一致，最后才扩展到全网。
+该测试只证明传感器输出端口可接入 PS-Simulink Converter，并未证明其已经接入 IEEE39 网络，也没有验证测量误差、标定或可信性。
 
+### 10.5 发电机测量总线运行时形状
 
+[Run 45932227560](https://github.com/startkz/AEFC/actions/runs/45932227560) 识别出每台发电机 Bus Creator 的 3 个输入；现有 Measurements 子系统只选取每台机组的 mGenX.w 与 mGenX.Vt，分别进入两个 10 输入 Mux。第三个机组测量信号未被当前 Scope 选取。[Run 45933102123](https://github.com/startkz/AEFC/actions/runs/45933102123) 在 0.1 s 原生运行中捕获了 30 维发电机测量向量、7 个时间样本。数值向量顺序和第三字段的精确语义仍需从 Bus Creator 连接关系和字段参数中确认，不能仅按端口顺序推断。
+
+该测量总线当前连接到 Measurements 显示/监视终端，而不是 AEFCNativeController。它可作为独立安全监视器的信号来源，但不能据此宣称传感器完整性或误差界已经验证。
+
+### 10.6 当前传感器插装验证
+
+下一步正在执行 Bus16_1 三相电压传感器和 B16–B17 一端三相电流传感器的原生插装 pilot。验收条件是：传感器输出与离线 Simscape 电压/电流序列一致，且插装前后原生物理轨迹在既定数值容差内不变。该 pilot 通过后，才扩展到 41 个物理母线区段、68 个线路端点和24个变压器绕组端。
 ## 11. 原生线路/变压器参数与 MATPOWER case39 的等价性审计已通过
 
 [Run 45932665618](https://github.com/startkz/AEFC/actions/runs/45932665618) 使用原生 MATLAB R2024b 掩码参数和固定版本 MATPOWER case39 数据完成逐支路核对。
@@ -227,14 +240,15 @@ R_1=R-R_m,\quad L_1=L-M,\quad C_1=C_g+3C_l
 
 ### 11.2 12 台变压器
 
-12 台原生变压器的两侧绕组电阻和漏抗之和与 MATPOWER 对应支路匹配：
+12 台原生变压器的串联参数审计结果如下：
 
-- 最大绕组电阻和绝对误差：\(10^{-4}\) p.u.；
-- 最大漏抗和绝对误差：0；
-- 原生块参数均记录 \`SRated=100\`（单位 MW）；
-- 额定电压组合为 3 台 345/345 kV、9 台 345/22 kV。
+- 12/12 台的两侧漏抗之和与 MATPOWER 串联电抗匹配，最大绝对误差为 0；
+- 12/12 台的两侧绕组电阻和在 \(10^{-3}\) p.u. 绝对容差内匹配；其中 8/12 项数值直接相同，另外 4 台原生模型为 \(10^{-4}\) p.u.，MATPOWER 对应支路电阻为 0；
+- 0/12 台变压器的标幺变比与 MATPOWER tap_ratio 匹配；
+- 只有 3/12 台的两侧绕组额定电压同时匹配 MATPOWER 的 345 kV 母线基准；原生模型有 3 台 345/345 kV 和 9 台 345/22 kV；
+- 原生块参数均记录 SRated=100 MW，而 MATPOWER RATE_A 为 500–1800 MVA。两者单位和物理含义不同，不作直接额定容量等同。
 
-MATPOWER 的变压器支路 RATE_A 不应用于原生变压器绕组热限。绕组热限应依据原生 \`SRated\`、两侧额定电压和电流测量定义建立；此外，tap 等价性和额定容量单位仍需核验。当前不报告变压器热过载率。
+MATPOWER 的变压器支路 RATE_A 不应用于原生变压器绕组热限。尤其是 345/22 kV 发电机侧变压器，不能用 345 kV 母线等效电流代替 22 kV 绕组电流。变压器热限应依据原生绕组额定值、两侧额定电压、实际变比和两侧测量电流建立；当前不报告变压器热过载率，也不宣称 MathWorks 与 MATPOWER 变压器完全物理等价。
 
 ### 11.3 对实验路线的影响
 
