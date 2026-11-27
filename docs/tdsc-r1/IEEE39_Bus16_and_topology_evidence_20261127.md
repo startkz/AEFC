@@ -206,3 +206,37 @@ I_{2k-1}\leftrightarrow LConn_k,\qquad I_{2k}\leftrightarrow RConn_k.
 4. 在参数等价、绕组电压基准和 RMS 窗口核验完成前，不报告支路热过载率或热安全通过率。
 
 下一项工作是提取 MathWorks 原生线路和变压器掩码参数，逐支路与 MATPOWER 的 per-unit R/X、tap ratio 和 baseMVA 对齐；只有对齐后才进入连续热限比较。
+
+
+## 10. 原生在线测量端口审计：现有发电机信号与电网测量缺口
+
+原生 MATLAB R2024b 信号端口清点已通过：[Run 45930528000](https://github.com/startkz/AEFC/actions/runs/45930528000)。其原始工件逐项记录了 Busbar、线路、变压器和控制器端口句柄及连接关系。
+
+### 10.1 现有发电机测量候选信号
+
+模型包含 70 个 PS-Simulink Converter，全部位于发电机子系统，没有一个位于 Grid 子系统；另有 60 个 Synchronous Machine Measurement 块和 20 个 Simulink-PS Converter。每台发电机现有以下三个可路由的 Simulink 信号候选：
+
+- 转子电角度：10 路；
+- 转子速度：10 路；
+- 发电机端电压：10 路。
+
+这些信号由发电机本地测量块和 PS-Simulink Converter 输出，部分连接至 Bus Creator/Unit Delay。它们是可供独立安全监视器使用的模型信号候选，但当前并未作为完整测量向量接入 AEFCNativeController；也没有因此获得可信传感器完整性证明或测量误差界。
+
+当前 AEFCNativeController 仍只有两个顶层输入：四路发电机转速观测 Mux，以及离线攻击/客户端数据包。实际物理观测仍只有四路转速。
+
+### 10.2 Grid 子系统没有现成的在线电压/支路电流信号端口
+
+端口句柄审计发现：
+
+- 41 个 Busbar 块只有 LConn/RConn 物理连接端口，没有信号输出端口；
+- 34 个线路块只有物理连接端口，没有 Simulink/PS 测量输出端口；
+- 12 个变压器块同样没有可路由的信号输出端口；
+- Grid 子系统内没有 PS-Simulink Converter。
+
+因此，39 个逻辑母线电压、41 个物理母线区段电压、68 个线路端点三相电流和 24 个变压器绕组电流，虽然已能从 Simscape 离线日志完整提取，但目前仍不是控制器可接收的在线传感器信号。
+
+### 10.3 下一步传感器接入顺序
+
+建议先复用现有 10 台机组的转速、转子角和端电压信号，构建独立的 Generator Measurement Monitor；随后在 41 个物理母线区段接入电压测量，在 34 条线路两端及 12 台变压器两侧接入电流测量，并将测量信号通过显式转换器接入独立的全网安全监视器。传感器噪声、偏置、丢包、时间同步和完整性保护需要作为单独的威胁模型与实验变量，不得把仿真器隐藏日志直接当作可信在线观测。
+
+这一步只解决测量路径，不自动解决全状态估计、误差界或可达集证明。完整 IEEE39 安全认证仍保持 BLOCKED。
