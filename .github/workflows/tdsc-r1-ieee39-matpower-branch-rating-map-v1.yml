@@ -1,0 +1,43 @@
+name: TDSC-R1 map MATPOWER case39 reference branch ratings to native IEEE39 topology v1
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-matpower-branch-rating-map-v1.yml'
+      - 'experiments/audit/aefc_ieee39_matpower_branch_rating_topology_audit_v1.py'
+      - 'configs/ieee39_matpower_case39_reference_branch_ratings.json'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  map_reference_ratings:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download verified native 123-port current map
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-123-bus-port-current-variable-map-v2
+          run-id: 45928276856
+          repository: \${{ github.repository }}
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/current_map
+      - name: Map all MATPOWER case39 branch rating records to native components
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/audit/aefc_ieee39_matpower_branch_rating_topology_audit_v1.py
+      - name: Archive branch rating topology map
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-MATPOWER-case39-branch-rating-topology-map-v1
+          path: |
+            results/ieee39_safety_mapping/matpower_branch_rating_topology_match_v1.json
+            configs/ieee39_matpower_case39_reference_branch_ratings.json
+            experiments/audit/aefc_ieee39_matpower_branch_rating_topology_audit_v1.py
+          if-no-files-found: error
+          retention-days: 90
