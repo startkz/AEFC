@@ -1,0 +1,40 @@
+name: TDSC-R1 IEEE39 Bus16 composite-port current-sum audit v2
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/tdsc-r1-ieee39-stress-recovery-20261125]
+    paths:
+      - '.github/workflows/tdsc-r1-ieee39-bus16-port-current-fault-signature-audit-v2.yml'
+      - 'experiments/audit/aefc_ieee39_bus16_port_current_fault_signature_audit_v2.py'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  audit_bus16_fault_port:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Download successful native Bus16 current probe
+        uses: actions/download-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-Bus16-port-current-fault-probe-v2
+          run-id: 45928367918
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts/bus16_fault_probe
+      - name: Audit I2 equals the sum of line-terminal and fault currents
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/audit/aefc_ieee39_bus16_port_current_fault_signature_audit_v2.py
+      - name: Archive Bus16 composite current-sum audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: TDSC-R1-IEEE39-Bus16-composite-current-sum-audit-v2
+          path: results/ieee39_safety_mapping/bus16_port_current_fault_signature_audit_v2.json
+          if-no-files-found: error
+          retention-days: 90
