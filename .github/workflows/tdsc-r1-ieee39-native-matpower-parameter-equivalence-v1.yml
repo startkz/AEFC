@@ -23,8 +23,8 @@ jobs:
         with:
           name: TDSC-R1-native-IEEE39-branch-parameter-inventory-v1
           run-id: 45931696089
-          repository: \${{ github.repository }}
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts/native_params
       - name: Verify per-unit line and transformer parameter equivalence
         shell: bash
