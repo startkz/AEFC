@@ -22,16 +22,16 @@ jobs:
         with:
           name: TDSC-R1-native-IEEE39-busbar-port-component-map-v1-e86c2f761e9c327db53a4a703b68532673733b67
           run-id: 45772532158
-          repository: \${{ github.repository }}
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts/busbar_port_map
       - name: Download native Simscape bus-port current and connectivity capture
         uses: actions/download-artifact@v4
         with:
           name: TDSC-R1-native-IEEE39-bus-port-connection-map-v1
           run-id: 45924972310
-          repository: \${{ github.repository }}
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts/current_port_map
       - name: Join all 123 I# series to physical LConn/RConn and connected components
         shell: bash
