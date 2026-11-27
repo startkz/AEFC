@@ -11,6 +11,7 @@ on:
       - 'experiments/matlab/aefc_native_load_verified_state_contract.m'
       - 'configs/ieee39_native_fault_recovery_protocol_r1.json'
       - 'configs/ieee39_native_fault_recovery_protocol_r1_location_addendum.json'
+      - 'configs/ieee39_unpriv_r1.json'
 permissions:
   contents: read
 jobs:
