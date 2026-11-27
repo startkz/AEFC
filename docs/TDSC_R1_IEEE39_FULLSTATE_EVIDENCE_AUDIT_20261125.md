@@ -94,3 +94,42 @@ input_lower+abar <= u <= input_upper-abar
 目前可以陈述：“提出并实装了无特权在线链条与条件性保守集合估计、鲁棒执行及采样保持区间检查；合成模型上通过随机包含与失败拒绝测试，原生 MathWorks 39 母线模型完成动态状态与十台发电机物理测量路径审计。”不能写成“已证明全部 IEEE39 状态连续安全、AEFC 实现可信物理恢复、或六方法已经显示 AEFC 改善”等未经独立验收结论。
 
 下一项确定性工程工作是从原生模型提取对应的可观测安全状态映射，验证真实电网差分/代数可达集与误差界，建立真实备用命令安全合同，再用新的冻结独立种子验证六方法可归因的恢复优势。
+
+
+## 11. 2026-11-27 addendum — native electrical topology, branch parameters, and measurement instrumentation
+
+### 11.1 Bus16_1 physical exposure is now confirmed on ten preregistered seeds
+
+[Run 45924335524](https://github.com/startkz/AEFC/actions/runs/45924335524) passed the native MATLAB simulation and independent audit for 20 episodes (AEFC-Full and Supervisor-only, seeds 80–89). All 20 episodes were outside the frozen recovery set during the Bus16_1 fault and satisfied the frozen 20-sample recovery predicate after clearing. The first recovery time was 2.0833 s after fault clearing in every episode.
+
+Strict execution released zero added Pref corrections, invoked zero backup actions, and produced pointwise-identical AEFC-Full and Supervisor-only physical trajectories. Cross-seed physical trajectories were also identical because seeds affect offline client-packet generation, not the native plant disturbance. This is a confirmed native post-fault recovery baseline, not an AEFC physical recovery-gain result or ten independent physical samples.
+
+### 11.2 Complete bus-port current topology
+
+[Run 45930674491](https://github.com/startkz/AEFC/actions/runs/45930674491) resolved all 123 busbar-port current series across 41 physical bus sections. The mapping uses the native alternating convention I_(2k-1)=LConn_k and I_(2k)=RConn_k; all 123 ports are mapped. The five composite busbar ports are reconciled through three current-conservation relations. The remaining current families include 68 three-phase line-terminal vectors and 24 transformer winding vectors. These are offline simulator records, not trusted online sensors.
+
+### 11.3 Native branch parameter equivalence to MATPOWER case39
+
+[Run 45932665618](https://github.com/startkz/AEFC/actions/runs/45932665618) verified all 34 line R/X/B values and all 12 transformer winding R/X sums against the fixed MATPOWER case39 reference.
+
+For native three-phase lines, the positive-sequence conversion is R1=R-Rm, L1=L-M, and C1=Cg+3Cl. Maximum relative errors were 0.0070% for R, 0.7814% for X, and 3.3888% for B, within the declared 0.1%, 1%, and 5% tolerances. MATPOWER RATE_A is now usable as a benchmark reference for the 34 345-kV lines after correct RMS-current calculation; it is not a validated conductor thermal limit.
+
+The 12 transformer winding resistance/leakage-reactance sums match the MATPOWER branches with maximum absolute errors of 1e-4 p.u. and zero, respectively. Native transformer blocks declare SRated=100 (unit MW), with three 345/345-kV and nine 345/22-kV configurations. MATPOWER transformer RATE_A is not applied to the native winding thermal limit. Tap equivalence and the native rated-apparent-power interpretation still require review.
+
+### 11.4 Online measurement port audit and sensor candidates
+
+[Run 45932082411](https://github.com/startkz/AEFC/actions/runs/45932082411) confirms 70 PS-Simulink Converter blocks in Generators and zero in Grid. Ten rotor-angle, ten rotor-speed, and ten generator-terminal-voltage signal candidates are present. Busbar, line, and transformer blocks have no signal output ports. AEFCNativeController still receives only four physical speed measurements.
+
+The existing Generators output bus has one top-level output connected to the Measurements subsystem. The latter selects mGenX.w and mGenX.Vt (20 fields) into two ten-input Muxes; each generator Bus Creator has three inputs, leaving one generator signal not selected by the current Scope. A runtime probe [Run 45933102123](https://github.com/startkz/AEFC/actions/runs/45933102123) captured a 30-dimensional generator measurement vector over seven samples. The updated probe is extracting its first/last values and bus object metadata to determine exact channel ordering.
+
+The Simscape Electrical library exposes native three-phase Current Sensor, Line Voltage Sensor, Phase Voltage Sensor, and Current-and-Voltage Sensor blocks. [Run 45932871101](https://github.com/startkz/AEFC/actions/runs/45932871101) confirmed their physical-signal output ports can connect to the native PS-Simulink Converter. This validates library-level compatibility only.
+
+### 11.5 Single-point sensor insertion pilot
+
+[Run 45934020640](https://github.com/startkz/AEFC/actions/runs/45934020640) is running a single-point insertion experiment: a Line Voltage Sensor at Bus16_1 and a series Current Sensor between Bus16_1/RConn1 and B16–B17/LConn1. The wiring removes only that specific physical branch and preserves the shared Bus16_1 fault connection. The audit will compare sensor outputs against native Simscape voltage/current series and compare all 41 bus-voltage and ten-generator-speed trajectories against the no-sensor seed-80 baseline. No full-grid sensor coverage claim is made until this pilot passes.
+
+### 11.6 Full-state promotion gate recheck
+
+[Run 45934329179](https://github.com/startkz/AEFC/actions/runs/45934329179) reran the independent promotion gate after the latest topology and parameter evidence was added. The result remains BLOCKED, with 18 blocking requirements, including incomplete online observer coverage, no full-state measurement map or error-bound proof, unverified physical predicates, no validated sampled/intersample nonlinear DAE reachable tube, uncertified emergency Governor viability, and no independent six-method recovery holdout.
+
+The offline current/topology/parameter evidence improves model understanding and sensor-insertion readiness. It does not satisfy trusted online measurement, continuous-time reachability, or emergency-control certification. The manuscript promotion gate must remain blocked.
