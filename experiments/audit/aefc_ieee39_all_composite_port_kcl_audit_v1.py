@@ -6,14 +6,15 @@ import pathlib
 import numpy as np
 
 ROOT = pathlib.Path(".")
-CAPTURE = ROOT / "artifacts/terminal_capture/native_ieee39_bus_port_terminal_current_capture_v2.json"
-MAP = ROOT / "artifacts/current_map/native_ieee39_bus_port_current_variable_map_v2.json"
-PROBE = ROOT / "artifacts/bus16_probe/native_ieee39_bus16_port_current_fault_probe_v1.json"
+CAPTURE_ROOT = ROOT / "artifacts/terminal_capture"
+MAP_ROOT = ROOT / "artifacts/current_map"
+PROBE_ROOT = ROOT / "artifacts/bus16_probe"
 OUT = ROOT / "results/ieee39_safety_mapping/all_composite_port_kcl_audit_v1.json"
 
-def load(path):
-    assert path.is_file(), f"missing artifact input: {path}"
-    return json.loads(path.read_text(encoding="utf-8"))
+def load_unique(root, filename):
+    hits = list(root.rglob(filename))
+    assert len(hits) == 1, f"expected exactly one {filename} below {root}, got {len(hits)}"
+    return json.loads(hits[0].read_text(encoding="utf-8"))
 
 def vec(series):
     a = np.asarray(series["values_real"], dtype=float)
@@ -47,9 +48,9 @@ def normalized_kcl(items, mask=None):
     }
 
 def main():
-    c = load(CAPTURE)
-    m = load(MAP)
-    p = load(PROBE)
+    c = load_unique(CAPTURE_ROOT, "native_ieee39_bus_port_terminal_current_capture_v2.json")
+    m = load_unique(MAP_ROOT, "native_ieee39_bus_port_current_variable_map_v2.json")
+    p = load_unique(PROBE_ROOT, "native_ieee39_bus16_port_current_fault_probe_v1.json")
 
     assert c["bus_port_current_count"] == 123
     assert len(c["bus_port_current_series"]) == 123
