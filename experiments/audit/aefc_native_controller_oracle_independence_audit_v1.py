@@ -31,7 +31,7 @@ assert re.search(r"numel\(zNative\)\s*==\s*4",ctrl)
 assert re.search(r"numel\(packet\)\s*==\s*67",ctrl)
 assert re.search(r"ExploratoryMode\s*=\s*false",ctrl)
 assert "aefc_native_certified_execution_step" in ctrl
-assert re.search(r"if\s+~logical\(obj\.ExploratoryMode\)",ctrl)
+assert "if logical(obj.ExploratoryMode)" in ctrl_code
 assert "full_network_variables_covered" in step
 assert "measurement_map_verified" in step
 assert "intersample_reachability_verified" in step
