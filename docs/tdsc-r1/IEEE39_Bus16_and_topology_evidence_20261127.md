@@ -110,18 +110,26 @@
 
 
 
-## 8. Final physical topology map; I# port assignment remains under validation
 
-The structural port-to-component map is complete: 123/123 physical Busbar ports are resolved, with zero unresolved ports, 34 transmission-line components, 12 transformer components and 41 physical bus sections. The immutable artifacts are available from Actions runs 45772532158, 45924972310 and the join audit 45926582377.
+## 8. Final 123-port physical and current-variable map
 
-The 123 Bus/I# current series have also been captured. For every Busbar block, the number of I# series equals the number of physical ports, and the two transformer LConn1 anchors (Bus10/I1 and Bus12/I1) match the negative of the corresponding i2 winding current with zero residual.
+The terminal-signature join [Actions run 45928276856](https://github.com/startkz/AEFC/actions/runs/45928276856) resolves all 123 physical Busbar ports to the native Simscape current-variable series. The empirically supported ordering is interleaved:
 
-**However, the full I# to LConn/RConn permutation is not yet validated.** The global PortConnectivity ordinal used in the first join is only a candidate rule. The two exact anchors validate two LConn1 cases, not the remaining 121 assignments. The earlier local-index candidate differs from the global-ordinal candidate in 52 cases; this difference alone does not establish which assignment is correct.
+I_(2k-1) = LConn_k; I_(2k) = RConn_k.
 
-The next capture [Actions run 45926990179](https://github.com/startkz/AEFC/actions/runs/45926990179) records the 123 bus-port currents together with both three-phase line terminal vectors (phase_splitter1/2) and all 24 transformer winding-current vectors. These terminal signatures will be used to resolve the I# permutation rather than assuming PortConnectivity ordering.
+This differs from both the local-index and global PortConnectivity-order assumptions. Across 41 Busbar blocks, the predicted interleaved I# set matches the captured current-series set exactly. The interleaved rule yields 65/70 exact bus-port-to-line-terminal matches, compared with 33/70 under global PortConnectivity order and 24/70 under the previous local-index candidate. All 65 single-component line-port references match directly. The five remaining references belong to three composite line endpoints.
 
-### Line-current diagnostic
+The 34 lines have 68 terminal-current vectors captured from phase_splitter1/2. Of the 68 unique line component ports, 65 match directly; the three composite endpoints arise from:
+- Bus16_1/RConn1, shared by B16-B17 and the three-phase fault;
+- B19-B16/RConn1, shared by Bus16_1/LConn2 and Bus16_2/LConn1;
+- B25-B26/RConn1, shared by Bus26_1/LConn1 and Bus26_2/LConn1.
 
-The selected inductor_a/i/amplitude internal series remain near zero across all 34 lines (1.17e-12–5.59e-11 A), whereas inductor_b and inductor_c are nonzero. However, the Simscape registry also contains nonzero three-phase terminal-current candidates under phase_splitter1/I and phase_splitter2/I, and corresponding T1/T2 i_a/i_b/i_c paths. Therefore the near-zero inductor_a series must not be interpreted as proof that the physical phase-A terminal current is zero. The correct terminal-current mapping is being validated in the new capture.
+The two split-bus current sums are already consistent with the corresponding line terminal current to numerical precision:
+- Bus16_1/I3 + Bus16_2/I1 = −(B19-B16 phase_splitter2), normalized residual 1.49e-16;
+- Bus26_1/I1 + Bus26_2/I1 = −(B25-B26 phase_splitter2), normalized residual 2.30e-16.
 
-**Current claim boundary:** 123 physical port-to-component topology mapping is complete; the I#-to-port permutation and line terminal current identity remain provisional. No online sensor integrity, branch thermal limits or full-network safety is certified.
+All 24 transformer endpoints are structurally mapped to 12 transformers. Eleven endpoints directly match a winding-current series up to sign/phase permutation; all 24 are consistent with the associated winding current under a fixed three-phase linear transformation. This is a current-signature consistency check, not a transformer protection or thermal certificate.
+
+The earlier near-zero inductor_a/i/amplitude path is an internal inductor-current series, not the line terminal phase-A current. The actual terminal-current vectors are phase_splitter1/2 and contain all three phase components. The remaining Bus16 fault-port sum is being checked using the one-episode fault-current probe.
+
+**Claim boundary:** all 123 physical ports have a current-variable assignment under the validated interleaved ordering. The five composite bus ports require component-sum interpretation; the Bus16 fault composite is still under targeted validation. No online sensor integrity, branch thermal limits, or full-network safety is certified.
